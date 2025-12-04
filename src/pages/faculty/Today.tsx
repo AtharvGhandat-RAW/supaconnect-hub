@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-import { Calendar, Clock, BookOpen, Users, CheckCircle, AlertCircle, Play } from 'lucide-react';
+import { Calendar, Clock, BookOpen, Users, CheckCircle, AlertCircle, Play, ArrowRightLeft } from 'lucide-react';
 import PageShell from '@/components/layout/PageShell';
 import StatusBadge from '@/components/ui/StatusBadge';
 import { Button } from '@/components/ui/button';
@@ -9,6 +9,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { getTodaySlots } from '@/services/timetable';
 import { getAttendanceSessions } from '@/services/attendance';
+import { checkTimeGate } from '@/utils/timeGate';
 
 interface LectureSlot {
   id: string;
@@ -21,8 +22,10 @@ interface LectureSlot {
   time: string;
   room: string;
   isSubstitution: boolean;
-  status: 'upcoming' | 'ongoing' | 'completed' | 'leave';
+  substitutionFor?: string;
+  status: 'upcoming' | 'ongoing' | 'completed' | 'missed';
   canTakeAttendance: boolean;
+  timeGateReason?: string;
   sessionId?: string;
 }
 
@@ -60,17 +63,28 @@ const FacultyTodayPage: React.FC = () => {
     async function fetchTodayData() {
       try {
         const today = new Date().toISOString().split('T')[0];
-        const [slots, sessions] = await Promise.all([
+        
+        // Fetch regular slots and substitution assignments
+        const [slots, sessions, substitutions] = await Promise.all([
           getTodaySlots(facultyId!),
           getAttendanceSessions({ faculty_id: facultyId!, date: today }),
+          supabase
+            .from('substitution_assignments')
+            .select(`
+              *,
+              classes (id, name, division),
+              subjects (id, name, subject_code),
+              faculty!substitution_assignments_src_faculty_id_fkey (profiles (name))
+            `)
+            .eq('sub_faculty_id', facultyId!)
+            .eq('date', today),
         ]);
 
         const completedSlots = new Map(
           (sessions || []).map((s: { start_time: string; id: string }) => [s.start_time, s.id])
         );
 
-        const now = new Date();
-
+        // Format regular slots
         const formattedSlots: LectureSlot[] = (slots || []).map((slot: {
           id: string;
           classes?: { id: string; name: string; division: string } | null;
@@ -80,25 +94,15 @@ const FacultyTodayPage: React.FC = () => {
         }) => {
           const sessionId = completedSlots.get(slot.start_time);
           const isCompleted = !!sessionId;
+          const timeGate = checkTimeGate(slot.start_time);
 
-          const [hours, minutes] = slot.start_time.split(':').map(Number);
-          const slotTime = new Date();
-          slotTime.setHours(hours, minutes, 0, 0);
-
-          const windowStart = new Date(slotTime.getTime() - 5 * 60 * 1000); // -5 min
-          const windowEnd = new Date(slotTime.getTime() + 15 * 60 * 1000); // +15 min
-          const slotEnd = new Date(slotTime.getTime() + 60 * 60 * 1000); // +1 hour
-
-          let status: 'upcoming' | 'ongoing' | 'completed' | 'leave' = 'upcoming';
-          let canTakeAttendance = false;
-
+          let status: 'upcoming' | 'ongoing' | 'completed' | 'missed' = 'upcoming';
           if (isCompleted) {
             status = 'completed';
-          } else if (now >= windowStart && now <= windowEnd) {
+          } else if (timeGate.enabled) {
             status = 'ongoing';
-            canTakeAttendance = true;
-          } else if (now > slotEnd) {
-            status = 'upcoming'; // Missed
+          } else if (timeGate.reason === 'Attendance window closed') {
+            status = 'missed';
           }
 
           return {
@@ -113,10 +117,50 @@ const FacultyTodayPage: React.FC = () => {
             room: slot.room_no || 'TBA',
             isSubstitution: false,
             status,
-            canTakeAttendance,
+            canTakeAttendance: !isCompleted && timeGate.enabled,
+            timeGateReason: timeGate.reason,
             sessionId,
           };
         });
+
+        // Add substitution assignments
+        const subData = substitutions.data || [];
+        subData.forEach((sub: any) => {
+          const sessionId = completedSlots.get(sub.start_time);
+          const isCompleted = !!sessionId;
+          const timeGate = checkTimeGate(sub.start_time);
+          const srcFaculty = sub.faculty as unknown as { profiles: { name: string } } | null;
+
+          let status: 'upcoming' | 'ongoing' | 'completed' | 'missed' = 'upcoming';
+          if (isCompleted) {
+            status = 'completed';
+          } else if (timeGate.enabled) {
+            status = 'ongoing';
+          } else if (timeGate.reason === 'Attendance window closed') {
+            status = 'missed';
+          }
+
+          formattedSlots.push({
+            id: `sub-${sub.id}`,
+            className: sub.classes?.name || 'Unknown',
+            division: sub.classes?.division || '',
+            classId: sub.classes?.id || '',
+            subject: sub.subjects?.name || 'Unknown',
+            subjectCode: sub.subjects?.subject_code || '',
+            subjectId: sub.subjects?.id || '',
+            time: sub.start_time,
+            room: 'TBA',
+            isSubstitution: true,
+            substitutionFor: srcFaculty?.profiles?.name,
+            status,
+            canTakeAttendance: !isCompleted && timeGate.enabled,
+            timeGateReason: timeGate.reason,
+            sessionId,
+          });
+        });
+
+        // Sort by time
+        formattedSlots.sort((a, b) => a.time.localeCompare(b.time));
 
         setTodaySlots(formattedSlots);
       } catch (error) {
@@ -128,10 +172,16 @@ const FacultyTodayPage: React.FC = () => {
 
     fetchTodayData();
 
-    // Realtime subscription
+    // Realtime subscriptions
     const channel = supabase
       .channel('faculty-today')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'attendance_sessions' }, () => {
+        fetchTodayData();
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'timetable_slots' }, () => {
+        fetchTodayData();
+      })
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'substitution_assignments' }, () => {
         fetchTodayData();
       })
       .subscribe();
@@ -149,12 +199,13 @@ const FacultyTodayPage: React.FC = () => {
         startTime: slot.time,
         className: `${slot.className} ${slot.division}`,
         subjectName: slot.subject,
+        isSubstitution: slot.isSubstitution,
       },
     });
   };
 
   const handleViewAttendance = (sessionId: string) => {
-    navigate(`/faculty/attendance/${sessionId}`);
+    navigate(`/faculty/attendance/${sessionId}/view`);
   };
 
   const getStatusIcon = (status: string) => {
@@ -163,7 +214,7 @@ const FacultyTodayPage: React.FC = () => {
         return <CheckCircle className="w-5 h-5 text-success" />;
       case 'ongoing':
         return <Play className="w-5 h-5 text-warning animate-pulse" />;
-      case 'leave':
+      case 'missed':
         return <AlertCircle className="w-5 h-5 text-danger" />;
       default:
         return <Clock className="w-5 h-5 text-muted-foreground" />;
@@ -210,22 +261,25 @@ const FacultyTodayPage: React.FC = () => {
                 className={`glass-card rounded-xl p-5 border-l-4 ${
                   slot.status === 'completed' ? 'border-l-success' :
                   slot.status === 'ongoing' ? 'border-l-warning' :
-                  slot.status === 'leave' ? 'border-l-danger' : 'border-l-muted'
+                  slot.status === 'missed' ? 'border-l-danger' : 'border-l-muted'
                 }`}
               >
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                   <div className="flex-1">
-                    <div className="flex items-center gap-3 mb-2">
+                    <div className="flex items-center gap-3 mb-2 flex-wrap">
                       {getStatusIcon(slot.status)}
                       <span className="text-xl font-bold text-foreground">{slot.time}</span>
                       {slot.isSubstitution && (
-                        <StatusBadge variant="info">Substitution</StatusBadge>
+                        <StatusBadge variant="info">
+                          <ArrowRightLeft className="w-3 h-3 mr-1" />
+                          Substitution
+                        </StatusBadge>
                       )}
                       <StatusBadge
                         variant={
                           slot.status === 'completed' ? 'success' :
                           slot.status === 'ongoing' ? 'warning' :
-                          slot.status === 'leave' ? 'danger' : 'outline'
+                          slot.status === 'missed' ? 'danger' : 'outline'
                         }
                       >
                         {slot.status.charAt(0).toUpperCase() + slot.status.slice(1)}
@@ -238,6 +292,14 @@ const FacultyTodayPage: React.FC = () => {
                     <p className="text-sm text-muted-foreground mt-1">
                       {slot.className} {slot.division} • Room {slot.room}
                     </p>
+                    {slot.isSubstitution && slot.substitutionFor && (
+                      <p className="text-sm text-info mt-1">
+                        Substitution for Prof. {slot.substitutionFor}
+                      </p>
+                    )}
+                    {slot.timeGateReason && slot.status !== 'completed' && (
+                      <p className="text-xs text-muted-foreground mt-1">{slot.timeGateReason}</p>
+                    )}
                   </div>
                   <div className="flex gap-2">
                     {slot.canTakeAttendance && (

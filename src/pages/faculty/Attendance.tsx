@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
-import { Check, Copy, Users, BookOpen } from 'lucide-react';
+import { Check, Copy, Users, BookOpen, MessageSquare, AlertCircle } from 'lucide-react';
 import PageShell from '@/components/layout/PageShell';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
+import StatusBadge from '@/components/ui/StatusBadge';
 import { toast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
@@ -12,6 +13,8 @@ import { getStudents, type Student } from '@/services/students';
 import { createAttendanceSession, createAttendanceRecords } from '@/services/attendance';
 import { getSyllabusTopics, markTopicsCovered, type SyllabusTopic } from '@/services/syllabus';
 import { createActivityLog } from '@/services/activity';
+import { openWhatsApp } from '@/utils/whatsapp';
+import { checkTimeGate } from '@/utils/timeGate';
 
 interface StudentAttendance extends Student {
   isPresent: boolean;
@@ -31,6 +34,7 @@ const FacultyAttendancePage: React.FC = () => {
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [absentStudents, setAbsentStudents] = useState<Student[]>([]);
+  const [timeGateError, setTimeGateError] = useState<string | null>(null);
 
   const state = location.state as {
     classId: string;
@@ -38,6 +42,7 @@ const FacultyAttendancePage: React.FC = () => {
     startTime: string;
     className: string;
     subjectName: string;
+    isSubstitution?: boolean;
   } | undefined;
 
   useEffect(() => {
@@ -61,6 +66,12 @@ const FacultyAttendancePage: React.FC = () => {
         if (!state) {
           setLoading(false);
           return;
+        }
+
+        // Check time gate
+        const timeGate = checkTimeGate(state.startTime);
+        if (!timeGate.enabled) {
+          setTimeGateError(timeGate.reason || 'Attendance window not available');
         }
 
         // Fetch students for the class
@@ -116,6 +127,7 @@ const FacultyAttendancePage: React.FC = () => {
         faculty_id: facultyId,
         date: today,
         start_time: state.startTime,
+        is_substitution: state.isSubstitution || false,
       });
 
       // Create attendance records
@@ -217,6 +229,25 @@ Please maintain regular attendance.
     );
   }
 
+  // Time gate error
+  if (timeGateError) {
+    return (
+      <PageShell role="faculty">
+        <div className="glass-card rounded-xl p-8 text-center">
+          <AlertCircle className="w-12 h-12 text-warning mx-auto mb-4" />
+          <h2 className="text-xl font-semibold text-foreground mb-2">Attendance Not Available</h2>
+          <p className="text-muted-foreground mb-4">{timeGateError}</p>
+          <p className="text-sm text-muted-foreground mb-4">
+            {state?.className} • {state?.subjectName} • {state?.startTime}
+          </p>
+          <Button onClick={() => navigate('/faculty/today')}>
+            Back to Today
+          </Button>
+        </div>
+      </PageShell>
+    );
+  }
+
   return (
     <PageShell role="faculty">
       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
@@ -231,6 +262,9 @@ Please maintain regular attendance.
                 <p className="text-muted-foreground mt-1">
                   {state?.className} • {state?.subjectName} • {state?.startTime}
                 </p>
+                {state?.isSubstitution && (
+                  <StatusBadge variant="info" className="mt-2">Substitution Lecture</StatusBadge>
+                )}
               </div>
               <Button variant="outline" onClick={handleMarkAllPresent}>
                 Mark All Present
@@ -343,28 +377,42 @@ Please maintain regular attendance.
 
             {absentStudents.length > 0 ? (
               <>
+                {/* Common Messages */}
                 <div className="glass-card rounded-xl p-6">
-                  <h2 className="text-lg font-semibold text-foreground mb-4">
+                  <h2 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
+                    <MessageSquare className="w-5 h-5" />
                     Common Absent Message ({absentStudents.length} absent)
                   </h2>
                   <div className="space-y-4">
+                    {/* English */}
                     <div>
                       <div className="flex items-center justify-between mb-2">
                         <span className="text-sm text-muted-foreground">English</span>
-                        <Button size="sm" variant="ghost" onClick={() => copyToClipboard(generateCommonMessageEN())}>
-                          <Copy className="w-4 h-4 mr-1" /> Copy
-                        </Button>
+                        <div className="flex gap-2">
+                          <Button size="sm" onClick={() => openWhatsApp(null, generateCommonMessageEN())} className="btn-gradient">
+                            Open WhatsApp (EN)
+                          </Button>
+                          <Button size="sm" variant="ghost" onClick={() => copyToClipboard(generateCommonMessageEN())}>
+                            <Copy className="w-4 h-4 mr-1" /> Copy
+                          </Button>
+                        </div>
                       </div>
                       <pre className="text-sm bg-white/5 p-3 rounded-lg whitespace-pre-wrap border border-border/30">
                         {generateCommonMessageEN()}
                       </pre>
                     </div>
+                    {/* Marathi */}
                     <div>
                       <div className="flex items-center justify-between mb-2">
                         <span className="text-sm text-muted-foreground">Marathi (मराठी)</span>
-                        <Button size="sm" variant="ghost" onClick={() => copyToClipboard(generateCommonMessageMR())}>
-                          <Copy className="w-4 h-4 mr-1" /> Copy
-                        </Button>
+                        <div className="flex gap-2">
+                          <Button size="sm" onClick={() => openWhatsApp(null, generateCommonMessageMR())} className="btn-gradient">
+                            Open WhatsApp (MR)
+                          </Button>
+                          <Button size="sm" variant="ghost" onClick={() => copyToClipboard(generateCommonMessageMR())}>
+                            <Copy className="w-4 h-4 mr-1" /> Copy
+                          </Button>
+                        </div>
                       </div>
                       <pre className="text-sm bg-white/5 p-3 rounded-lg whitespace-pre-wrap border border-border/30">
                         {generateCommonMessageMR()}
@@ -373,6 +421,7 @@ Please maintain regular attendance.
                   </div>
                 </div>
 
+                {/* Per-Student Messages */}
                 <div className="glass-card rounded-xl p-6">
                   <h2 className="text-lg font-semibold text-foreground mb-4">
                     Per-Student Messages
@@ -380,20 +429,39 @@ Please maintain regular attendance.
                   <div className="space-y-4 max-h-[400px] overflow-y-auto">
                     {absentStudents.map(student => (
                       <div key={student.id} className="border border-border/30 rounded-lg p-4">
-                        <h3 className="font-medium text-foreground mb-2">
-                          Roll {student.roll_no} - {student.name}
-                        </h3>
-                        <div className="flex gap-2">
+                        <div className="flex items-center justify-between mb-2">
+                          <h3 className="font-medium text-foreground">
+                            Roll {student.roll_no} - {student.name}
+                          </h3>
+                          {student.mobile && (
+                            <span className="text-xs text-muted-foreground">{student.mobile}</span>
+                          )}
+                        </div>
+                        <div className="flex flex-wrap gap-2">
                           <Button
                             size="sm"
                             variant="outline"
+                            onClick={() => openWhatsApp(student.mobile, generateStudentMessageEN(student))}
+                          >
+                            EN → WhatsApp
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => openWhatsApp(student.mobile, generateStudentMessageMR(student))}
+                          >
+                            MR → WhatsApp
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="ghost"
                             onClick={() => copyToClipboard(generateStudentMessageEN(student))}
                           >
                             <Copy className="w-3 h-3 mr-1" /> EN
                           </Button>
                           <Button
                             size="sm"
-                            variant="outline"
+                            variant="ghost"
                             onClick={() => copyToClipboard(generateStudentMessageMR(student))}
                           >
                             <Copy className="w-3 h-3 mr-1" /> MR
