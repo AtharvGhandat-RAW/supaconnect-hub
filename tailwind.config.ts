@@ -22,15 +22,16 @@ export default {
         primary: {
           DEFAULT: "hsl(var(--primary))",
           foreground: "hsl(var(--primary-foreground))",
-          600: "#4F46E5",
-          700: "#4338CA",
-          900: "#1E1B4B",
+          500: "#10B981",
+          600: "#059669",
+          700: "#047857",
         },
         secondary: {
           DEFAULT: "hsl(var(--secondary))",
           foreground: "hsl(var(--secondary-foreground))",
-          600: "#9333EA",
-          700: "#7E22CE",
+          500: "#14B8A6",
+          600: "#0D9488",
+          700: "#0F766E",
         },
         destructive: {
           DEFAULT: "hsl(var(--destructive))",
@@ -43,7 +44,7 @@ export default {
         accent: {
           DEFAULT: "hsl(var(--accent))",
           foreground: "hsl(var(--accent-foreground))",
-          electric: "#22D3EE",
+          electric: "#10B981",
         },
         popover: {
           DEFAULT: "hsl(var(--popover))",
@@ -54,9 +55,9 @@ export default {
           foreground: "hsl(var(--card-foreground))",
         },
         surface: {
-          950: "#0B0B12",
-          900: "#0F1020",
-          800: "#18192C",
+          950: "#0C1015",
+          900: "#111820",
+          800: "#1A242E",
         },
         success: "#22C55E",
         warning: "#F59E0B",
@@ -128,8 +129,8 @@ export default {
         "gradient-sweep": "gradient-sweep 3s ease infinite",
       },
       backgroundImage: {
-        "gradient-app": "linear-gradient(to bottom right, #1E1B4B, #581C87, #000000)",
-        "gradient-button": "linear-gradient(90deg, #4F46E5, #9333EA, #4F46E5)",
+        "gradient-app": "linear-gradient(to bottom right, #0F172A, #134E4A, #0C1015)",
+        "gradient-button": "linear-gradient(90deg, #059669, #0D9488, #059669)",
       },
     },
   },

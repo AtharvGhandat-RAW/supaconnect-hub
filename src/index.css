@@ -6,56 +6,56 @@
 
 @layer base {
   :root {
-    --background: 240 10% 4%;
-    --foreground: 0 0% 100%;
-    --card: 240 10% 6%;
-    --card-foreground: 0 0% 100%;
-    --popover: 240 10% 6%;
-    --popover-foreground: 0 0% 100%;
-    --primary: 243 75% 59%;
-    --primary-foreground: 0 0% 100%;
-    --secondary: 270 91% 55%;
-    --secondary-foreground: 0 0% 100%;
-    --muted: 240 10% 15%;
-    --muted-foreground: 230 10% 78%;
-    --accent: 187 92% 53%;
-    --accent-foreground: 240 10% 4%;
+    --background: 220 20% 7%;
+    --foreground: 210 40% 98%;
+    --card: 220 20% 10%;
+    --card-foreground: 210 40% 98%;
+    --popover: 220 20% 10%;
+    --popover-foreground: 210 40% 98%;
+    --primary: 160 84% 39%;
+    --primary-foreground: 210 40% 98%;
+    --secondary: 173 80% 40%;
+    --secondary-foreground: 210 40% 98%;
+    --muted: 220 15% 18%;
+    --muted-foreground: 215 20% 65%;
+    --accent: 160 84% 39%;
+    --accent-foreground: 210 40% 98%;
     --destructive: 0 84% 60%;
-    --destructive-foreground: 0 0% 100%;
-    --border: 240 10% 20%;
-    --input: 240 10% 20%;
-    --ring: 243 75% 59%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 220 15% 22%;
+    --input: 220 15% 22%;
+    --ring: 160 84% 39%;
     --radius: 0.75rem;
-    --sidebar-background: 240 10% 6%;
-    --sidebar-foreground: 0 0% 100%;
-    --sidebar-primary: 243 75% 59%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 270 91% 55%;
-    --sidebar-accent-foreground: 0 0% 100%;
-    --sidebar-border: 240 10% 20%;
-    --sidebar-ring: 243 75% 59%;
+    --sidebar-background: 220 20% 9%;
+    --sidebar-foreground: 210 40% 98%;
+    --sidebar-primary: 160 84% 39%;
+    --sidebar-primary-foreground: 210 40% 98%;
+    --sidebar-accent: 173 80% 40%;
+    --sidebar-accent-foreground: 210 40% 98%;
+    --sidebar-border: 220 15% 20%;
+    --sidebar-ring: 160 84% 39%;
   }
 
   .light {
     --background: 0 0% 100%;
-    --foreground: 240 10% 4%;
+    --foreground: 220 20% 10%;
     --card: 0 0% 100%;
-    --card-foreground: 240 10% 4%;
+    --card-foreground: 220 20% 10%;
     --popover: 0 0% 100%;
-    --popover-foreground: 240 10% 4%;
-    --primary: 243 75% 59%;
-    --primary-foreground: 0 0% 100%;
-    --secondary: 270 91% 55%;
-    --secondary-foreground: 0 0% 100%;
-    --muted: 240 5% 96%;
-    --muted-foreground: 240 4% 46%;
-    --accent: 187 92% 53%;
-    --accent-foreground: 240 10% 4%;
+    --popover-foreground: 220 20% 10%;
+    --primary: 160 84% 39%;
+    --primary-foreground: 210 40% 98%;
+    --secondary: 173 80% 40%;
+    --secondary-foreground: 210 40% 98%;
+    --muted: 220 15% 96%;
+    --muted-foreground: 220 9% 46%;
+    --accent: 160 84% 39%;
+    --accent-foreground: 210 40% 98%;
     --destructive: 0 84% 60%;
-    --destructive-foreground: 0 0% 100%;
-    --border: 240 6% 90%;
-    --input: 240 6% 90%;
-    --ring: 243 75% 59%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 220 13% 91%;
+    --input: 220 13% 91%;
+    --ring: 160 84% 39%;
   }
 }
 
@@ -73,7 +73,7 @@
 
 @layer components {
   .glass-card {
-    @apply backdrop-blur-xl bg-white/5 border border-white/10 rounded-2xl;
+    @apply backdrop-blur-xl bg-card/80 border border-border/50 rounded-2xl shadow-lg;
   }
 
   .glow-border {
@@ -82,24 +82,24 @@
 
   .glow-border::before {
     content: '';
-    @apply absolute -inset-[1px] rounded-2xl bg-gradient-to-r from-primary-600 via-secondary-600 to-primary-600 opacity-50 blur-sm;
+    @apply absolute -inset-[1px] rounded-2xl bg-gradient-to-r from-primary via-secondary to-primary opacity-40 blur-sm;
     z-index: -1;
   }
 
   .gradient-text {
-    @apply bg-gradient-to-r from-primary-600 via-secondary-600 to-accent-electric bg-clip-text text-transparent;
+    @apply bg-gradient-to-r from-primary via-secondary to-primary bg-clip-text text-transparent;
   }
 
   .btn-gradient {
-    @apply relative overflow-hidden bg-gradient-to-r from-primary-600 via-secondary-600 to-primary-600 bg-[length:200%_100%] transition-all duration-300;
+    @apply relative overflow-hidden bg-gradient-to-r from-primary via-secondary to-primary bg-[length:200%_100%] text-primary-foreground transition-all duration-300 shadow-lg shadow-primary/20;
   }
 
   .btn-gradient:hover {
-    @apply bg-[position:100%_0];
+    @apply bg-[position:100%_0] shadow-primary/30;
   }
 
   .focus-ring {
-    @apply focus:outline-none focus:ring-2 focus:ring-accent-electric/70 focus:ring-offset-2 focus:ring-offset-background;
+    @apply focus:outline-none focus:ring-2 focus:ring-primary/70 focus:ring-offset-2 focus:ring-offset-background;
   }
 }
 
