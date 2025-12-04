@@ -26,12 +26,12 @@ const SplashScreen: React.FC = () => {
     <AnimatePresence>
       {!isExiting && (
         <motion.div
-          className="fixed inset-0 flex items-center justify-center bg-gradient-to-br from-primary-900 via-secondary-700/50 to-black overflow-hidden"
+          className="fixed inset-0 flex items-center justify-center bg-background overflow-hidden"
           exit={{ opacity: 0, scale: 1.1 }}
           transition={{ duration: 0.5 }}
         >
           {/* Floating orbs background */}
-          <FloatingOrbs count={6} opacity={0.2} />
+          <FloatingOrbs count={6} opacity={0.15} />
 
           {/* Content container */}
           <motion.div
@@ -53,10 +53,10 @@ const SplashScreen: React.FC = () => {
               {/* Glow effect behind logo */}
               <div className="absolute inset-0 -z-10 flex items-center justify-center">
                 <motion.div
-                  className="w-48 h-48 md:w-64 md:h-64 rounded-full bg-secondary-600/30 blur-3xl"
+                  className="w-48 h-48 md:w-64 md:h-64 rounded-full bg-accent/20 blur-3xl"
                   animate={prefersReducedMotion ? {} : {
                     scale: [1, 1.1, 1],
-                    opacity: [0.3, 0.5, 0.3],
+                    opacity: [0.2, 0.4, 0.2],
                   }}
                   transition={{
                     duration: 3,
@@ -70,7 +70,7 @@ const SplashScreen: React.FC = () => {
               <motion.img
                 src={ritLogo}
                 alt="RIT Polytechnic Logo"
-                className="w-28 h-28 md:w-36 md:h-36 lg:w-40 lg:h-40 rounded-full object-cover shadow-2xl ring-4 ring-white/10"
+                className="w-28 h-28 md:w-36 md:h-36 lg:w-40 lg:h-40 rounded-full object-cover shadow-2xl ring-4 ring-primary/30"
                 animate={prefersReducedMotion ? {} : {
                   scale: [1, 1.02, 1],
                 }}
@@ -84,7 +84,7 @@ const SplashScreen: React.FC = () => {
 
             {/* Institute name */}
             <motion.h1
-              className="font-display text-2xl md:text-3xl lg:text-4xl font-bold text-white mb-2"
+              className="font-display text-2xl md:text-3xl lg:text-4xl font-bold text-foreground mb-2"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ 

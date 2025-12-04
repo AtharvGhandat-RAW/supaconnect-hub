@@ -18,39 +18,15 @@ const LoadingSpinner: React.FC<LoadingSpinnerProps> = ({
 }) => {
   return (
     <div className={cn('relative', sizes[size], className)}>
-      {/* Outer ring with gradient */}
-      <div
-        className={cn(
-          'absolute inset-0 rounded-full border-2 border-transparent animate-loader-spin',
-          'bg-gradient-to-r from-primary-600 via-secondary-600 to-accent-electric'
-        )}
-        style={{
-          backgroundClip: 'border-box',
-          WebkitMask: 'linear-gradient(#fff 0 0) padding-box, linear-gradient(#fff 0 0)',
-          WebkitMaskComposite: 'xor',
-          maskComposite: 'exclude',
-        }}
-      />
-      {/* Gap in the ring */}
-      <div
-        className={cn(
-          'absolute inset-0 rounded-full border-2 border-transparent',
-          'border-t-transparent animate-loader-spin'
-        )}
-        style={{
-          borderImage: 'linear-gradient(to right, #4F46E5, #9333EA, #22D3EE) 1',
-          borderRadius: '50%',
-        }}
-      />
       <svg
         className={cn('animate-loader-spin', sizes[size])}
         viewBox="0 0 50 50"
       >
         <defs>
           <linearGradient id="spinner-gradient" x1="0%" y1="0%" x2="100%" y2="0%">
-            <stop offset="0%" stopColor="#4F46E5" />
-            <stop offset="50%" stopColor="#9333EA" />
-            <stop offset="100%" stopColor="#22D3EE" />
+            <stop offset="0%" stopColor="hsl(168, 76%, 26%)" />
+            <stop offset="50%" stopColor="hsl(168, 53%, 31%)" />
+            <stop offset="100%" stopColor="hsl(142, 70%, 49%)" />
           </linearGradient>
         </defs>
         <circle

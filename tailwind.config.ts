@@ -65,10 +65,18 @@ export default {
           border: "hsl(var(--sidebar-border))",
           ring: "hsl(var(--sidebar-ring))",
         },
+        // WhatsApp specific colors
+        whatsapp: {
+          teal: "hsl(var(--whatsapp-teal))",
+          green: "hsl(var(--whatsapp-green))",
+          "light-green": "hsl(var(--whatsapp-light-green))",
+          "dark-bg": "hsl(var(--whatsapp-dark-bg))",
+          panel: "hsl(var(--whatsapp-panel))",
+        },
       },
       fontFamily: {
         sans: ["Inter", "system-ui", "sans-serif"],
-        display: ["Poppins", "Inter", "system-ui", "sans-serif"],
+        display: ["Inter", "system-ui", "sans-serif"],
       },
       borderRadius: {
         lg: "var(--radius)",

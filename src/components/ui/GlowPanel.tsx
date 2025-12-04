@@ -10,9 +10,9 @@ interface GlowPanelProps {
 }
 
 const glowColors = {
-  primary: 'from-primary-600/50 via-secondary-600/50 to-primary-600/50',
-  secondary: 'from-secondary-600/50 via-primary-600/50 to-secondary-600/50',
-  accent: 'from-accent-electric/50 via-primary-600/50 to-accent-electric/50',
+  primary: 'from-primary/40 via-accent/30 to-primary/40',
+  secondary: 'from-secondary/40 via-primary/30 to-secondary/40',
+  accent: 'from-accent/40 via-primary/30 to-accent/40',
 };
 
 const GlowPanel: React.FC<GlowPanelProps> = ({
@@ -31,13 +31,13 @@ const GlowPanel: React.FC<GlowPanelProps> = ({
       {/* Glow effect */}
       <div
         className={cn(
-          'absolute -inset-[1px] rounded-2xl bg-gradient-to-r opacity-60 blur-sm transition-opacity duration-300',
+          'absolute -inset-[1px] rounded-lg bg-gradient-to-r opacity-50 blur-sm transition-opacity duration-300',
           glowColors[glowColor],
-          animate && 'group-hover:opacity-80'
+          animate && 'group-hover:opacity-70'
         )}
       />
       {/* Main panel */}
-      <div className="relative glass-card p-8 rounded-2xl">
+      <div className="relative glass-card p-8 rounded-lg">
         {children}
       </div>
     </motion.div>
