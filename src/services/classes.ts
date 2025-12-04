@@ -1,0 +1,74 @@
+import { supabase } from '@/integrations/supabase/client';
+
+export interface Class {
+  id: string;
+  name: string;
+  year: number;
+  semester: number;
+  division: string;
+  department: string | null;
+  class_teacher_id: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export async function getClasses() {
+  const { data, error } = await supabase
+    .from('classes')
+    .select('*')
+    .order('year', { ascending: true })
+    .order('division', { ascending: true });
+  
+  if (error) throw error;
+  return data as Class[];
+}
+
+export async function getClassById(id: string) {
+  const { data, error } = await supabase
+    .from('classes')
+    .select('*')
+    .eq('id', id)
+    .single();
+  
+  if (error) throw error;
+  return data as Class;
+}
+
+export async function createClass(classData: {
+  name: string;
+  year: number;
+  semester: number;
+  division: string;
+  department?: string;
+  class_teacher_id?: string;
+}) {
+  const { data, error } = await supabase
+    .from('classes')
+    .insert(classData)
+    .select()
+    .single();
+  
+  if (error) throw error;
+  return data;
+}
+
+export async function updateClass(id: string, updates: Partial<Class>) {
+  const { data, error } = await supabase
+    .from('classes')
+    .update(updates)
+    .eq('id', id)
+    .select()
+    .single();
+  
+  if (error) throw error;
+  return data;
+}
+
+export async function deleteClass(id: string) {
+  const { error } = await supabase
+    .from('classes')
+    .delete()
+    .eq('id', id);
+  
+  if (error) throw error;
+}
