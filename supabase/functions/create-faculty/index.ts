@@ -19,7 +19,7 @@ serve(async (req) => {
       auth: { autoRefreshToken: false, persistSession: false },
     });
 
-    const { name, email, employee_code, designation } = await req.json();
+    const { name, email, password, employee_code, designation } = await req.json();
 
     if (!name || !email) {
       return new Response(
@@ -31,7 +31,7 @@ serve(async (req) => {
     // Create auth user with service role
     const { data: authData, error: authError } = await supabase.auth.admin.createUser({
       email,
-      password: "TempPass@123",
+      password: password || "TempPass@123",
       email_confirm: true,
     });
 

@@ -23,6 +23,7 @@ const AdminFacultyPage: React.FC = () => {
   const [newFaculty, setNewFaculty] = useState({
     name: '',
     email: '',
+    password: '',
     designation: '',
     employee_code: '',
   });
@@ -51,8 +52,13 @@ const AdminFacultyPage: React.FC = () => {
   });
 
   const handleAddFaculty = async () => {
-    if (!newFaculty.name || !newFaculty.email) {
-      toast({ title: 'Error', description: 'Name and email are required', variant: 'destructive' });
+    if (!newFaculty.name || !newFaculty.email || !newFaculty.password) {
+      toast({ title: 'Error', description: 'Name, email and password are required', variant: 'destructive' });
+      return;
+    }
+
+    if (newFaculty.password.length < 6) {
+      toast({ title: 'Error', description: 'Password must be at least 6 characters', variant: 'destructive' });
       return;
     }
 
@@ -62,6 +68,7 @@ const AdminFacultyPage: React.FC = () => {
         body: {
           name: newFaculty.name,
           email: newFaculty.email,
+          password: newFaculty.password,
           employee_code: newFaculty.employee_code,
           designation: newFaculty.designation,
         },
@@ -70,9 +77,9 @@ const AdminFacultyPage: React.FC = () => {
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
 
-      toast({ title: 'Success', description: 'Faculty added successfully. Default password: TempPass@123' });
+      toast({ title: 'Success', description: `Faculty added. Login: ${newFaculty.email}` });
       setIsAddDialogOpen(false);
-      setNewFaculty({ name: '', email: '', designation: '', employee_code: '' });
+      setNewFaculty({ name: '', email: '', password: '', designation: '', employee_code: '' });
       fetchFaculty();
     } catch (error: unknown) {
       console.error('Error adding faculty:', error);
@@ -153,11 +160,22 @@ const AdminFacultyPage: React.FC = () => {
           <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center">
             <UserCog className="w-4 h-4 text-primary" />
           </div>
-          <span className="font-medium text-foreground">{f.profiles?.name || 'N/A'}</span>
+          <div>
+            <span className="font-medium text-foreground block">{f.profiles?.name || 'N/A'}</span>
+            <span className="text-xs text-muted-foreground">{f.employee_code || ''}</span>
+          </div>
         </div>
       ),
     },
-    { key: 'employee_code', header: 'Employee Code', render: (f: Faculty) => f.employee_code || '-' },
+    { 
+      key: 'account', 
+      header: 'Account', 
+      render: (f: Faculty) => (
+        <StatusBadge variant={f.profile_id ? 'success' : 'danger'}>
+          {f.profile_id ? 'Created' : 'Pending'}
+        </StatusBadge>
+      )
+    },
     { key: 'designation', header: 'Designation', render: (f: Faculty) => f.designation || '-' },
     {
       key: 'status',
@@ -232,12 +250,22 @@ const AdminFacultyPage: React.FC = () => {
                     />
                   </div>
                   <div>
-                    <Label>Email *</Label>
+                    <Label>Email (Login ID) *</Label>
                     <Input
                       type="email"
                       value={newFaculty.email}
                       onChange={(e) => setNewFaculty({ ...newFaculty, email: e.target.value })}
                       placeholder="faculty@rit.edu"
+                      className="bg-muted/50 border-border/50"
+                    />
+                  </div>
+                  <div>
+                    <Label>Password *</Label>
+                    <Input
+                      type="password"
+                      value={newFaculty.password}
+                      onChange={(e) => setNewFaculty({ ...newFaculty, password: e.target.value })}
+                      placeholder="Min 6 characters"
                       className="bg-muted/50 border-border/50"
                     />
                   </div>
@@ -259,9 +287,6 @@ const AdminFacultyPage: React.FC = () => {
                       className="bg-muted/50 border-border/50"
                     />
                   </div>
-                  <p className="text-xs text-muted-foreground">
-                    Default password will be: TempPass@123
-                  </p>
                   <Button 
                     onClick={handleAddFaculty} 
                     className="w-full btn-gradient"
