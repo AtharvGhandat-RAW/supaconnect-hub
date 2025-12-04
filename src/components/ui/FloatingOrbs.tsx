@@ -21,9 +21,9 @@ interface FloatingOrbsProps {
 
 const FloatingOrbs: React.FC<FloatingOrbsProps> = ({
   count = 5,
-  colors = ['bg-yellow-500', 'bg-yellow-400', 'bg-amber-500'],
+  colors = ['bg-emerald-500', 'bg-teal-500', 'bg-green-400'],
   className,
-  opacity = 0.15,
+  opacity = 0.12,
 }) => {
   const orbs: Orb[] = React.useMemo(() => {
     return Array.from({ length: count }, (_, i) => ({

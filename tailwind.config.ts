@@ -47,8 +47,8 @@ export default {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
-        success: "#22C55E",
-        warning: "#FFCC00",
+        success: "#25D366",
+        warning: "#F59E0B",
         danger: "#EF4444",
         sidebar: {
           DEFAULT: "hsl(var(--sidebar-background))",
