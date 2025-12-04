@@ -125,8 +125,8 @@ const AdminLoginForm: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary-900 via-secondary-700/30 to-black p-4 relative overflow-hidden">
-      <FloatingOrbs count={5} opacity={0.15} />
+    <div className="min-h-screen flex items-center justify-center bg-background p-4 relative overflow-hidden">
+      <FloatingOrbs count={5} opacity={0.12} />
       
       <motion.div
         className="w-full max-w-md relative z-10"
@@ -145,14 +145,14 @@ const AdminLoginForm: React.FC = () => {
                 <img
                   src={ritLogo}
                   alt="RIT Logo"
-                  className="w-16 h-16 rounded-full object-cover ring-2 ring-primary-600/50"
+                  className="w-16 h-16 rounded-full object-cover ring-2 ring-primary/50"
                 />
-                <div className="absolute -bottom-1 -right-1 bg-primary-600 rounded-full p-1">
-                  <Shield className="w-4 h-4 text-white" />
+                <div className="absolute -bottom-1 -right-1 bg-primary rounded-full p-1">
+                  <Shield className="w-4 h-4 text-primary-foreground" />
                 </div>
               </div>
             </motion.div>
-            <h1 className="font-display text-2xl font-bold text-white mb-1">
+            <h1 className="font-display text-2xl font-bold text-foreground mb-1">
               Admin Portal
             </h1>
             <p className="text-muted-foreground text-sm">
@@ -164,7 +164,7 @@ const AdminLoginForm: React.FC = () => {
           <form onSubmit={handleSubmit} className="space-y-5">
             {/* Email */}
             <motion.div variants={itemVariants} className="space-y-2">
-              <label className="text-sm font-medium text-white/90">Email</label>
+              <label className="text-sm font-medium text-foreground/90">Email</label>
               <div className="relative">
                 <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
                 <Input
@@ -172,17 +172,17 @@ const AdminLoginForm: React.FC = () => {
                   placeholder="admin@rit.edu"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="pl-10 bg-white/5 border-white/10 text-white placeholder:text-muted-foreground focus-ring"
+                  className="pl-10 bg-muted/50 border-border text-foreground placeholder:text-muted-foreground focus-ring"
                 />
               </div>
               {errors.email && (
-                <p className="text-xs text-danger">{errors.email}</p>
+                <p className="text-xs text-destructive">{errors.email}</p>
               )}
             </motion.div>
 
             {/* Password */}
             <motion.div variants={itemVariants} className="space-y-2">
-              <label className="text-sm font-medium text-white/90">Password</label>
+              <label className="text-sm font-medium text-foreground/90">Password</label>
               <div className="relative">
                 <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
                 <Input
@@ -190,18 +190,18 @@ const AdminLoginForm: React.FC = () => {
                   placeholder="••••••••"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="pl-10 pr-10 bg-white/5 border-white/10 text-white placeholder:text-muted-foreground focus-ring"
+                  className="pl-10 pr-10 bg-muted/50 border-border text-foreground placeholder:text-muted-foreground focus-ring"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-white transition-colors"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
                 >
                   {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                 </button>
               </div>
               {errors.password && (
-                <p className="text-xs text-danger">{errors.password}</p>
+                <p className="text-xs text-destructive">{errors.password}</p>
               )}
             </motion.div>
 
@@ -211,7 +211,7 @@ const AdminLoginForm: React.FC = () => {
                 id="remember"
                 checked={rememberMe}
                 onCheckedChange={(checked) => setRememberMe(checked as boolean)}
-                className="border-white/20 data-[state=checked]:bg-primary-600"
+                className="border-border data-[state=checked]:bg-primary data-[state=checked]:border-primary"
               />
               <label htmlFor="remember" className="text-sm text-muted-foreground cursor-pointer">
                 Remember me
@@ -227,7 +227,7 @@ const AdminLoginForm: React.FC = () => {
                 <Button
                   type="submit"
                   disabled={isLoading}
-                  className="w-full btn-gradient text-white font-semibold py-5 focus-ring"
+                  className="w-full btn-gradient py-5 focus-ring"
                 >
                   {isLoading ? 'Signing in...' : 'Sign In as Admin'}
                 </Button>
@@ -239,7 +239,7 @@ const AdminLoginForm: React.FC = () => {
           <motion.div variants={itemVariants} className="mt-6 text-center">
             <Link
               to="/login/faculty"
-              className="text-sm text-muted-foreground hover:text-accent-electric transition-colors"
+              className="text-sm text-muted-foreground hover:text-accent transition-colors"
             >
               Faculty login →
             </Link>
