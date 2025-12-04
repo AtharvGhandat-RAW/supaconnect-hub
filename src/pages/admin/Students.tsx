@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
-import { Plus, Search, Upload, Users, Edit2, Eye } from 'lucide-react';
+import { Plus, Search, Upload, Users, Edit2, Eye, Download } from 'lucide-react';
 import PageShell from '@/components/layout/PageShell';
 import DataTable from '@/components/ui/DataTable';
 import StatusBadge from '@/components/ui/StatusBadge';
@@ -12,6 +12,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { toast } from '@/hooks/use-toast';
 import { getStudents, createStudent, type Student } from '@/services/students';
 import { getClasses, type Class } from '@/services/classes';
+import { downloadTemplate } from '@/utils/export';
+import { supabase } from '@/integrations/supabase/client';
 
 const AdminStudentsPage: React.FC = () => {
   const [students, setStudents] = useState<Student[]>([]);
@@ -21,6 +23,7 @@ const AdminStudentsPage: React.FC = () => {
   const [classFilter, setClassFilter] = useState('all');
   const [statusFilter, setStatusFilter] = useState('all');
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [formData, setFormData] = useState({
     name: '',
     enrollment_no: '',
@@ -29,7 +32,6 @@ const AdminStudentsPage: React.FC = () => {
     semester: 1,
     class_id: '',
     division: 'A',
-    department: 'AIML',
     mobile: '',
     email: '',
   });
@@ -62,9 +64,14 @@ const AdminStudentsPage: React.FC = () => {
   });
 
   const handleSubmit = async () => {
+    if (!formData.name) {
+      toast({ title: 'Error', description: 'Name is required', variant: 'destructive' });
+      return;
+    }
     try {
       await createStudent({
         ...formData,
+        department: 'AIML',
         roll_no: formData.roll_no,
         status: 'ACTIVE',
       });
@@ -78,7 +85,6 @@ const AdminStudentsPage: React.FC = () => {
         semester: 1,
         class_id: '',
         division: 'A',
-        department: 'AIML',
         mobile: '',
         email: '',
       });
@@ -86,6 +92,62 @@ const AdminStudentsPage: React.FC = () => {
     } catch (error) {
       toast({ title: 'Error', description: 'Failed to add student', variant: 'destructive' });
     }
+  };
+
+  const handleImportCSV = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = async (event) => {
+      const text = event.target?.result as string;
+      const lines = text.split('\n').filter(line => line.trim());
+      const headers = lines[0].split(',').map(h => h.trim().toLowerCase());
+      
+      const nameIdx = headers.indexOf('name');
+      const enrollIdx = headers.indexOf('enrollment_no');
+      const rollIdx = headers.indexOf('roll_no');
+      const yearIdx = headers.indexOf('year');
+      const semIdx = headers.indexOf('semester');
+      const divIdx = headers.indexOf('division');
+      const mobileIdx = headers.indexOf('mobile');
+      const emailIdx = headers.indexOf('email');
+
+      if (nameIdx === -1) {
+        toast({ title: 'Error', description: 'CSV must have name column', variant: 'destructive' });
+        return;
+      }
+
+      let success = 0;
+      let failed = 0;
+
+      for (let i = 1; i < lines.length; i++) {
+        const values = lines[i].split(',').map(v => v.trim());
+        try {
+          await createStudent({
+            name: values[nameIdx],
+            enrollment_no: enrollIdx !== -1 ? values[enrollIdx] : null,
+            roll_no: rollIdx !== -1 ? parseInt(values[rollIdx]) || null : null,
+            year: yearIdx !== -1 ? parseInt(values[yearIdx]) || 1 : 1,
+            semester: semIdx !== -1 ? parseInt(values[semIdx]) || 1 : 1,
+            division: divIdx !== -1 ? values[divIdx] : 'A',
+            department: 'AIML',
+            mobile: mobileIdx !== -1 ? values[mobileIdx] : null,
+            email: emailIdx !== -1 ? values[emailIdx] : null,
+            status: 'ACTIVE',
+            class_id: null,
+          });
+          success++;
+        } catch {
+          failed++;
+        }
+      }
+
+      toast({ title: 'Import Complete', description: `${success} added, ${failed} failed` });
+      fetchData();
+    };
+    reader.readAsText(file);
+    if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
   const columns = [
@@ -137,10 +199,21 @@ const AdminStudentsPage: React.FC = () => {
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
             <h1 className="text-2xl lg:text-3xl font-display font-bold text-foreground">Students</h1>
-            <p className="text-muted-foreground mt-1">Manage student records and information</p>
+            <p className="text-muted-foreground mt-1">Manage AIML department student records</p>
           </div>
           <div className="flex gap-2">
-            <Button variant="outline" className="border-border/50">
+            <Button variant="outline" size="sm" onClick={() => downloadTemplate('students')}>
+              <Download className="w-4 h-4 mr-2" />
+              Template
+            </Button>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept=".csv"
+              className="hidden"
+              onChange={handleImportCSV}
+            />
+            <Button variant="outline" onClick={() => fileInputRef.current?.click()}>
               <Upload className="w-4 h-4 mr-2" />
               Import CSV
             </Button>
@@ -157,12 +230,12 @@ const AdminStudentsPage: React.FC = () => {
                 </DialogHeader>
                 <div className="space-y-4 mt-4 max-h-[70vh] overflow-y-auto pr-2">
                   <div>
-                    <Label>Name</Label>
+                    <Label>Name *</Label>
                     <Input
                       value={formData.name}
                       onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                       placeholder="Full name"
-                      className="bg-white/5 border-border/50"
+                      className="bg-muted/50 border-border/50"
                     />
                   </div>
                   <div className="grid grid-cols-2 gap-4">
@@ -172,7 +245,7 @@ const AdminStudentsPage: React.FC = () => {
                         value={formData.enrollment_no}
                         onChange={(e) => setFormData({ ...formData, enrollment_no: e.target.value })}
                         placeholder="ENR001"
-                        className="bg-white/5 border-border/50"
+                        className="bg-muted/50 border-border/50"
                       />
                     </div>
                     <div>
@@ -182,7 +255,7 @@ const AdminStudentsPage: React.FC = () => {
                         value={formData.roll_no || ''}
                         onChange={(e) => setFormData({ ...formData, roll_no: parseInt(e.target.value) || null })}
                         placeholder="1"
-                        className="bg-white/5 border-border/50"
+                        className="bg-muted/50 border-border/50"
                       />
                     </div>
                   </div>
@@ -190,7 +263,7 @@ const AdminStudentsPage: React.FC = () => {
                     <div>
                       <Label>Year</Label>
                       <Select value={formData.year.toString()} onValueChange={(v) => setFormData({ ...formData, year: parseInt(v) })}>
-                        <SelectTrigger className="bg-white/5 border-border/50"><SelectValue /></SelectTrigger>
+                        <SelectTrigger className="bg-muted/50 border-border/50"><SelectValue /></SelectTrigger>
                         <SelectContent>
                           <SelectItem value="1">1st Year</SelectItem>
                           <SelectItem value="2">2nd Year</SelectItem>
@@ -201,7 +274,7 @@ const AdminStudentsPage: React.FC = () => {
                     <div>
                       <Label>Semester</Label>
                       <Select value={formData.semester.toString()} onValueChange={(v) => setFormData({ ...formData, semester: parseInt(v) })}>
-                        <SelectTrigger className="bg-white/5 border-border/50"><SelectValue /></SelectTrigger>
+                        <SelectTrigger className="bg-muted/50 border-border/50"><SelectValue /></SelectTrigger>
                         <SelectContent>
                           {[1, 2, 3, 4, 5, 6].map((s) => (
                             <SelectItem key={s} value={s.toString()}>Sem {s}</SelectItem>
@@ -214,7 +287,7 @@ const AdminStudentsPage: React.FC = () => {
                     <div>
                       <Label>Class</Label>
                       <Select value={formData.class_id || 'none'} onValueChange={(v) => setFormData({ ...formData, class_id: v === 'none' ? '' : v })}>
-                        <SelectTrigger className="bg-white/5 border-border/50"><SelectValue placeholder="Select class" /></SelectTrigger>
+                        <SelectTrigger className="bg-muted/50 border-border/50"><SelectValue placeholder="Select class" /></SelectTrigger>
                         <SelectContent>
                           <SelectItem value="none">Not assigned</SelectItem>
                           {classes.map((c) => (
@@ -229,7 +302,7 @@ const AdminStudentsPage: React.FC = () => {
                         value={formData.division}
                         onChange={(e) => setFormData({ ...formData, division: e.target.value })}
                         placeholder="A"
-                        className="bg-white/5 border-border/50"
+                        className="bg-muted/50 border-border/50"
                       />
                     </div>
                   </div>
@@ -239,7 +312,7 @@ const AdminStudentsPage: React.FC = () => {
                       value={formData.mobile}
                       onChange={(e) => setFormData({ ...formData, mobile: e.target.value })}
                       placeholder="9876543210"
-                      className="bg-white/5 border-border/50"
+                      className="bg-muted/50 border-border/50"
                     />
                   </div>
                   <div>
@@ -249,7 +322,7 @@ const AdminStudentsPage: React.FC = () => {
                       value={formData.email}
                       onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                       placeholder="student@rit.edu"
-                      className="bg-white/5 border-border/50"
+                      className="bg-muted/50 border-border/50"
                     />
                   </div>
                   <Button onClick={handleSubmit} className="w-full btn-gradient">
@@ -269,11 +342,11 @@ const AdminStudentsPage: React.FC = () => {
               placeholder="Search by name, roll no, or enrollment..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10 bg-white/5 border-border/50"
+              className="pl-10 bg-muted/50 border-border/50"
             />
           </div>
           <Select value={classFilter} onValueChange={setClassFilter}>
-            <SelectTrigger className="w-full sm:w-48 bg-white/5 border-border/50">
+            <SelectTrigger className="w-full sm:w-48 bg-muted/50 border-border/50">
               <SelectValue placeholder="Class" />
             </SelectTrigger>
             <SelectContent>
@@ -284,7 +357,7 @@ const AdminStudentsPage: React.FC = () => {
             </SelectContent>
           </Select>
           <Select value={statusFilter} onValueChange={setStatusFilter}>
-            <SelectTrigger className="w-full sm:w-40 bg-white/5 border-border/50">
+            <SelectTrigger className="w-full sm:w-40 bg-muted/50 border-border/50">
               <SelectValue placeholder="Status" />
             </SelectTrigger>
             <SelectContent>
