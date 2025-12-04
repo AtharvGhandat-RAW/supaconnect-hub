@@ -1,73 +1,198 @@
-# Welcome to your Lovable project
+# RIT Polytechnic - AIML Department Attendance Management System
 
-## Project info
+A premium, production-ready attendance and academic management web application for Rajarambapu Institute of Technology (Polytechnic) – AIML Department.
 
-**URL**: https://lovable.dev/projects/93331e87-8854-4598-ab77-a625e30fad3c
+## Features
 
-## How can I edit this code?
+### Admin Dashboard
+- Real-time attendance monitoring and statistics
+- Faculty, Classes, Subjects, and Students management
+- Timetable import and management
+- Faculty leave approval with auto-substitution
+- Syllabus progress tracking
+- Defaulter list generation with PDF/CSV exports
+- Student promotion/YD wizard
+- Comprehensive reports and analytics
 
-There are several ways of editing your application.
+### Faculty Dashboard
+- Today's lectures overview
+- Attendance marking with syllabus coverage
+- Auto-generated absent messages (English & Marathi)
+- Leave request management
+- Subject-wise reports
+- Syllabus topic management
 
-**Use Lovable**
+## Tech Stack
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/93331e87-8854-4598-ab77-a625e30fad3c) and start prompting.
+- **Frontend**: React + TypeScript + Vite
+- **Styling**: Tailwind CSS (dark mode)
+- **Animations**: Framer Motion
+- **Backend**: Supabase (Auth, Postgres, Realtime, Storage)
+- **Serverless**: Supabase Edge Functions (TypeScript)
+- **Charts**: Recharts
+- **State Management**: TanStack Query (React Query)
+- **Routing**: React Router
 
-Changes made via Lovable will be committed automatically to this repo.
+## Getting Started
 
-**Use your preferred IDE**
+### Prerequisites
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+- Node.js 18+ and npm
+- Supabase account and project
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+### Environment Variables
 
-Follow these steps:
+Create a `.env` file in the root directory:
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+```env
+VITE_SUPABASE_URL=your_supabase_project_url
+VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
+```
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+### Installation
 
-# Step 3: Install the necessary dependencies.
-npm i
+```bash
+# Clone the repository
+git clone <your-repo-url>
+cd rit-attendance-system
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
+# Install dependencies
+npm install
+
+# Start the development server
 npm run dev
 ```
 
-**Edit a file directly in GitHub**
+The app will be available at `http://localhost:5173`
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+## Deploy on Lovable Cloud
 
-**Use GitHub Codespaces**
+1. Open the project in [Lovable](https://lovable.dev)
+2. Click **Share → Publish**
+3. Your app will be deployed automatically
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+### Custom Domain
 
-## What technologies are used for this project?
+1. Go to **Project > Settings > Domains**
+2. Click **Connect Domain**
+3. Follow the DNS configuration instructions
 
-This project is built with:
+## Edge Functions
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+The application uses three Supabase Edge Functions:
 
-## How can I deploy this project?
+### 1. assign-substitute
 
-Simply open [Lovable](https://lovable.dev/projects/93331e87-8854-4598-ab77-a625e30fad3c) and click on Share -> Publish.
+Automatically assigns substitute faculty when leave is approved.
 
-## Can I connect a custom domain to my Lovable project?
+**Input:**
+```json
+{
+  "faculty_id": "uuid",
+  "date": "YYYY-MM-DD",
+  "window": "FULL_DAY" | "HALF_MORNING" | "HALF_AFTERNOON"
+}
+```
 
-Yes, you can!
+### 2. generate-defaulter
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+Computes defaulter students based on attendance threshold.
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+**Input:**
+```json
+{
+  "class_id": "uuid",
+  "from": "YYYY-MM-DD",
+  "to": "YYYY-MM-DD",
+  "threshold": 75
+}
+```
+
+### 3. ai-summary
+
+Generates monthly attendance summary and insights.
+
+**Input:**
+```json
+{
+  "month": "YYYY-MM",
+  "class_id": "uuid (optional)"
+}
+```
+
+### Deploying Edge Functions
+
+Edge functions are automatically deployed with the Lovable platform. For local development:
+
+```bash
+# Install Supabase CLI
+npm install -g supabase
+
+# Login to Supabase
+supabase login
+
+# Deploy functions
+supabase functions deploy assign-substitute
+supabase functions deploy generate-defaulter
+supabase functions deploy ai-summary
+```
+
+## Database Schema
+
+The application uses the following main tables:
+
+- `profiles` - User profiles linked to auth.users
+- `faculty` - Faculty information
+- `classes` - Class/division data
+- `students` - Student records
+- `subjects` - Subject master
+- `subject_allocations` - Faculty-subject-class mapping
+- `timetable_slots` - Weekly timetable
+- `attendance_sessions` - Attendance session records
+- `attendance_records` - Individual student attendance
+- `faculty_leaves` - Leave requests
+- `substitution_assignments` - Substitute faculty assignments
+- `syllabus_topics` - Syllabus content
+- `syllabus_coverage` - Topics covered per session
+- `activity_log` - System activity log
+- `settings` - Application settings
+
+## Authentication
+
+- Email/Password authentication via Supabase Auth
+- Role-based access control (ADMIN / FACULTY)
+- No public signup - accounts are created by admin
+
+## Exports
+
+- **PDF**: Print-ready documents with institute header and logo
+- **CSV/XLSX**: Downloadable spreadsheet exports
+
+## Project Structure
+
+```
+src/
+├── components/
+│   ├── auth/        # Authentication components
+│   ├── layout/      # Layout components (PageShell, NavLink)
+│   ├── splash/      # Splash screen
+│   └── ui/          # Reusable UI components
+├── hooks/           # Custom React hooks
+├── integrations/    # Supabase client setup
+├── pages/
+│   ├── admin/       # Admin dashboard pages
+│   └── faculty/     # Faculty dashboard pages
+├── services/        # Data service functions
+└── utils/           # Utility functions (exports)
+
+supabase/
+└── functions/       # Edge functions
+```
+
+## License
+
+Private - RIT Polytechnic AIML Department
+
+## Support
+
+For issues and support, contact the AIML Department.
