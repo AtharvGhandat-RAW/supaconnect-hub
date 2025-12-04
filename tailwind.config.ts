@@ -22,16 +22,10 @@ export default {
         primary: {
           DEFAULT: "hsl(var(--primary))",
           foreground: "hsl(var(--primary-foreground))",
-          500: "#10B981",
-          600: "#059669",
-          700: "#047857",
         },
         secondary: {
           DEFAULT: "hsl(var(--secondary))",
           foreground: "hsl(var(--secondary-foreground))",
-          500: "#14B8A6",
-          600: "#0D9488",
-          700: "#0F766E",
         },
         destructive: {
           DEFAULT: "hsl(var(--destructive))",
@@ -44,7 +38,6 @@ export default {
         accent: {
           DEFAULT: "hsl(var(--accent))",
           foreground: "hsl(var(--accent-foreground))",
-          electric: "#10B981",
         },
         popover: {
           DEFAULT: "hsl(var(--popover))",
@@ -54,13 +47,8 @@ export default {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
-        surface: {
-          950: "#0C1015",
-          900: "#111820",
-          800: "#1A242E",
-        },
         success: "#22C55E",
-        warning: "#F59E0B",
+        warning: "#FFCC00",
         danger: "#EF4444",
         sidebar: {
           DEFAULT: "hsl(var(--sidebar-background))",
@@ -112,11 +100,6 @@ export default {
           "0%": { opacity: "0", transform: "translateY(20px)" },
           "100%": { opacity: "1", transform: "translateY(0)" },
         },
-        "gradient-sweep": {
-          "0%": { backgroundPosition: "0% 50%" },
-          "50%": { backgroundPosition: "100% 50%" },
-          "100%": { backgroundPosition: "0% 50%" },
-        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
@@ -126,11 +109,6 @@ export default {
         "loader-spin": "loader-spin 1.5s linear infinite",
         "micro-pulse": "micro-pulse 4s ease-in-out infinite",
         "fade-up": "fade-up 0.6s ease-out forwards",
-        "gradient-sweep": "gradient-sweep 3s ease infinite",
-      },
-      backgroundImage: {
-        "gradient-app": "linear-gradient(to bottom right, #0F172A, #134E4A, #0C1015)",
-        "gradient-button": "linear-gradient(90deg, #059669, #0D9488, #059669)",
       },
     },
   },
