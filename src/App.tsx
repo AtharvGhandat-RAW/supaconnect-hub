@@ -30,9 +30,11 @@ import AdminSettings from "./pages/admin/Settings";
 import FacultyDashboard from "./pages/faculty/Dashboard";
 import FacultyToday from "./pages/faculty/Today";
 import FacultyAttendance from "./pages/faculty/Attendance";
+import FacultyAttendanceView from "./pages/faculty/AttendanceView";
 import FacultyLeave from "./pages/faculty/Leave";
 import FacultyReports from "./pages/faculty/Reports";
 import FacultySubjects from "./pages/faculty/Subjects";
+import FacultySettings from "./pages/faculty/Settings";
 
 const queryClient = new QueryClient();
 
@@ -67,9 +69,11 @@ const App = () => (
           <Route path="/faculty/dashboard" element={<RouteGuard allowedRole="FACULTY"><FacultyDashboard /></RouteGuard>} />
           <Route path="/faculty/today" element={<RouteGuard allowedRole="FACULTY"><FacultyToday /></RouteGuard>} />
           <Route path="/faculty/attendance/:sessionId" element={<RouteGuard allowedRole="FACULTY"><FacultyAttendance /></RouteGuard>} />
+          <Route path="/faculty/attendance/:sessionId/view" element={<RouteGuard allowedRole="FACULTY"><FacultyAttendanceView /></RouteGuard>} />
           <Route path="/faculty/leave" element={<RouteGuard allowedRole="FACULTY"><FacultyLeave /></RouteGuard>} />
           <Route path="/faculty/reports" element={<RouteGuard allowedRole="FACULTY"><FacultyReports /></RouteGuard>} />
           <Route path="/faculty/subjects" element={<RouteGuard allowedRole="FACULTY"><FacultySubjects /></RouteGuard>} />
+          <Route path="/faculty/settings" element={<RouteGuard allowedRole="FACULTY"><FacultySettings /></RouteGuard>} />
 
           {/* 404 */}
           <Route path="*" element={<NotFound />} />

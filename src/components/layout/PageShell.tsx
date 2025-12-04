@@ -21,6 +21,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
+import NotificationCenter from '@/components/faculty/NotificationCenter';
 import ritLogo from '@/assets/rit-logo.jpg';
 
 interface NavItem {
@@ -51,6 +52,7 @@ const facultyNavItems: NavItem[] = [
   { label: 'Leave', path: '/faculty/leave', icon: <CalendarOff className="w-5 h-5" /> },
   { label: 'Reports', path: '/faculty/reports', icon: <FileBarChart className="w-5 h-5" /> },
   { label: 'My Subjects', path: '/faculty/subjects', icon: <BookOpen className="w-5 h-5" /> },
+  { label: 'Settings', path: '/faculty/settings', icon: <Settings className="w-5 h-5" /> },
 ];
 
 interface PageShellProps {
@@ -87,14 +89,17 @@ export const PageShell: React.FC<PageShellProps> = ({ children, role }) => {
             <img src={ritLogo} alt="RIT Logo" className="w-10 h-10 rounded-full object-cover" />
             <span className="font-display font-semibold text-foreground">RIT AIML</span>
           </div>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => setSidebarOpen(!sidebarOpen)}
-            className="text-foreground"
-          >
-            {sidebarOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-          </Button>
+          <div className="flex items-center gap-2">
+            {role === 'faculty' && <NotificationCenter />}
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setSidebarOpen(!sidebarOpen)}
+              className="text-foreground"
+            >
+              {sidebarOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+            </Button>
+          </div>
         </div>
       </header>
 
@@ -133,7 +138,7 @@ export const PageShell: React.FC<PageShellProps> = ({ children, role }) => {
               <nav className="flex-1 overflow-y-auto py-4 px-3">
                 <ul className="space-y-1">
                   {navItems.map((item) => {
-                    const isActive = location.pathname === item.path;
+                    const isActive = location.pathname === item.path || location.pathname.startsWith(item.path + '/');
                     return (
                       <li key={item.path}>
                         <Link
@@ -190,7 +195,7 @@ export const PageShell: React.FC<PageShellProps> = ({ children, role }) => {
         <nav className="flex-1 overflow-y-auto py-4 px-3">
           <ul className="space-y-1">
             {navItems.map((item) => {
-              const isActive = location.pathname === item.path;
+              const isActive = location.pathname === item.path || location.pathname.startsWith(item.path + '/');
               return (
                 <li key={item.path}>
                   <Link
@@ -232,6 +237,9 @@ export const PageShell: React.FC<PageShellProps> = ({ children, role }) => {
         <div className="hidden lg:flex items-center justify-between p-6 border-b border-border/30">
           <div>
             <p className="text-sm text-muted-foreground">{today}</p>
+          </div>
+          <div className="flex items-center gap-4">
+            {role === 'faculty' && <NotificationCenter />}
           </div>
         </div>
 
