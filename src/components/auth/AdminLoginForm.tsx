@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { Eye, EyeOff, Mail, Lock, Shield } from 'lucide-react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
+import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -48,7 +49,7 @@ const AdminLoginForm: React.FC = () => {
     setIsLoading(true);
     
     try {
-      const { error } = await signIn(email, password);
+      const { data, error } = await signIn(email, password);
       
       if (error) {
         toast({
@@ -56,10 +57,41 @@ const AdminLoginForm: React.FC = () => {
           description: error.message || 'Invalid credentials. Please try again.',
           variant: 'destructive',
         });
-      } else {
+        return;
+      }
+
+      // Check user role from profiles table
+      if (data?.user) {
+        const { data: profile, error: profileError } = await supabase
+          .from('profiles')
+          .select('role')
+          .eq('id', data.user.id)
+          .single();
+
+        if (profileError || !profile) {
+          await supabase.auth.signOut();
+          toast({
+            title: 'Profile Not Found',
+            description: 'Your profile does not exist. Please contact the administrator.',
+            variant: 'destructive',
+          });
+          return;
+        }
+
+        if (profile.role !== 'ADMIN') {
+          await supabase.auth.signOut();
+          toast({
+            title: 'Access Denied',
+            description: 'You do not have admin privileges. Please use the Faculty login.',
+            variant: 'destructive',
+          });
+          return;
+        }
+
         if (rememberMe) {
           localStorage.setItem('rememberAdmin', 'true');
         }
+        
         toast({
           title: 'Welcome, Admin',
           description: 'Login successful. Redirecting to dashboard...',
