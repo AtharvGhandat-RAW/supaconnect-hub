@@ -1,19 +1,18 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Plus, BookOpen, Edit2, Trash2, ChevronDown, ChevronRight } from 'lucide-react';
+import { BookOpen, ChevronDown, ChevronRight, CheckCircle } from 'lucide-react';
 import PageShell from '@/components/layout/PageShell';
 import { Progress } from '@/components/ui/progress';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { toast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { getSubjectAllocations, type SubjectAllocation } from '@/services/allocations';
-import { getSyllabusTopics, getSyllabusProgress, createSyllabusTopic, deleteSyllabusTopic, type SyllabusTopic } from '@/services/syllabus';
+import {
+  getTopicsWithCoverage,
+  getSyllabusProgress,
+  type SyllabusTopic
+} from '@/services/syllabus';
 
 interface SubjectWithProgress extends SubjectAllocation {
   progress?: {
@@ -31,9 +30,7 @@ const FacultySubjectsPage: React.FC = () => {
   const [subjects, setSubjects] = useState<SubjectWithProgress[]>([]);
   const [loading, setLoading] = useState(true);
   const [expandedSubject, setExpandedSubject] = useState<string | null>(null);
-  const [isAddTopicOpen, setIsAddTopicOpen] = useState(false);
-  const [selectedSubjectForTopic, setSelectedSubjectForTopic] = useState<string | null>(null);
-  const [newTopic, setNewTopic] = useState({ unit_no: 1, topic_text: '' });
+  const [expandedUnits, setExpandedUnits] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     async function fetchData() {
@@ -62,58 +59,34 @@ const FacultySubjectsPage: React.FC = () => {
   const fetchSubjects = async (fId: string) => {
     try {
       const allocations = await getSubjectAllocations(fId);
-      
-      // Fetch progress and topics for each subject
+
       const subjectsWithProgress = await Promise.all(
         allocations.map(async (alloc) => {
           const [progress, topics] = await Promise.all([
             getSyllabusProgress(alloc.subject_id),
-            getSyllabusTopics(alloc.subject_id),
+            getTopicsWithCoverage(alloc.subject_id),
           ]);
           return { ...alloc, progress, topics };
         })
       );
-      
+
       setSubjects(subjectsWithProgress);
     } catch (error) {
       console.error('Error fetching subjects:', error);
     }
   };
 
-  const handleAddTopic = async () => {
-    if (!selectedSubjectForTopic || !newTopic.topic_text.trim()) return;
-
-    try {
-      await createSyllabusTopic({
-        subject_id: selectedSubjectForTopic,
-        unit_no: newTopic.unit_no,
-        topic_text: newTopic.topic_text,
-      });
-      toast({ title: 'Success', description: 'Topic added' });
-      setIsAddTopicOpen(false);
-      setNewTopic({ unit_no: 1, topic_text: '' });
-      setSelectedSubjectForTopic(null);
-      if (facultyId) fetchSubjects(facultyId);
-    } catch (error) {
-      toast({ title: 'Error', description: 'Failed to add topic', variant: 'destructive' });
-    }
-  };
-
-  const handleDeleteTopic = async (topicId: string) => {
-    if (!confirm('Delete this topic?')) return;
-
-    try {
-      await deleteSyllabusTopic(topicId);
-      toast({ title: 'Success', description: 'Topic deleted' });
-      if (facultyId) fetchSubjects(facultyId);
-    } catch (error) {
-      toast({ title: 'Error', description: 'Failed to delete topic', variant: 'destructive' });
-    }
-  };
-
-  const openAddTopic = (subjectId: string) => {
-    setSelectedSubjectForTopic(subjectId);
-    setIsAddTopicOpen(true);
+  const toggleUnit = (subjectId: string, unitNo: number) => {
+    const key = `${subjectId}-${unitNo}`;
+    setExpandedUnits(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(key)) {
+        newSet.delete(key);
+      } else {
+        newSet.add(key);
+      }
+      return newSet;
+    });
   };
 
   return (
@@ -121,21 +94,22 @@ const FacultySubjectsPage: React.FC = () => {
       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
         <div>
           <h1 className="text-2xl lg:text-3xl font-display font-bold text-foreground">My Subjects</h1>
-          <p className="text-muted-foreground mt-1">Manage syllabus topics and track progress</p>
+          <p className="text-muted-foreground mt-1">View syllabus and track coverage progress</p>
         </div>
 
         {loading ? (
           <div className="space-y-4">
             {[1, 2, 3].map(i => (
               <div key={i} className="glass-card rounded-xl p-6 animate-pulse">
-                <div className="h-20 bg-muted rounded"></div>
+                <div className="h-24 bg-muted rounded"></div>
               </div>
             ))}
           </div>
         ) : subjects.length === 0 ? (
           <div className="glass-card rounded-xl p-8 text-center">
             <BookOpen className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-            <p className="text-muted-foreground">No subjects assigned yet</p>
+            <p className="text-lg font-medium text-foreground mb-2">No Subjects Assigned</p>
+            <p className="text-muted-foreground">Contact admin to assign subjects to you</p>
           </div>
         ) : (
           <div className="space-y-4">
@@ -150,28 +124,28 @@ const FacultySubjectsPage: React.FC = () => {
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-4">
                         {expandedSubject === subject.id ? (
-                          <ChevronDown className="w-5 h-5 text-muted-foreground" />
+                          <ChevronDown className="w-5 h-5 text-accent" />
                         ) : (
                           <ChevronRight className="w-5 h-5 text-muted-foreground" />
                         )}
                         <div>
                           <h3 className="text-lg font-semibold text-foreground">
                             {subject.subjects?.name}
-                            <span className="text-muted-foreground font-normal ml-2">
+                            <span className="text-muted-foreground font-normal ml-2 text-sm">
                               ({subject.subjects?.subject_code})
                             </span>
                           </h3>
                           <p className="text-sm text-muted-foreground">
-                            {subject.classes?.name} {subject.classes?.division} • {subject.subjects?.type}
+                            {subject.classes?.name} {subject.classes?.division} • {subject.subjects?.type === 'TH' ? 'Theory' : 'Practical'}
                           </p>
                         </div>
                       </div>
                       <div className="text-right">
-                        <span className="text-2xl font-bold text-primary">
+                        <span className="text-2xl font-bold text-accent">
                           {subject.progress?.percentage || 0}%
                         </span>
                         <p className="text-xs text-muted-foreground">
-                          {subject.progress?.coveredTopics || 0}/{subject.progress?.totalTopics || 0} topics
+                          {subject.progress?.coveredTopics || 0}/{subject.progress?.totalTopics || 0} topics covered
                         </p>
                       </div>
                     </div>
@@ -180,47 +154,64 @@ const FacultySubjectsPage: React.FC = () => {
 
                   <CollapsibleContent>
                     <div className="px-6 pb-6 pt-2 border-t border-border/30">
-                      <div className="flex items-center justify-between mb-4">
-                        <h4 className="text-sm font-medium text-foreground">Syllabus Topics</h4>
-                        <Button size="sm" onClick={() => openAddTopic(subject.subject_id)}>
-                          <Plus className="w-4 h-4 mr-1" />
-                          Add Topic
-                        </Button>
-                      </div>
+                      <h4 className="text-sm font-semibold text-foreground mb-4 flex items-center gap-2">
+                        <BookOpen className="w-4 h-4" />
+                        Syllabus Topics by Unit
+                      </h4>
 
-                      {(!subject.topics || subject.topics.length === 0) ? (
-                        <p className="text-sm text-muted-foreground text-center py-4">
-                          No topics defined yet
-                        </p>
+                      {subject.progress?.totalTopics === 0 ? (
+                        <div className="text-center py-6 text-muted-foreground">
+                          <BookOpen className="w-10 h-10 mx-auto mb-2 opacity-50" />
+                          <p>No syllabus defined for this subject yet.</p>
+                          <p className="text-sm mt-1">Contact admin to add syllabus topics.</p>
+                        </div>
                       ) : (
-                        <div className="space-y-4">
-                          {[1, 2, 3, 4, 5].map(unit => {
-                            const unitTopics = subject.topics?.filter(t => t.unit_no === unit) || [];
+                        <div className="space-y-3">
+                          {[1, 2, 3, 4, 5].map(unitNo => {
+                            const unitTopics = subject.topics?.filter(t => t.unit_no === unitNo) || [];
+                            const unitKey = `${subject.id}-${unitNo}`;
+                            const isUnitExpanded = expandedUnits.has(unitKey);
+                            const unitProgress = subject.progress?.unitProgress[unitNo];
+
                             if (unitTopics.length === 0) return null;
 
                             return (
-                              <div key={unit}>
-                                <h5 className="text-sm font-medium text-muted-foreground mb-2">
-                                  Unit {unit}
-                                </h5>
-                                <div className="space-y-1">
-                                  {unitTopics.map(topic => (
-                                    <div
-                                      key={topic.id}
-                                      className="flex items-center justify-between p-2 rounded-lg hover:bg-white/5"
-                                    >
-                                      <span className="text-sm text-foreground">{topic.topic_text}</span>
-                                      <Button
-                                        size="sm"
-                                        variant="ghost"
-                                        onClick={() => handleDeleteTopic(topic.id)}
-                                        className="text-danger hover:text-danger h-8 w-8 p-0"
-                                      >
-                                        <Trash2 className="w-4 h-4" />
-                                      </Button>
-                                    </div>
-                                  ))}
-                                </div>
+                              <div key={unitNo} className="border border-border/30 rounded-lg overflow-hidden">
+                                <button
+                                  onClick={() => toggleUnit(subject.id, unitNo)}
+                                  className="w-full p-3 flex items-center justify-between hover:bg-white/5 transition-colors"
+                                >
+                                  <div className="flex items-center gap-2">
+                                    {isUnitExpanded ? (
+                                      <ChevronDown className="w-4 h-4 text-muted-foreground" />
+                                    ) : (
+                                      <ChevronRight className="w-4 h-4 text-muted-foreground" />
+                                    )}
+                                    <span className="font-medium text-foreground">Unit {unitNo}</span>
+                                    <span className="text-xs text-muted-foreground">
+                                      ({unitProgress?.covered || 0}/{unitProgress?.total || 0} covered)
+                                    </span>
+                                  </div>
+                                  {unitProgress?.covered === unitProgress?.total && unitProgress?.total > 0 && (
+                                    <CheckCircle className="w-4 h-4 text-success" />
+                                  )}
+                                </button>
+
+                                {isUnitExpanded && (
+                                  <div className="px-3 pb-3 space-y-1">
+                                    {unitTopics.map((topic, idx) => (
+                                      <div key={topic.id} className="flex items-start gap-2 p-2 rounded-lg hover:bg-white/5">
+                                        <span className="text-xs text-muted-foreground w-5 pt-0.5">{idx + 1}.</span>
+                                        <p className="flex-1 text-sm text-foreground whitespace-pre-wrap">{topic.topic_text}</p>
+                                        {topic.covered_count && topic.covered_count > 0 && (
+                                          <span className="text-xs bg-success/20 text-success px-1.5 py-0.5 rounded shrink-0">
+                                            ✓ {topic.covered_count}x
+                                          </span>
+                                        )}
+                                      </div>
+                                    ))}
+                                  </div>
+                                )}
                               </div>
                             );
                           })}
@@ -233,42 +224,6 @@ const FacultySubjectsPage: React.FC = () => {
             ))}
           </div>
         )}
-
-        {/* Add Topic Dialog */}
-        <Dialog open={isAddTopicOpen} onOpenChange={setIsAddTopicOpen}>
-          <DialogContent className="glass-card border-border/50">
-            <DialogHeader>
-              <DialogTitle>Add Syllabus Topic</DialogTitle>
-            </DialogHeader>
-            <div className="space-y-4 mt-4">
-              <div>
-                <Label>Unit</Label>
-                <Select value={newTopic.unit_no.toString()} onValueChange={(v) => setNewTopic({ ...newTopic, unit_no: parseInt(v) })}>
-                  <SelectTrigger className="bg-white/5 border-border/50 mt-1">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {[1, 2, 3, 4, 5].map(u => (
-                      <SelectItem key={u} value={u.toString()}>Unit {u}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <Label>Topic</Label>
-                <Input
-                  value={newTopic.topic_text}
-                  onChange={(e) => setNewTopic({ ...newTopic, topic_text: e.target.value })}
-                  placeholder="Enter topic description"
-                  className="bg-white/5 border-border/50 mt-1"
-                />
-              </div>
-              <Button onClick={handleAddTopic} className="w-full btn-gradient">
-                Add Topic
-              </Button>
-            </div>
-          </DialogContent>
-        </Dialog>
       </motion.div>
     </PageShell>
   );

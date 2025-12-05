@@ -18,7 +18,7 @@ export async function getClasses() {
     .select('*')
     .order('year', { ascending: true })
     .order('division', { ascending: true });
-  
+
   if (error) throw error;
   return data as Class[];
 }
@@ -29,9 +29,20 @@ export async function getClassById(id: string) {
     .select('*')
     .eq('id', id)
     .single();
-  
+
   if (error) throw error;
   return data as Class;
+}
+
+export async function getClassByTeacherId(teacherId: string) {
+  const { data, error } = await supabase
+    .from('classes')
+    .select('*')
+    .eq('class_teacher_id', teacherId)
+    .single();
+
+  if (error && error.code !== 'PGRST116') throw error;
+  return data as Class | null;
 }
 
 export async function createClass(classData: {
@@ -47,7 +58,7 @@ export async function createClass(classData: {
     .insert(classData)
     .select()
     .single();
-  
+
   if (error) throw error;
   return data;
 }
@@ -59,7 +70,7 @@ export async function updateClass(id: string, updates: Partial<Class>) {
     .eq('id', id)
     .select()
     .single();
-  
+
   if (error) throw error;
   return data;
 }
@@ -69,6 +80,6 @@ export async function deleteClass(id: string) {
     .from('classes')
     .delete()
     .eq('id', id);
-  
+
   if (error) throw error;
 }

@@ -173,16 +173,12 @@ export function downloadPDF(htmlContent: string, filename: string) {
 // Template download for imports
 export function downloadTemplate(templateName: string) {
   const templates: Record<string, { headers: string[]; sample: string[][] }> = {
-    timetable: {
-      headers: ['faculty_email', 'day_of_week', 'start_time', 'class_name', 'division', 'semester', 'subject_code', 'room_no', 'valid_from', 'valid_to'],
-      sample: [
-        ['faculty@rit.edu', 'Monday', '09:00', 'FY AIML', 'A', '1', 'CS101', '101', '2025-01-01', '2025-06-30'],
-      ],
-    },
     students: {
-      headers: ['enrollment_no', 'roll_no', 'name', 'year', 'semester', 'class_name', 'division', 'department', 'mobile', 'email'],
+      headers: ['name', 'enrollment_no', 'roll_no', 'year', 'semester', 'division', 'mobile', 'email'],
       sample: [
-        ['ENR2025001', '1', 'John Doe', '1', '1', 'FY AIML', 'A', 'AIML', '9876543210', 'john@rit.edu'],
+        ['John Doe', 'ENR2025001', '1', '3', '5', 'A', '9876543210', 'john@rit.edu'],
+        ['Jane Smith', 'ENR2025002', '2', '3', '5', 'A', '9876543211', 'jane@rit.edu'],
+        ['Alex Kumar', 'ENR2025003', '3', '3', '5', 'A', '9876543212', 'alex@rit.edu'],
       ],
     },
     faculty: {
@@ -195,6 +191,12 @@ export function downloadTemplate(templateName: string) {
       headers: ['subject_code', 'name', 'semester', 'year', 'department', 'type', 'weekly_lectures'],
       sample: [
         ['CS101', 'Introduction to Programming', '1', '1', 'AIML', 'TH', '4'],
+      ],
+    },
+    timetable: {
+      headers: ['faculty_email', 'day_of_week', 'start_time', 'class_name', 'division', 'subject_code', 'room_no', 'valid_from', 'valid_to'],
+      sample: [
+        ['faculty@rit.edu', 'Monday', '09:00', 'TY AIML', 'A', 'CS101', '101', '2025-01-01', '2025-06-30'],
       ],
     },
   };

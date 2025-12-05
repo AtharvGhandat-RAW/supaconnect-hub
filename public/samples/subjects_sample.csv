@@ -1,0 +1,13 @@
+subject_code,name,semester,year,department,type,weekly_lectures
+AI501,Artificial Intelligence,5,3,AIML,TH,4
+ML502,Machine Learning,5,3,AIML,TH,4
+DL503,Deep Learning,5,3,AIML,TH,3
+NLP504,Natural Language Processing,5,3,AIML,TH,3
+CV505,Computer Vision,5,3,AIML,TH,3
+AI501P,AI Lab,5,3,AIML,PR,2
+ML502P,ML Lab,5,3,AIML,PR,2
+DL503P,Deep Learning Lab,5,3,AIML,PR,2
+NLP504P,NLP Lab,5,3,AIML,PR,2
+CV505P,Computer Vision Lab,5,3,AIML,PR,2
+DS506,Data Science,5,3,AIML,TH,3
+STAT507,Statistics for AI,5,3,AIML,TH,3

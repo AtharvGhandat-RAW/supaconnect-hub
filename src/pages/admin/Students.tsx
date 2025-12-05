@@ -10,7 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from '@/hooks/use-toast';
-import { getStudents, createStudent, type Student } from '@/services/students';
+import { getStudents, createStudent, bulkCreateStudents, type Student } from '@/services/students';
 import { getClasses, type Class } from '@/services/classes';
 import { downloadTemplate } from '@/utils/export';
 import { supabase } from '@/integrations/supabase/client';
@@ -51,6 +51,21 @@ const AdminStudentsPage: React.FC = () => {
 
   useEffect(() => {
     fetchData();
+
+    const channel = supabase
+      .channel('students-changes')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'students' },
+        () => {
+          fetchData();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
 
   const filteredStudents = students.filter((s) => {
@@ -103,7 +118,7 @@ const AdminStudentsPage: React.FC = () => {
       const text = event.target?.result as string;
       const lines = text.split('\n').filter(line => line.trim());
       const headers = lines[0].split(',').map(h => h.trim().toLowerCase());
-      
+
       const nameIdx = headers.indexOf('name');
       const enrollIdx = headers.indexOf('enrollment_no');
       const rollIdx = headers.indexOf('roll_no');
@@ -112,39 +127,90 @@ const AdminStudentsPage: React.FC = () => {
       const divIdx = headers.indexOf('division');
       const mobileIdx = headers.indexOf('mobile');
       const emailIdx = headers.indexOf('email');
+      const classIdIdx = headers.indexOf('class_id');
 
       if (nameIdx === -1) {
         toast({ title: 'Error', description: 'CSV must have name column', variant: 'destructive' });
         return;
       }
 
-      let success = 0;
-      let failed = 0;
+      console.log('CSV Headers:', headers);
+      console.log('Available classes:', classes);
+
+      // Helper function to find class by year and division
+      const findClassId = (year: number, division: string): string | null => {
+        // First try to match by year and division
+        const matchedClass = classes.find(c =>
+          c.year === year && c.division?.toUpperCase() === division?.toUpperCase()
+        );
+        if (matchedClass) {
+          console.log(`Found class for Year ${year}, Division ${division}:`, matchedClass);
+          return matchedClass.id;
+        }
+
+        // Try to match by year only
+        const yearMatch = classes.find(c => c.year === year);
+        if (yearMatch) {
+          console.log(`Found class for Year ${year} (any division):`, yearMatch);
+          return yearMatch.id;
+        }
+
+        console.log(`No class found for Year ${year}, Division ${division}`);
+        return null;
+      };
+
+      const studentsToCreate = [];
+      let skipped = 0;
 
       for (let i = 1; i < lines.length; i++) {
-        const values = lines[i].split(',').map(v => v.trim());
-        try {
-          await createStudent({
-            name: values[nameIdx],
-            enrollment_no: enrollIdx !== -1 ? values[enrollIdx] : null,
-            roll_no: rollIdx !== -1 ? parseInt(values[rollIdx]) || null : null,
-            year: yearIdx !== -1 ? parseInt(values[yearIdx]) || 1 : 1,
-            semester: semIdx !== -1 ? parseInt(values[semIdx]) || 1 : 1,
-            division: divIdx !== -1 ? values[divIdx] : 'A',
-            department: 'AIML',
-            mobile: mobileIdx !== -1 ? values[mobileIdx] : null,
-            email: emailIdx !== -1 ? values[emailIdx] : null,
-            status: 'ACTIVE',
-            class_id: null,
-          });
-          success++;
-        } catch {
-          failed++;
+        // Handle CSV values with potential commas inside quoted strings
+        const values = lines[i].split(',').map(v => v.trim().replace(/^"|"$/g, ''));
+        if (!values[nameIdx] || values[nameIdx].trim() === '') {
+          skipped++;
+          continue;
         }
+
+        const year = yearIdx !== -1 ? parseInt(values[yearIdx]) || 3 : 3; // Default to Year 3 for TY
+        const division = divIdx !== -1 ? values[divIdx] || 'A' : 'A';
+
+        // Try to match class by year and division
+        const classId = classIdIdx !== -1 && values[classIdIdx]
+          ? values[classIdIdx]
+          : findClassId(year, division);
+
+        studentsToCreate.push({
+          name: values[nameIdx],
+          enrollment_no: enrollIdx !== -1 && values[enrollIdx] ? values[enrollIdx] : null,
+          roll_no: rollIdx !== -1 ? parseInt(values[rollIdx]) || null : null,
+          year: year,
+          semester: semIdx !== -1 ? parseInt(values[semIdx]) || (year * 2 - 1) : (year * 2 - 1), // Auto-calculate semester from year
+          division: division,
+          department: 'AIML',
+          mobile: mobileIdx !== -1 && values[mobileIdx] ? values[mobileIdx] : null,
+          email: emailIdx !== -1 && values[emailIdx] ? values[emailIdx] : null,
+          status: 'ACTIVE' as const,
+          class_id: classId,
+        });
       }
 
-      toast({ title: 'Import Complete', description: `${success} added, ${failed} failed` });
-      fetchData();
+      console.log('Students to create:', studentsToCreate);
+
+      try {
+        if (studentsToCreate.length > 0) {
+          const result = await bulkCreateStudents(studentsToCreate);
+          const addedCount = result?.length || studentsToCreate.length;
+          toast({
+            title: 'Import Complete',
+            description: `${addedCount} students added/updated${skipped > 0 ? `, ${skipped} skipped` : ''}`
+          });
+          fetchData();
+        } else {
+          toast({ title: 'Warning', description: 'No valid students found in CSV', variant: 'destructive' });
+        }
+      } catch (error) {
+        console.error('Import error:', error);
+        toast({ title: 'Error', description: 'Failed to import students. Check console for details.', variant: 'destructive' });
+      }
     };
     reader.readAsText(file);
     if (fileInputRef.current) fileInputRef.current.value = '';

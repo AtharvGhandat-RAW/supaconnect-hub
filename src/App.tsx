@@ -17,6 +17,7 @@ import AdminFaculty from "./pages/admin/Faculty";
 import AdminClasses from "./pages/admin/Classes";
 import AdminStudents from "./pages/admin/Students";
 import AdminSubjects from "./pages/admin/Subjects";
+import AdminAllocations from "./pages/admin/Allocations";
 import AdminTimetable from "./pages/admin/Timetable";
 import AdminFacultyLeave from "./pages/admin/FacultyLeave";
 import AdminAttendanceMonitor from "./pages/admin/AttendanceMonitor";
@@ -56,6 +57,7 @@ const App = () => (
           <Route path="/admin/classes" element={<RouteGuard allowedRole="ADMIN"><AdminClasses /></RouteGuard>} />
           <Route path="/admin/students" element={<RouteGuard allowedRole="ADMIN"><AdminStudents /></RouteGuard>} />
           <Route path="/admin/subjects" element={<RouteGuard allowedRole="ADMIN"><AdminSubjects /></RouteGuard>} />
+          <Route path="/admin/allocations" element={<RouteGuard allowedRole="ADMIN"><AdminAllocations /></RouteGuard>} />
           <Route path="/admin/timetable" element={<RouteGuard allowedRole="ADMIN"><AdminTimetable /></RouteGuard>} />
           <Route path="/admin/faculty-leave" element={<RouteGuard allowedRole="ADMIN"><AdminFacultyLeave /></RouteGuard>} />
           <Route path="/admin/attendance-monitor" element={<RouteGuard allowedRole="ADMIN"><AdminAttendanceMonitor /></RouteGuard>} />

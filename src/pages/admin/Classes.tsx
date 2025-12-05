@@ -196,19 +196,6 @@ const AdminClassesPage: React.FC = () => {
                       className="bg-white/5 border-border/50"
                     />
                   </div>
-                  <div>
-                    <Label>Department</Label>
-                    <Select value={formData.department} onValueChange={(v) => setFormData({ ...formData, department: v })}>
-                      <SelectTrigger className="bg-white/5 border-border/50">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="AIML">AIML</SelectItem>
-                        <SelectItem value="CS">Computer Science</SelectItem>
-                        <SelectItem value="IT">Information Technology</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
                 </div>
                 <div>
                   <Label>Class Teacher</Label>

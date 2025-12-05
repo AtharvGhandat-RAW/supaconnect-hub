@@ -9,9 +9,10 @@ import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { getTodaySlots } from '@/services/timetable';
-import { getSubjectAllocations } from '@/services/allocations';
+import { getSubjectAllocations, type SubjectAllocation } from '@/services/allocations';
 import { getSyllabusProgress } from '@/services/syllabus';
 import { getRecentActivity } from '@/services/activity';
+import { getClassByTeacherId, type Class } from '@/services/classes';
 
 interface LectureSlot {
   id: string;
@@ -37,6 +38,8 @@ const FacultyDashboardPage: React.FC = () => {
   const [profile, setProfile] = useState<{ name: string; department: string | null } | null>(null);
   const [facultyId, setFacultyId] = useState<string | null>(null);
   const [todaySlots, setTodaySlots] = useState<LectureSlot[]>([]);
+  const [assignedClass, setAssignedClass] = useState<Class | null>(null);
+  const [allocations, setAllocations] = useState<SubjectAllocation[]>([]);
   const [recentActivity, setRecentActivity] = useState<ActivityItem[]>([]);
   const [stats, setStats] = useState({
     totalLectures: 0,
@@ -122,8 +125,18 @@ const FacultyDashboardPage: React.FC = () => {
     await Promise.all([
       fetchTodayData(fId),
       fetchSyllabusProgress(fId),
+      fetchAssignedClass(fId),
       profileId ? fetchActivity(profileId) : Promise.resolve(),
     ]);
+  };
+
+  const fetchAssignedClass = async (fId: string) => {
+    try {
+      const classData = await getClassByTeacherId(fId);
+      setAssignedClass(classData);
+    } catch (error) {
+      console.error('Error fetching assigned class:', error);
+    }
   };
 
   const fetchTodayData = async (fId: string) => {
@@ -199,16 +212,17 @@ const FacultyDashboardPage: React.FC = () => {
 
   const fetchSyllabusProgress = async (fId: string) => {
     try {
-      const allocations = await getSubjectAllocations(fId);
-      
-      if (allocations.length === 0) {
+      const allocationsData = await getSubjectAllocations(fId);
+      setAllocations(allocationsData);
+
+      if (allocationsData.length === 0) {
         setStats(prev => ({ ...prev, avgSyllabusProgress: 0 }));
         return;
       }
 
-      const progressPromises = allocations.map(alloc => getSyllabusProgress(alloc.subject_id));
+      const progressPromises = allocationsData.map(alloc => getSyllabusProgress(alloc.subject_id));
       const progressResults = await Promise.all(progressPromises);
-      
+
       const validProgress = progressResults.filter(p => p.totalTopics > 0);
       const avgProgress = validProgress.length > 0
         ? Math.round(validProgress.reduce((sum, p) => sum + p.percentage, 0) / validProgress.length)
@@ -258,7 +272,7 @@ const FacultyDashboardPage: React.FC = () => {
     const now = new Date();
     const diffMs = now.getTime() - date.getTime();
     const diffMins = Math.floor(diffMs / 60000);
-    
+
     if (diffMins < 1) return 'Just now';
     if (diffMins < 60) return `${diffMins}m ago`;
     const diffHours = Math.floor(diffMins / 60);
@@ -328,6 +342,26 @@ const FacultyDashboardPage: React.FC = () => {
           />
         </div>
 
+        {assignedClass && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="glass-card p-6 rounded-xl border-l-4 border-l-accent"
+          >
+            <div className="flex items-center gap-4">
+              <div className="p-3 rounded-full bg-accent/20">
+                <Users className="w-6 h-6 text-accent" />
+              </div>
+              <div>
+                <h3 className="text-lg font-semibold text-foreground">Class Teacher</h3>
+                <p className="text-muted-foreground">
+                  You are the class teacher of <span className="text-foreground font-medium">{assignedClass.name} {assignedClass.division}</span>
+                </p>
+              </div>
+            </div>
+          </motion.div>
+        )}
+
         <div className="grid lg:grid-cols-3 gap-6">
           {/* Today's Lectures */}
           <div className="lg:col-span-2">
@@ -356,11 +390,10 @@ const FacultyDashboardPage: React.FC = () => {
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: index * 0.1 }}
-                    className={`glass-card rounded-xl p-4 border-l-4 ${
-                      slot.status === 'completed' ? 'border-l-success' :
+                    className={`glass-card rounded-xl p-4 border-l-4 ${slot.status === 'completed' ? 'border-l-success' :
                       slot.status === 'ongoing' ? 'border-l-warning' :
-                      slot.status === 'pending' ? 'border-l-danger' : 'border-l-muted'
-                    }`}
+                        slot.status === 'pending' ? 'border-l-danger' : 'border-l-muted'
+                      }`}
                   >
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
@@ -383,8 +416,8 @@ const FacultyDashboardPage: React.FC = () => {
                       <StatusBadge
                         variant={
                           slot.status === 'completed' ? 'success' :
-                          slot.status === 'ongoing' ? 'warning' :
-                          slot.status === 'pending' ? 'danger' : 'outline'
+                            slot.status === 'ongoing' ? 'warning' :
+                              slot.status === 'pending' ? 'danger' : 'outline'
                         }
                       >
                         {slot.status.charAt(0).toUpperCase() + slot.status.slice(1)}
@@ -411,7 +444,7 @@ const FacultyDashboardPage: React.FC = () => {
               <Activity className="w-5 h-5" />
               Recent Activity
             </h2>
-            <div className="glass-card rounded-xl p-4">
+            <div className="glass-card rounded-xl p-4 mb-6">
               {recentActivity.length === 0 ? (
                 <p className="text-sm text-muted-foreground text-center py-4">No recent activity</p>
               ) : (
@@ -428,6 +461,41 @@ const FacultyDashboardPage: React.FC = () => {
                       <p className="text-xs text-muted-foreground mt-1">
                         {formatTimeAgo(item.timestamp)}
                       </p>
+                    </motion.div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Assigned Subjects */}
+            <h2 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
+              <BookOpen className="w-5 h-5" />
+              Assigned Subjects
+            </h2>
+            <div className="glass-card rounded-xl p-4">
+              {allocations.length === 0 ? (
+                <p className="text-sm text-muted-foreground text-center py-4">No subjects assigned</p>
+              ) : (
+                <div className="space-y-3">
+                  {allocations.map((alloc, index) => (
+                    <motion.div
+                      key={alloc.id}
+                      initial={{ opacity: 0, x: -10 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: index * 0.05 }}
+                      className="border-b border-border/30 last:border-0 pb-3 last:pb-0"
+                    >
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <p className="text-sm font-medium text-foreground">{alloc.subjects?.name}</p>
+                          <p className="text-xs text-muted-foreground mt-1">
+                            {alloc.classes?.name} {alloc.classes?.division} • {alloc.subjects?.subject_code}
+                          </p>
+                        </div>
+                        <StatusBadge variant="outline" className="text-xs">
+                          {alloc.subjects?.type}
+                        </StatusBadge>
+                      </div>
                     </motion.div>
                   ))}
                 </div>

@@ -18,6 +18,7 @@ import {
   BarChart3,
   AlertTriangle,
   ArrowUpCircle,
+  Link2,
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
@@ -35,6 +36,7 @@ const adminNavItems: NavItem[] = [
   { label: 'Faculty', path: '/admin/faculty', icon: <UserCog className="w-5 h-5" /> },
   { label: 'Classes', path: '/admin/classes', icon: <GraduationCap className="w-5 h-5" /> },
   { label: 'Subjects', path: '/admin/subjects', icon: <BookOpen className="w-5 h-5" /> },
+  { label: 'Allocations', path: '/admin/allocations', icon: <Link2 className="w-5 h-5" /> },
   { label: 'Students', path: '/admin/students', icon: <Users className="w-5 h-5" /> },
   { label: 'Timetable', path: '/admin/timetable', icon: <Calendar className="w-5 h-5" /> },
   { label: 'Faculty Leave', path: '/admin/faculty-leave', icon: <CalendarOff className="w-5 h-5" /> },
@@ -144,11 +146,10 @@ export const PageShell: React.FC<PageShellProps> = ({ children, role }) => {
                         <Link
                           to={item.path}
                           onClick={() => setSidebarOpen(false)}
-                          className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 ${
-                            isActive
+                          className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 ${isActive
                               ? 'bg-primary/20 text-primary border border-primary/30'
                               : 'text-muted-foreground hover:text-foreground hover:bg-white/5'
-                          }`}
+                            }`}
                         >
                           {item.icon}
                           {item.label}
@@ -200,11 +201,10 @@ export const PageShell: React.FC<PageShellProps> = ({ children, role }) => {
                 <li key={item.path}>
                   <Link
                     to={item.path}
-                    className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 ${
-                      isActive
+                    className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 ${isActive
                         ? 'bg-primary/20 text-primary border border-primary/30'
                         : 'text-muted-foreground hover:text-foreground hover:bg-white/5'
-                    }`}
+                      }`}
                   >
                     {item.icon}
                     {item.label}

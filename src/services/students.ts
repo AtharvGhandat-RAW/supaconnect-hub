@@ -27,12 +27,12 @@ export async function getStudents(filters?: {
     .from('students')
     .select('*')
     .order('roll_no', { ascending: true });
-  
+
   if (filters?.class_id) query = query.eq('class_id', filters.class_id);
   if (filters?.year) query = query.eq('year', filters.year);
   if (filters?.semester) query = query.eq('semester', filters.semester);
   if (filters?.status) query = query.eq('status', filters.status);
-  
+
   const { data, error } = await query;
   if (error) throw error;
   return data as Student[];
@@ -44,7 +44,7 @@ export async function getStudentById(id: string) {
     .select('*')
     .eq('id', id)
     .single();
-  
+
   if (error) throw error;
   return data as Student;
 }
@@ -55,7 +55,7 @@ export async function createStudent(student: Omit<Student, 'id' | 'created_at' |
     .insert(student)
     .select()
     .single();
-  
+
   if (error) throw error;
   return data;
 }
@@ -67,18 +67,41 @@ export async function updateStudent(id: string, updates: Partial<Student>) {
     .eq('id', id)
     .select()
     .single();
-  
+
   if (error) throw error;
   return data;
 }
 
 export async function bulkCreateStudents(students: Omit<Student, 'id' | 'created_at' | 'updated_at'>[]) {
+  // Use regular insert since enrollment_no might not have a unique constraint
+  // Filter out students that might already exist based on enrollment_no
   const { data, error } = await supabase
     .from('students')
     .insert(students)
     .select();
-  
-  if (error) throw error;
+
+  if (error) {
+    // If there's a duplicate key error, try inserting one by one
+    if (error.code === '23505') {
+      const results = [];
+      for (const student of students) {
+        try {
+          const { data: singleData, error: singleError } = await supabase
+            .from('students')
+            .insert(student)
+            .select()
+            .single();
+          if (!singleError && singleData) {
+            results.push(singleData);
+          }
+        } catch {
+          // Skip duplicates
+        }
+      }
+      return results;
+    }
+    throw error;
+  }
   return data;
 }
 
@@ -87,7 +110,7 @@ export async function getStudentCount() {
     .from('students')
     .select('*', { count: 'exact', head: true })
     .eq('status', 'ACTIVE');
-  
+
   if (error) throw error;
   return count || 0;
 }

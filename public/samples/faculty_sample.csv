@@ -1,0 +1,11 @@
+name,email,mobile,department,designation,employee_code,is_hod
+Dr. Rajesh Kumar,rajesh.kumar@rit.edu,9812345601,AIML,Professor,EMP001,true
+Prof. Sunita Sharma,sunita.sharma@rit.edu,9812345602,AIML,Associate Professor,EMP002,false
+Prof. Anil Patil,anil.patil@rit.edu,9812345603,AIML,Assistant Professor,EMP003,false
+Prof. Meena Joshi,meena.joshi@rit.edu,9812345604,AIML,Assistant Professor,EMP004,false
+Prof. Sanjay Kulkarni,sanjay.kulkarni@rit.edu,9812345605,AIML,Assistant Professor,EMP005,false
+Prof. Prachi Deshmukh,prachi.deshmukh@rit.edu,9812345606,AIML,Assistant Professor,EMP006,false
+Prof. Vivek Rane,vivek.rane@rit.edu,9812345607,AIML,Lecturer,EMP007,false
+Prof. Asha Bhosale,asha.bhosale@rit.edu,9812345608,AIML,Lecturer,EMP008,false
+Prof. Nitin Gaikwad,nitin.gaikwad@rit.edu,9812345609,AIML,Lecturer,EMP009,false
+Prof. Rekha Shinde,rekha.shinde@rit.edu,9812345610,AIML,Lecturer,EMP010,false

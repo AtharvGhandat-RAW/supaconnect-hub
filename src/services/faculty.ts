@@ -25,7 +25,7 @@ export async function getFaculty() {
       profiles (id, name, role, department)
     `)
     .order('created_at', { ascending: false });
-  
+
   if (error) throw error;
   return data as Faculty[];
 }
@@ -39,7 +39,7 @@ export async function getFacultyById(id: string) {
     `)
     .eq('id', id)
     .single();
-  
+
   if (error) throw error;
   return data as Faculty;
 }
@@ -55,7 +55,7 @@ export async function createFaculty(faculty: {
     .insert(faculty)
     .select()
     .single();
-  
+
   if (error) throw error;
   return data;
 }
@@ -67,7 +67,7 @@ export async function updateFaculty(id: string, updates: Partial<Faculty>) {
     .eq('id', id)
     .select()
     .single();
-  
+
   if (error) throw error;
   return data;
 }
@@ -77,6 +77,14 @@ export async function deleteFaculty(id: string) {
     .from('faculty')
     .delete()
     .eq('id', id);
-  
+
   if (error) throw error;
+}
+
+export async function getAllFacultyWithEmail() {
+  const { data, error } = await supabase
+    .rpc('get_all_faculty_with_email');
+
+  if (error) throw error;
+  return data as { id: string; name: string; email: string; employee_code: string | null }[];
 }

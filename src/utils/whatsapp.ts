@@ -7,10 +7,10 @@
  */
 export function normalizeIndiaPhone(phone: string | null | undefined): string | null {
   if (!phone) return null;
-  
+
   // Remove all non-digit characters
   let digits = phone.replace(/\D/g, '');
-  
+
   // Handle various Indian phone formats
   if (digits.length === 10) {
     // 10 digit: add 91 prefix
@@ -28,12 +28,12 @@ export function normalizeIndiaPhone(phone: string | null | undefined): string | 
     // Invalid format
     return null;
   }
-  
+
   // Validate: must be 12 digits starting with 91 and then a valid mobile prefix (6-9)
   if (digits.length === 12 && digits.startsWith('91') && /^91[6-9]\d{9}$/.test(digits)) {
     return digits;
   }
-  
+
   return null;
 }
 
@@ -45,16 +45,17 @@ export function normalizeIndiaPhone(phone: string | null | undefined): string | 
  */
 export function buildWaLink(phoneOrNull: string | null, text: string): string {
   const encodedText = encodeURIComponent(text);
-  
+
   if (phoneOrNull) {
     const normalizedPhone = normalizeIndiaPhone(phoneOrNull);
     if (normalizedPhone) {
       return `https://wa.me/${normalizedPhone}?text=${encodedText}`;
     }
   }
-  
-  // Fallback: open WhatsApp without specific contact (user chooses)
-  return `https://wa.me/?text=${encodedText}`;
+
+  // For sharing to groups - use whatsapp:// protocol which opens WhatsApp app directly
+  // This allows user to select any chat/group
+  return `https://api.whatsapp.com/send?text=${encodedText}`;
 }
 
 /**
@@ -64,5 +65,30 @@ export function buildWaLink(phoneOrNull: string | null, text: string): string {
  */
 export function openWhatsApp(phoneOrNull: string | null, text: string): void {
   const url = buildWaLink(phoneOrNull, text);
+  window.open(url, '_blank', 'noopener,noreferrer');
+}
+
+/**
+ * Open WhatsApp share dialog - allows selecting any contact or group
+ * Uses Web Share API on mobile, falls back to WhatsApp URL on desktop
+ * @param text - Message text
+ */
+export async function shareToWhatsApp(text: string): Promise<void> {
+  // Try native share first (works better on mobile for selecting groups)
+  if (navigator.share) {
+    try {
+      await navigator.share({
+        text: text,
+      });
+      return;
+    } catch (err) {
+      // User cancelled or error - fall through to WhatsApp URL
+      console.log('Native share failed, using WhatsApp URL');
+    }
+  }
+
+  // Fallback: Use WhatsApp API URL which opens the app and lets you pick a chat
+  const encodedText = encodeURIComponent(text);
+  const url = `https://api.whatsapp.com/send?text=${encodedText}`;
   window.open(url, '_blank', 'noopener,noreferrer');
 }

@@ -19,6 +19,12 @@ export interface SubjectAllocation {
     name: string;
     division: string;
   };
+  faculty?: {
+    id: string;
+    profiles?: {
+      name: string;
+    };
+  };
 }
 
 export async function getSubjectAllocations(facultyId?: string) {
@@ -37,11 +43,38 @@ export async function getSubjectAllocations(facultyId?: string) {
   return data as SubjectAllocation[];
 }
 
+export async function getAllAllocationsWithFaculty() {
+  const { data, error } = await supabase
+    .from('subject_allocations')
+    .select(`
+      *,
+      subjects (id, name, subject_code, semester, year, type),
+      classes (id, name, division),
+      faculty (id, profiles (name))
+    `);
+
+  if (error) throw error;
+  return data as SubjectAllocation[];
+}
+
 export async function createSubjectAllocation(allocation: {
   faculty_id: string;
   class_id: string;
   subject_id: string;
 }) {
+  // Check if already exists
+  const { data: existing } = await supabase
+    .from('subject_allocations')
+    .select('id')
+    .eq('faculty_id', allocation.faculty_id)
+    .eq('class_id', allocation.class_id)
+    .eq('subject_id', allocation.subject_id)
+    .single();
+
+  if (existing) {
+    throw new Error('This allocation already exists');
+  }
+
   const { data, error } = await supabase
     .from('subject_allocations')
     .insert(allocation)
@@ -59,4 +92,47 @@ export async function deleteSubjectAllocation(id: string) {
     .eq('id', id);
 
   if (error) throw error;
+}
+
+// Sync allocations from existing timetable slots
+export async function syncAllocationsFromTimetable() {
+  // Get all timetable slots
+  const { data: slots, error: slotsError } = await supabase
+    .from('timetable_slots')
+    .select('faculty_id, class_id, subject_id');
+
+  if (slotsError) throw slotsError;
+
+  // Get existing allocations
+  const { data: existingAllocs } = await supabase
+    .from('subject_allocations')
+    .select('faculty_id, class_id, subject_id');
+
+  const existingSet = new Set(
+    (existingAllocs || []).map(a => `${a.faculty_id}-${a.class_id}-${a.subject_id}`)
+  );
+
+  // Find unique combinations from timetable not in allocations
+  const toCreate = new Map<string, { faculty_id: string; class_id: string; subject_id: string }>();
+  (slots || []).forEach(slot => {
+    const key = `${slot.faculty_id}-${slot.class_id}-${slot.subject_id}`;
+    if (!existingSet.has(key) && !toCreate.has(key)) {
+      toCreate.set(key, {
+        faculty_id: slot.faculty_id,
+        class_id: slot.class_id,
+        subject_id: slot.subject_id,
+      });
+    }
+  });
+
+  // Insert new allocations
+  if (toCreate.size > 0) {
+    const { error } = await supabase
+      .from('subject_allocations')
+      .insert(Array.from(toCreate.values()));
+
+    if (error) throw error;
+  }
+
+  return toCreate.size;
 }

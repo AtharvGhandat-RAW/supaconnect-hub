@@ -1,0 +1,14 @@
+faculty_email,day_of_week,start_time,class_name,division,subject_code,room_no,valid_from,valid_to
+rajesh.kumar@rit.edu,Monday,09:00,TY AIML,A,AI501,101,2025-01-01,2025-06-30
+sunita.sharma@rit.edu,Monday,10:00,TY AIML,A,ML502,101,2025-01-01,2025-06-30
+anil.patil@rit.edu,Monday,11:00,TY AIML,A,DL503,102,2025-01-01,2025-06-30
+meena.joshi@rit.edu,Tuesday,09:00,TY AIML,A,NLP504,101,2025-01-01,2025-06-30
+sanjay.kulkarni@rit.edu,Tuesday,10:00,TY AIML,A,CV505,103,2025-01-01,2025-06-30
+prachi.deshmukh@rit.edu,Tuesday,11:00,TY AIML,A,DS506,102,2025-01-01,2025-06-30
+vivek.rane@rit.edu,Wednesday,09:00,TY AIML,A,AI501P,LAB1,2025-01-01,2025-06-30
+asha.bhosale@rit.edu,Wednesday,11:00,TY AIML,A,ML502P,LAB1,2025-01-01,2025-06-30
+nitin.gaikwad@rit.edu,Thursday,09:00,TY AIML,A,DL503P,LAB2,2025-01-01,2025-06-30
+rekha.shinde@rit.edu,Thursday,11:00,TY AIML,A,NLP504P,LAB2,2025-01-01,2025-06-30
+rajesh.kumar@rit.edu,Friday,09:00,TY AIML,A,AI501,101,2025-01-01,2025-06-30
+sunita.sharma@rit.edu,Friday,10:00,TY AIML,A,ML502,101,2025-01-01,2025-06-30
+anil.patil@rit.edu,Friday,11:00,TY AIML,A,STAT507,102,2025-01-01,2025-06-30

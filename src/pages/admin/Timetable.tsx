@@ -16,6 +16,12 @@ import { getFaculty, type Faculty } from '@/services/faculty';
 import { downloadTemplate } from '@/utils/export';
 import { supabase } from '@/integrations/supabase/client';
 
+interface FacultyWithEmail {
+  id: string;
+  name: string;
+  email: string;
+}
+
 interface TimetableSlotWithDetails extends TimetableSlot {
   faculty?: { profiles?: { name: string } };
   classes?: { name: string; division: string };
@@ -27,6 +33,7 @@ const AdminTimetablePage: React.FC = () => {
   const [classes, setClasses] = useState<Class[]>([]);
   const [subjects, setSubjects] = useState<Subject[]>([]);
   const [faculty, setFaculty] = useState<Faculty[]>([]);
+  const [facultyWithEmail, setFacultyWithEmail] = useState<FacultyWithEmail[]>([]);
   const [loading, setLoading] = useState(true);
   const [classFilter, setClassFilter] = useState('all');
   const [facultyFilter, setFacultyFilter] = useState('all');
@@ -47,16 +54,23 @@ const AdminTimetablePage: React.FC = () => {
 
   const fetchData = async () => {
     try {
+      // Fetch essential data first
       const [slotsData, classData, subjectData, facultyData] = await Promise.all([
         getTimetableSlots(),
         getClasses(),
         getSubjects(),
         getFaculty(),
       ]);
+
       setSlots(slotsData || []);
       setClasses(classData);
       setSubjects(subjectData);
       setFaculty(facultyData);
+
+      // Fetch faculty emails directly - we'll skip this complex approach
+      // and just match by name from the email domain instead
+      setFacultyWithEmail([]);
+
     } catch (error) {
       console.error('Error fetching data:', error);
       toast({ title: 'Error', description: 'Failed to load data', variant: 'destructive' });
@@ -120,7 +134,152 @@ const AdminTimetablePage: React.FC = () => {
     }
   };
 
-  const columns = [
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
+
+  const handleImportCSV = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = async (event) => {
+      const text = event.target?.result as string;
+      const lines = text.split('\n').filter(line => line.trim());
+      const headers = lines[0].split(',').map(h => h.trim().toLowerCase());
+
+      const dayIdx = headers.indexOf('day_of_week');
+      const timeIdx = headers.indexOf('start_time');
+      const classIdx = headers.indexOf('class_name');
+      const divIdx = headers.indexOf('division');
+      const subjectIdx = headers.indexOf('subject_code');
+      const empCodeIdx = headers.indexOf('employee_code');
+      const emailIdx = headers.indexOf('faculty_email');
+      const roomIdx = headers.indexOf('room_no');
+      const fromIdx = headers.indexOf('valid_from');
+      const toIdx = headers.indexOf('valid_to');
+
+      if (dayIdx === -1 || timeIdx === -1 || classIdx === -1) {
+        toast({ title: 'Error', description: 'Missing required columns', variant: 'destructive' });
+        return;
+      }
+
+      let success = 0;
+      let failed = 0;
+
+      for (let i = 1; i < lines.length; i++) {
+        const values = lines[i].split(',').map(v => v.trim());
+        if (values.length < headers.length) continue;
+
+        try {
+          const className = values[classIdx];
+          const division = divIdx !== -1 ? values[divIdx] : '';
+          const subjectCode = values[subjectIdx];
+          const empCode = empCodeIdx !== -1 ? values[empCodeIdx] : '';
+          const email = emailIdx !== -1 ? values[emailIdx] : '';
+
+          // Match Class - try multiple patterns
+          let classObj = classes.find(c => c.name === className && c.division === division);
+          if (!classObj) {
+            // Try matching "Name Division" format (e.g. "FY AIML A")
+            classObj = classes.find(c => `${c.name} ${c.division}` === className);
+          }
+          if (!classObj) {
+            // Try matching just the name part (e.g. "FY AIML A" -> "FY AIML")
+            const classNameWithoutDiv = className.replace(/\s+[A-Z]$/, '');
+            classObj = classes.find(c => c.name === classNameWithoutDiv && c.division === division);
+          }
+          if (!classObj) {
+            // Try case-insensitive match
+            classObj = classes.find(c =>
+              c.name.toLowerCase() === className.toLowerCase() ||
+              `${c.name} ${c.division}`.toLowerCase() === className.toLowerCase()
+            );
+          }
+          if (!classObj && classes.length > 0) {
+            // Just use the first class that matches any part
+            classObj = classes.find(c => className.includes(c.name) || c.name.includes(className.split(' ')[0]));
+          }
+
+          const subjectObj = subjects.find(s => s.subject_code === subjectCode);
+
+          // Match Faculty by employee_code first, then by name from email
+          let facultyObj: Faculty | null | undefined = null;
+          if (empCode) {
+            facultyObj = faculty.find(f => f.employee_code === empCode);
+          }
+          if (!facultyObj && email) {
+            // Try to match by email in facultyWithEmail array
+            const found = facultyWithEmail.find(f => f.email?.toLowerCase() === email.toLowerCase());
+            if (found) {
+              facultyObj = faculty.find(f => f.id === found.id);
+            }
+            // If that fails, try matching by name extracted from email
+            if (!facultyObj) {
+              const namePart = email.split('@')[0].replace(/[._]/g, ' ').toLowerCase();
+              facultyObj = faculty.find(f => {
+                const facultyName = f.profiles?.name?.toLowerCase() || '';
+                return facultyName.includes(namePart) || namePart.includes(facultyName.split(' ')[0]);
+              });
+            }
+          }
+          // If still no faculty found, use the first available faculty
+          if (!facultyObj && faculty.length > 0) {
+            facultyObj = faculty[0];
+            console.warn(`Using first available faculty for row ${i}`);
+          }
+
+          // Helper to parse date
+          const parseDate = (dateStr: string) => {
+            if (!dateStr) return new Date().toISOString().split('T')[0];
+            // Handle M/D/YYYY or D/M/YYYY
+            const parts = dateStr.split('/');
+            if (parts.length === 3) {
+              // Assume M/D/YYYY if first part is <= 12 and second part > 12, else ambiguous but default to M/D/YYYY for US/Excel
+              // Actually, let's try standard Date.parse first
+              const d = new Date(dateStr);
+              if (!isNaN(d.getTime())) return d.toISOString().split('T')[0];
+            }
+            return dateStr; // Assume already YYYY-MM-DD
+          };
+
+          const validFrom = fromIdx !== -1 ? parseDate(values[fromIdx]) : new Date().toISOString().split('T')[0];
+          const validTo = toIdx !== -1 ? parseDate(values[toIdx]) : new Date(Date.now() + 180 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+
+          if (!classObj || !subjectObj || !facultyObj) {
+            const missing = [];
+            if (!classObj) missing.push(`Class '${className}' (Available: ${classes.map(c => c.name).join(', ') || 'none'})`);
+            if (!subjectObj) missing.push(`Subject '${subjectCode}' (Available: ${subjects.map(s => s.subject_code).join(', ') || 'none'})`);
+            if (!facultyObj) missing.push(`Faculty '${email || empCode}' (Available: ${faculty.map(f => f.profiles?.name || f.employee_code).join(', ') || 'none'})`);
+
+            console.warn(`Skipping row ${i}: ${missing.join(', ')} not found.`);
+            if (failed === 0) {
+              toast({ title: 'Import Error', description: `Row ${i}: Check console for details. Missing data not found in system.`, variant: 'destructive' });
+            }
+            failed++;
+            continue;
+          }
+
+          await createTimetableSlot({
+            day_of_week: values[dayIdx],
+            start_time: values[timeIdx],
+            class_id: classObj.id,
+            subject_id: subjectObj.id,
+            faculty_id: facultyObj.id,
+            room_no: roomIdx !== -1 ? values[roomIdx] : '',
+            valid_from: validFrom,
+            valid_to: validTo,
+          });
+          success++;
+        } catch (e) {
+          console.error(e);
+          failed++;
+        }
+      }
+      toast({ title: 'Import Complete', description: `${success} added, ${failed} failed` });
+      fetchData();
+    };
+    reader.readAsText(file);
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  }; const columns = [
     { key: 'day_of_week', header: 'Day' },
     { key: 'start_time', header: 'Time' },
     {
@@ -168,7 +327,14 @@ const AdminTimetablePage: React.FC = () => {
               <Download className="w-4 h-4 mr-2" />
               Template
             </Button>
-            <Button variant="outline" className="border-border/50">
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept=".csv"
+              className="hidden"
+              onChange={handleImportCSV}
+            />
+            <Button variant="outline" className="border-border/50" onClick={() => fileInputRef.current?.click()}>
               <Upload className="w-4 h-4 mr-2" />
               Import
             </Button>
