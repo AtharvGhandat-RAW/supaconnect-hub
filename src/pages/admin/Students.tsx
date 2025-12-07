@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
-import { Plus, Search, Upload, Users, Edit2, Eye, Download } from 'lucide-react';
+import { Plus, Search, Upload, Users, Edit2, Eye, Download, RefreshCw, ArrowUpCircle } from 'lucide-react';
 import PageShell from '@/components/layout/PageShell';
 import DataTable from '@/components/ui/DataTable';
 import StatusBadge from '@/components/ui/StatusBadge';
@@ -23,6 +23,9 @@ const AdminStudentsPage: React.FC = () => {
   const [classFilter, setClassFilter] = useState('all');
   const [statusFilter, setStatusFilter] = useState('all');
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [isPromoteDialogOpen, setIsPromoteDialogOpen] = useState(false);
+  const [promoteFrom, setPromoteFrom] = useState('');
+  const [promoteTo, setPromoteTo] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [formData, setFormData] = useState({
     name: '',
@@ -77,6 +80,38 @@ const AdminStudentsPage: React.FC = () => {
     const matchesStatus = statusFilter === 'all' || s.status === statusFilter;
     return matchesSearch && matchesClass && matchesStatus;
   });
+
+  const handlePromote = async () => {
+    if (!promoteFrom) return;
+
+    try {
+      // If promoting to "completed" (special value)
+      if (promoteTo === 'completed') {
+        const { error } = await supabase
+          .from('students')
+          .update({ status: 'ALUMNI' })
+          .eq('class_id', promoteFrom);
+        if (error) throw error;
+        toast({ title: 'Success', description: 'Students marked as Alumni' });
+      } else if (promoteTo) {
+        // Promote to another class
+        const { error } = await supabase
+          .from('students')
+          .update({ class_id: promoteTo })
+          .eq('class_id', promoteFrom);
+        if (error) throw error;
+        toast({ title: 'Success', description: 'Students promoted successfully' });
+      }
+
+      setIsPromoteDialogOpen(false);
+      setPromoteFrom('');
+      setPromoteTo('');
+      fetchData();
+    } catch (error) {
+      console.error('Error promoting students:', error);
+      toast({ title: 'Error', description: 'Failed to promote students', variant: 'destructive' });
+    }
+  };
 
   const handleSubmit = async () => {
     if (!formData.name) {
@@ -272,6 +307,50 @@ const AdminStudentsPage: React.FC = () => {
               <Download className="w-4 h-4 mr-2" />
               Template
             </Button>
+            <Button variant="outline" size="sm" onClick={fetchData} disabled={loading}>
+              <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+            </Button>
+            <Dialog open={isPromoteDialogOpen} onOpenChange={setIsPromoteDialogOpen}>
+              <DialogTrigger asChild>
+                <Button variant="outline" className="border-accent/50 text-accent hover:bg-accent/10">
+                  <ArrowUpCircle className="w-4 h-4 mr-2" />
+                  Promote
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="glass-card border-border/50">
+                <DialogHeader>
+                  <DialogTitle>Promote Students</DialogTitle>
+                </DialogHeader>
+                <div className="space-y-4 mt-4">
+                  <div>
+                    <Label>Promote From Class</Label>
+                    <Select value={promoteFrom} onValueChange={setPromoteFrom}>
+                      <SelectTrigger className="bg-muted/50 border-border/50"><SelectValue placeholder="Select Class" /></SelectTrigger>
+                      <SelectContent>
+                        {classes.map(c => (
+                          <SelectItem key={c.id} value={c.id}>{c.name} {c.division}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label>Promote To Class</Label>
+                    <Select value={promoteTo} onValueChange={setPromoteTo}>
+                      <SelectTrigger className="bg-muted/50 border-border/50"><SelectValue placeholder="Select Target Class" /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="completed" className="text-accent">Completed Diploma (Alumni)</SelectItem>
+                        {classes.filter(c => c.id !== promoteFrom).map(c => (
+                          <SelectItem key={c.id} value={c.id}>{c.name} {c.division}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <Button onClick={handlePromote} className="w-full btn-gradient" disabled={!promoteFrom || !promoteTo}>
+                    Promote Students
+                  </Button>
+                </div>
+              </DialogContent>
+            </Dialog>
             <input
               ref={fileInputRef}
               type="file"

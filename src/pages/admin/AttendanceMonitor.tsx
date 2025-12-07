@@ -60,7 +60,7 @@ const AdminAttendanceMonitorPage: React.FC = () => {
       if (classFilter !== 'all') filters.class_id = classFilter;
       if (subjectFilter !== 'all') filters.subject_id = subjectFilter;
       if (dateFilter) filters.date = dateFilter;
-      
+
       const data = await getAttendanceSessions(filters);
       setSessions(data || []);
     } catch (error) {
@@ -93,11 +93,9 @@ const AdminAttendanceMonitorPage: React.FC = () => {
 
   const handleToggleStatus = async (recordId: string, currentStatus: 'PRESENT' | 'ABSENT') => {
     const newStatus = currentStatus === 'PRESENT' ? 'ABSENT' : 'PRESENT';
-    const reason = prompt('Enter reason for change:');
-    if (!reason) return;
 
     try {
-      await updateAttendanceRecord(recordId, { status: newStatus, remark: reason });
+      await updateAttendanceRecord(recordId, { status: newStatus });
       toast({ title: 'Success', description: 'Attendance updated' });
       if (selectedSession) handleViewSession(selectedSession);
     } catch (error) {

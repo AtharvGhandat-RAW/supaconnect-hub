@@ -74,12 +74,16 @@ const AdminPromotionPage: React.FC = () => {
       return;
     }
 
-    const targetClassData = classes.find(c => c.id === targetClass);
-    if (!targetClassData) return;
+    let targetSemester = 0;
+    if (targetClass !== 'COMPLETED') {
+      const targetClassData = classes.find(c => c.id === targetClass);
+      if (!targetClassData) return;
+      targetSemester = targetClassData.semester;
+    }
 
     setLoading(true);
     try {
-      const result = await executePromotion(students, targetClass, targetClassData.semester);
+      const result = await executePromotion(students, targetClass, targetSemester);
       toast({
         title: 'Success',
         description: `${result.promoted} students promoted, ${result.yearDown} marked YD`,
@@ -176,6 +180,7 @@ const AdminPromotionPage: React.FC = () => {
                           .map(c => (
                             <SelectItem key={c.id} value={c.id}>{c.name} {c.division} (Sem {c.semester})</SelectItem>
                           ))}
+                        <SelectItem value="COMPLETED" className="text-green-500 font-medium">Completed Diploma</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Download, Upload, Search, Calendar, Edit2, Trash2, Plus } from 'lucide-react';
+import { Download, Upload, Search, Calendar, Edit2, Trash2, Plus, RefreshCw } from 'lucide-react';
 import PageShell from '@/components/layout/PageShell';
 import DataTable from '@/components/ui/DataTable';
 import { Button } from '@/components/ui/button';
@@ -13,6 +13,7 @@ import { getTimetableSlots, createTimetableSlot, deleteTimetableSlot, type Timet
 import { getClasses, type Class } from '@/services/classes';
 import { getSubjects, type Subject } from '@/services/subjects';
 import { getFaculty, type Faculty } from '@/services/faculty';
+import { getBatches, type Batch } from '@/services/batches';
 import { downloadTemplate } from '@/utils/export';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -26,6 +27,7 @@ interface TimetableSlotWithDetails extends TimetableSlot {
   faculty?: { profiles?: { name: string } };
   classes?: { name: string; division: string };
   subjects?: { name: string; subject_code: string };
+  batches?: { name: string };
 }
 
 const AdminTimetablePage: React.FC = () => {
@@ -39,6 +41,7 @@ const AdminTimetablePage: React.FC = () => {
   const [facultyFilter, setFacultyFilter] = useState('all');
   const [dayFilter, setDayFilter] = useState('all');
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [batches, setBatches] = useState<Batch[]>([]);
   const [formData, setFormData] = useState({
     faculty_id: '',
     class_id: '',
@@ -48,7 +51,16 @@ const AdminTimetablePage: React.FC = () => {
     room_no: '',
     valid_from: new Date().toISOString().split('T')[0],
     valid_to: new Date(Date.now() + 180 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+    batch_id: '',
   });
+
+  useEffect(() => {
+    if (formData.class_id) {
+      getBatches(formData.class_id).then(setBatches).catch(console.error);
+    } else {
+      setBatches([]);
+    }
+  }, [formData.class_id]);
 
   const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
@@ -104,7 +116,12 @@ const AdminTimetablePage: React.FC = () => {
 
   const handleAddSlot = async () => {
     try {
-      await createTimetableSlot(formData);
+      // Convert empty batch_id to null to avoid UUID errors
+      const slotData = {
+        ...formData,
+        batch_id: formData.batch_id || null
+      };
+      await createTimetableSlot(slotData);
       toast({ title: 'Success', description: 'Timetable slot created' });
       setIsAddDialogOpen(false);
       setFormData({
@@ -116,6 +133,7 @@ const AdminTimetablePage: React.FC = () => {
         room_no: '',
         valid_from: new Date().toISOString().split('T')[0],
         valid_to: new Date(Date.now() + 180 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+        batch_id: '',
       });
       fetchData();
     } catch (error) {
@@ -156,11 +174,15 @@ const AdminTimetablePage: React.FC = () => {
       const roomIdx = headers.indexOf('room_no');
       const fromIdx = headers.indexOf('valid_from');
       const toIdx = headers.indexOf('valid_to');
+      const batchIdx = headers.indexOf('batch_name');
 
       if (dayIdx === -1 || timeIdx === -1 || classIdx === -1) {
         toast({ title: 'Error', description: 'Missing required columns', variant: 'destructive' });
         return;
       }
+
+      // Fetch all batches for mapping
+      const { data: allBatches } = await supabase.from('batches').select('*');
 
       let success = 0;
       let failed = 0;
@@ -258,6 +280,16 @@ const AdminTimetablePage: React.FC = () => {
             continue;
           }
 
+          // Resolve Batch
+          let batchId = null;
+          if (batchIdx !== -1 && values[batchIdx] && classObj) {
+            const batchName = values[batchIdx].trim();
+            if (batchName) {
+              const batch = allBatches?.find(b => b.class_id === classObj!.id && b.name.toLowerCase() === batchName.toLowerCase());
+              if (batch) batchId = batch.id;
+            }
+          }
+
           await createTimetableSlot({
             day_of_week: values[dayIdx],
             start_time: values[timeIdx],
@@ -267,6 +299,7 @@ const AdminTimetablePage: React.FC = () => {
             room_no: roomIdx !== -1 ? values[roomIdx] : '',
             valid_from: validFrom,
             valid_to: validTo,
+            batch_id: batchId,
           });
           success++;
         } catch (e) {
@@ -286,6 +319,11 @@ const AdminTimetablePage: React.FC = () => {
       key: 'class',
       header: 'Class',
       render: (slot: TimetableSlotWithDetails) => `${slot.classes?.name || ''} ${slot.classes?.division || ''}`,
+    },
+    {
+      key: 'batch',
+      header: 'Batch',
+      render: (slot: TimetableSlotWithDetails) => slot.batches?.name || '-',
     },
     {
       key: 'subject',
@@ -326,6 +364,9 @@ const AdminTimetablePage: React.FC = () => {
             <Button variant="outline" onClick={() => downloadTemplate('timetable')} className="border-border/50">
               <Download className="w-4 h-4 mr-2" />
               Template
+            </Button>
+            <Button variant="outline" onClick={fetchData} disabled={loading} className="border-border/50">
+              <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
             </Button>
             <input
               ref={fileInputRef}
@@ -388,6 +429,17 @@ const AdminTimetablePage: React.FC = () => {
                       </SelectContent>
                     </Select>
                   </div>
+                  {subjects.find(s => s.id === formData.subject_id)?.type === 'PR' && (
+                    <div>
+                      <Label>Batch (Optional)</Label>
+                      <Select value={formData.batch_id} onValueChange={(v) => setFormData({ ...formData, batch_id: v })}>
+                        <SelectTrigger className="bg-white/5 border-border/50"><SelectValue placeholder="Select batch" /></SelectTrigger>
+                        <SelectContent>
+                          {batches.map(b => <SelectItem key={b.id} value={b.id}>{b.name}</SelectItem>)}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  )}
                   <div>
                     <Label>Faculty</Label>
                     <Select value={formData.faculty_id} onValueChange={(v) => setFormData({ ...formData, faculty_id: v })}>

@@ -9,6 +9,7 @@ import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
+import { useTheme } from '@/hooks/useTheme';
 import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
 
@@ -16,16 +17,16 @@ const PREFS_KEY = 'faculty_preferences';
 
 interface Preferences {
   language: 'en' | 'mr';
-  darkMode: boolean;
 }
 
 const FacultySettingsPage: React.FC = () => {
   const { user, signOut } = useAuth();
+  const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
   const [profile, setProfile] = useState<{ name: string; department: string | null } | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  
+
   // Password change state
   const [showPasswordSection, setShowPasswordSection] = useState(false);
   const [currentPassword, setCurrentPassword] = useState('');
@@ -34,11 +35,10 @@ const FacultySettingsPage: React.FC = () => {
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [changingPassword, setChangingPassword] = useState(false);
-  
+
   // Preferences
   const [preferences, setPreferences] = useState<Preferences>({
     language: 'en',
-    darkMode: true,
   });
 
   useEffect(() => {
@@ -56,14 +56,14 @@ const FacultySettingsPage: React.FC = () => {
   useEffect(() => {
     async function fetchProfile() {
       if (!user) return;
-      
+
       try {
         const { data, error } = await supabase
           .from('profiles')
           .select('name, department')
           .eq('id', user.id)
           .single();
-        
+
         if (error) throw error;
         setProfile(data);
       } catch (error) {
@@ -72,21 +72,13 @@ const FacultySettingsPage: React.FC = () => {
         setLoading(false);
       }
     }
-    
+
     fetchProfile();
   }, [user]);
 
   const savePreferences = (newPrefs: Preferences) => {
     setPreferences(newPrefs);
     localStorage.setItem(PREFS_KEY, JSON.stringify(newPrefs));
-    
-    // Apply dark mode
-    if (newPrefs.darkMode) {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-    }
-    
     toast({ title: 'Saved', description: 'Preferences updated' });
   };
 
@@ -95,26 +87,26 @@ const FacultySettingsPage: React.FC = () => {
       toast({ title: 'Error', description: 'Please fill in all password fields', variant: 'destructive' });
       return;
     }
-    
+
     if (newPassword !== confirmPassword) {
       toast({ title: 'Error', description: 'New passwords do not match', variant: 'destructive' });
       return;
     }
-    
+
     if (newPassword.length < 6) {
       toast({ title: 'Error', description: 'Password must be at least 6 characters', variant: 'destructive' });
       return;
     }
-    
+
     setChangingPassword(true);
-    
+
     try {
       const { error } = await supabase.auth.updateUser({
         password: newPassword,
       });
-      
+
       if (error) throw error;
-      
+
       toast({ title: 'Success', description: 'Password changed successfully' });
       setCurrentPassword('');
       setNewPassword('');
@@ -122,10 +114,10 @@ const FacultySettingsPage: React.FC = () => {
       setShowPasswordSection(false);
     } catch (error: any) {
       console.error('Error changing password:', error);
-      toast({ 
-        title: 'Error', 
-        description: error.message || 'Failed to change password', 
-        variant: 'destructive' 
+      toast({
+        title: 'Error',
+        description: error.message || 'Failed to change password',
+        variant: 'destructive'
       });
     } finally {
       setChangingPassword(false);
@@ -205,7 +197,7 @@ const FacultySettingsPage: React.FC = () => {
               </div>
               <Select
                 value={preferences.language}
-                onValueChange={(value: 'en' | 'mr') => 
+                onValueChange={(value: 'en' | 'mr') =>
                   savePreferences({ ...preferences, language: value })
                 }
               >
@@ -226,10 +218,8 @@ const FacultySettingsPage: React.FC = () => {
               <div className="flex items-center gap-2">
                 <Sun className="w-4 h-4 text-muted-foreground" />
                 <Switch
-                  checked={preferences.darkMode}
-                  onCheckedChange={(checked) => 
-                    savePreferences({ ...preferences, darkMode: checked })
-                  }
+                  checked={theme === 'dark'}
+                  onCheckedChange={toggleTheme}
                 />
                 <Moon className="w-4 h-4 text-muted-foreground" />
               </div>
@@ -243,7 +233,7 @@ const FacultySettingsPage: React.FC = () => {
             <Lock className="w-5 h-5" />
             Security
           </h2>
-          
+
           {!showPasswordSection ? (
             <Button variant="outline" onClick={() => setShowPasswordSection(true)}>
               Change Password
@@ -281,8 +271,8 @@ const FacultySettingsPage: React.FC = () => {
                 />
               </div>
               <div className="flex gap-2">
-                <Button 
-                  onClick={handleChangePassword} 
+                <Button
+                  onClick={handleChangePassword}
                   disabled={changingPassword}
                   className="btn-gradient"
                 >
@@ -302,8 +292,8 @@ const FacultySettingsPage: React.FC = () => {
         </div>
 
         {/* Logout */}
-        <Button 
-          variant="outline" 
+        <Button
+          variant="outline"
           onClick={handleLogout}
           className="w-full border-danger/50 text-danger hover:bg-danger/10"
         >

@@ -49,7 +49,7 @@ export function generatePDFContent(options: {
       <title>${title}</title>
       <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { 
+        body {
           font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
           padding: 20px;
           color: #1a1a2e;
@@ -57,14 +57,14 @@ export function generatePDFContent(options: {
         .header {
           display: flex;
           align-items: center;
-          gap: 20px;
+          gap: 16px;
           border-bottom: 2px solid #4F46E5;
-          padding-bottom: 15px;
+          padding-bottom: 12px;
           margin-bottom: 20px;
         }
         .header img {
-          width: 60px;
-          height: 60px;
+          width: 48px;
+          height: 48px;
           border-radius: 50%;
           object-fit: cover;
         }
@@ -80,7 +80,7 @@ export function generatePDFContent(options: {
         .meta {
           display: flex;
           justify-content: space-between;
-          margin-bottom: 20px;
+          margin-bottom: 16px;
           font-size: 12px;
           color: #374151;
         }
@@ -121,12 +121,11 @@ export function generatePDFContent(options: {
       <div class="header">
         ${logoSrc ? `<img src="${logoSrc}" alt="Logo">` : ''}
         <div class="header-text">
-          <h1>Rajarambapu Institute of Technology</h1>
-          <p>Polytechnic • AIML Department</p>
+          <h1>${title}</h1>
+          ${subtitle ? `<p>${subtitle}</p>` : ''}
         </div>
       </div>
       <div class="meta">
-        <div><strong>${title}</strong>${subtitle ? `<br>${subtitle}` : ''}</div>
         <div>${date || new Date().toLocaleDateString()}</div>
       </div>
       <table>
@@ -194,9 +193,9 @@ export function downloadTemplate(templateName: string) {
       ],
     },
     timetable: {
-      headers: ['faculty_email', 'day_of_week', 'start_time', 'class_name', 'division', 'subject_code', 'room_no', 'valid_from', 'valid_to'],
+      headers: ['faculty_email', 'day_of_week', 'start_time', 'class_name', 'division', 'subject_code', 'room_no', 'valid_from', 'valid_to', 'batch_name'],
       sample: [
-        ['faculty@rit.edu', 'Monday', '09:00', 'TY AIML', 'A', 'CS101', '101', '2025-01-01', '2025-06-30'],
+        ['faculty@rit.edu', 'Monday', '09:00', 'TY AIML', 'A', 'CS101', '101', '2025-01-01', '2025-06-30', 'Batch A'],
       ],
     },
   };

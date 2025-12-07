@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
-import { Plus, Search, BookOpen, Edit2, ChevronDown, ChevronRight, Check, X, Trash2, FileText } from 'lucide-react';
+import { Plus, Search, BookOpen, Edit2, ChevronDown, ChevronRight, Check, X, Trash2, FileText, Download, Upload, RefreshCw } from 'lucide-react';
 import PageShell from '@/components/layout/PageShell';
 import DataTable from '@/components/ui/DataTable';
 import StatusBadge from '@/components/ui/StatusBadge';
@@ -12,7 +12,9 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/component
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from '@/hooks/use-toast';
-import { getSubjects, createSubject, updateSubject, type Subject } from '@/services/subjects';
+import { getSubjects, createSubject, updateSubject, deleteSubject, type Subject } from '@/services/subjects';
+import { downloadTemplate } from '@/utils/export';
+import { supabase } from '@/integrations/supabase/client';
 import {
   getSyllabusTopics,
   createSyllabusTopic,
@@ -28,6 +30,9 @@ const AdminSubjectsPage: React.FC = () => {
   const [yearFilter, setYearFilter] = useState('all');
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [editingSubject, setEditingSubject] = useState<Subject | null>(null);
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [subjectToDelete, setSubjectToDelete] = useState<Subject | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Syllabus management state
   const [syllabusDialogOpen, setSyllabusDialogOpen] = useState(false);
@@ -118,6 +123,79 @@ const AdminSubjectsPage: React.FC = () => {
       status: s.status,
     });
     setIsAddDialogOpen(true);
+  };
+
+  const handleImportCSV = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = async (event) => {
+      const text = event.target?.result as string;
+      const lines = text.split('\n').filter(line => line.trim());
+      const headers = lines[0].split(',').map(h => h.trim().toLowerCase().replace(/"/g, ''));
+
+      const codeIdx = headers.indexOf('subject_code');
+      const nameIdx = headers.indexOf('name');
+      const semIdx = headers.indexOf('semester');
+      const yearIdx = headers.indexOf('year');
+      const typeIdx = headers.indexOf('type');
+      const lecturesIdx = headers.indexOf('weekly_lectures');
+
+      if (codeIdx === -1 || nameIdx === -1) {
+        toast({ title: 'Error', description: 'CSV must have subject_code and name columns', variant: 'destructive' });
+        return;
+      }
+
+      let success = 0;
+      let failed = 0;
+
+      for (let i = 1; i < lines.length; i++) {
+        const values = lines[i].split(',').map(v => v.trim().replace(/^"|"$/g, ''));
+        if (values.length < headers.length) continue;
+
+        try {
+          await createSubject({
+            subject_code: values[codeIdx],
+            name: values[nameIdx],
+            semester: semIdx !== -1 ? parseInt(values[semIdx]) || 1 : 1,
+            year: yearIdx !== -1 ? parseInt(values[yearIdx]) || 1 : 1,
+            department: 'AIML',
+            type: (typeIdx !== -1 && values[typeIdx] === 'PR') ? 'PR' : 'TH',
+            weekly_lectures: lecturesIdx !== -1 ? parseInt(values[lecturesIdx]) || 3 : 3,
+            status: 'Active',
+          });
+          success++;
+        } catch {
+          failed++;
+        }
+      }
+
+      toast({ title: 'Import Complete', description: `${success} added, ${failed} failed` });
+      setTimeout(() => fetchData(), 1000);
+    };
+    reader.readAsText(file);
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  };
+
+  const handleDeleteClick = (s: Subject) => {
+    setSubjectToDelete(s);
+    setDeleteConfirmOpen(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!subjectToDelete) return;
+
+    try {
+      await deleteSubject(subjectToDelete.id);
+      toast({ title: 'Success', description: 'Subject deleted successfully' });
+      setDeleteConfirmOpen(false);
+      setSubjectToDelete(null);
+      fetchData();
+    } catch (error) {
+      console.error('Error deleting subject:', error);
+      toast({ title: 'Error', description: 'Failed to delete subject', variant: 'destructive' });
+    }
   };
 
   // Syllabus management functions
@@ -246,6 +324,9 @@ const AdminSubjectsPage: React.FC = () => {
           <Button variant="ghost" size="sm" onClick={() => handleEdit(s)} title="Edit Subject">
             <Edit2 className="w-4 h-4" />
           </Button>
+          <Button variant="ghost" size="sm" onClick={() => handleDeleteClick(s)} title="Delete Subject" className="text-red-500 hover:text-red-700">
+            <Trash2 className="w-4 h-4" />
+          </Button>
         </div>
       ),
     },
@@ -259,7 +340,25 @@ const AdminSubjectsPage: React.FC = () => {
             <h1 className="text-2xl lg:text-3xl font-display font-bold text-foreground">Subjects</h1>
             <p className="text-muted-foreground mt-1">Manage subjects and their syllabus (click 📄 icon to manage syllabus)</p>
           </div>
-          <div className="flex gap-2">
+          <div className="flex gap-2 flex-wrap">
+            <Button variant="outline" size="sm" onClick={() => downloadTemplate('subjects')}>
+              <Download className="w-4 h-4 mr-2" />
+              Template
+            </Button>
+            <Button variant="outline" size="sm" onClick={fetchData} disabled={loading}>
+              <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+            </Button>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept=".csv"
+              className="hidden"
+              onChange={handleImportCSV}
+            />
+            <Button variant="outline" onClick={() => fileInputRef.current?.click()}>
+              <Upload className="w-4 h-4 mr-2" />
+              Import CSV
+            </Button>
             <Dialog open={isAddDialogOpen} onOpenChange={(open) => { setIsAddDialogOpen(open); if (!open) resetForm(); }}>
               <DialogTrigger asChild>
                 <Button className="btn-gradient">
@@ -520,6 +619,35 @@ const AdminSubjectsPage: React.FC = () => {
               <p className="text-sm text-muted-foreground text-center">
                 📚 Total: {topics.length} topic{topics.length !== 1 ? 's' : ''} across all units
               </p>
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* Delete Confirmation Dialog */}
+        <Dialog open={deleteConfirmOpen} onOpenChange={setDeleteConfirmOpen}>
+          <DialogContent className="sm:max-w-[400px]">
+            <DialogHeader>
+              <DialogTitle className="text-red-600">Delete Subject</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <p className="text-sm text-muted-foreground">
+                Are you sure you want to delete <span className="font-semibold text-foreground">"{subjectToDelete?.name}"</span>?
+              </p>
+              <p className="text-xs text-red-500">
+                ⚠️ This action cannot be undone. All associated data will be removed.
+              </p>
+              <div className="flex gap-3 justify-end pt-4">
+                <Button variant="outline" onClick={() => setDeleteConfirmOpen(false)}>
+                  Cancel
+                </Button>
+                <Button
+                  variant="destructive"
+                  onClick={handleDeleteConfirm}
+                  className="bg-red-600 hover:bg-red-700"
+                >
+                  Delete Subject
+                </Button>
+              </div>
             </div>
           </DialogContent>
         </Dialog>

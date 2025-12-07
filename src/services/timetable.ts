@@ -11,6 +11,7 @@ export interface TimetableSlot {
   valid_from: string;
   valid_to: string;
   created_at: string;
+  batch_id?: string | null;
 }
 
 export async function getTimetableSlots(filters?: {
@@ -24,7 +25,8 @@ export async function getTimetableSlots(filters?: {
       *,
       faculty (id, profiles (name)),
       classes (id, name, division),
-      subjects (id, name, subject_code)
+      subjects (id, name, subject_code),
+      batches (id, name)
     `)
     .order('start_time', { ascending: true });
 

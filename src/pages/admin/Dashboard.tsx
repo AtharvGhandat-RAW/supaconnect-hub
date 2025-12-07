@@ -7,10 +7,13 @@ import DataTable from '@/components/ui/DataTable';
 import StatusBadge from '@/components/ui/StatusBadge';
 import { getStudentCount } from '@/services/students';
 import { getClasses } from '@/services/classes';
-import { getTodayAttendanceStats, getAttendanceSessions } from '@/services/attendance';
+import { getTodayAttendanceStats, getAttendanceSessions, getDefaulters } from '@/services/attendance';
 import { getActivityLogs } from '@/services/activity';
 import { getTodaySlots } from '@/services/timetable';
+import { getSubjects } from '@/services/subjects';
 import { supabase } from '@/integrations/supabase/client';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Label } from '@/components/ui/label';
 
 interface TodaySession {
   id: string;
@@ -33,15 +36,27 @@ const AdminDashboardPage: React.FC = () => {
   const [activities, setActivities] = useState<{ id: string; message: string; time: string }[]>([]);
   const [loading, setLoading] = useState(true);
 
+  // Defaulters state
+  const [defaulters, setDefaulters] = useState<any[]>([]);
+  const [classesList, setClassesList] = useState<any[]>([]);
+  const [subjectsList, setSubjectsList] = useState<any[]>([]);
+  const [selectedClass, setSelectedClass] = useState<string>('all');
+  const [selectedSubject, setSelectedSubject] = useState<string>('all');
+  const [defaultersLoading, setDefaultersLoading] = useState(false);
+
   const fetchData = async () => {
     try {
-      const [studentCount, classes, attendanceStats, todaySlots, activityLogs] = await Promise.all([
+      const [studentCount, classes, attendanceStats, todaySlots, activityLogs, subjects] = await Promise.all([
         getStudentCount(),
         getClasses(),
         getTodayAttendanceStats(),
         getTodaySlots(),
         getActivityLogs(10),
+        getSubjects(),
       ]);
+
+      setClassesList(classes);
+      setSubjectsList(subjects);
 
       const today = new Date().toISOString().split('T')[0];
       const todayAttendanceSessions = await getAttendanceSessions({ date: today });
@@ -116,6 +131,25 @@ const AdminDashboardPage: React.FC = () => {
     };
   }, []);
 
+  useEffect(() => {
+    const fetchDefaulters = async () => {
+      setDefaultersLoading(true);
+      try {
+        const filters: any = {};
+        if (selectedClass && selectedClass !== 'all') filters.class_id = selectedClass;
+        if (selectedSubject && selectedSubject !== 'all') filters.subject_id = selectedSubject;
+
+        const data = await getDefaulters(filters);
+        setDefaulters(data.slice(0, 5)); // Top 5
+      } catch (error) {
+        console.error('Error fetching defaulters:', error);
+      } finally {
+        setDefaultersLoading(false);
+      }
+    };
+    fetchDefaulters();
+  }, [selectedClass, selectedSubject]);
+
   const sessionColumns = [
     { key: 'className', header: 'Class' },
     { key: 'subject', header: 'Subject' },
@@ -128,7 +162,7 @@ const AdminDashboardPage: React.FC = () => {
         <StatusBadge
           variant={
             session.status === 'Marked' ? 'success' :
-            session.status === 'On Leave' ? 'warning' : 'outline'
+              session.status === 'On Leave' ? 'warning' : 'outline'
           }
         >
           {session.status}
@@ -185,6 +219,68 @@ const AdminDashboardPage: React.FC = () => {
 
         {/* Main Content Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Top Defaulters Section */}
+          <div className="lg:col-span-3">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
+              <h2 className="text-lg font-semibold text-foreground flex items-center gap-2">
+                <Activity className="w-5 h-5 text-destructive" />
+                Top 5 Defaulters
+              </h2>
+              <div className="flex gap-2">
+                <div className="w-40">
+                  <Select value={selectedClass} onValueChange={setSelectedClass}>
+                    <SelectTrigger className="h-8">
+                      <SelectValue placeholder="All Classes" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Classes</SelectItem>
+                      {classesList.map(c => (
+                        <SelectItem key={c.id} value={c.id}>{c.name} {c.division}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="w-40">
+                  <Select value={selectedSubject} onValueChange={setSelectedSubject}>
+                    <SelectTrigger className="h-8">
+                      <SelectValue placeholder="All Subjects" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Subjects</SelectItem>
+                      {subjectsList.map(s => (
+                        <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            </div>
+
+            <div className="glass-card rounded-xl p-0 overflow-hidden">
+              <DataTable
+                columns={[
+                  { key: 'name', header: 'Student Name' },
+                  { key: 'className', header: 'Class' },
+                  { key: 'present', header: 'Present' },
+                  { key: 'total', header: 'Total' },
+                  {
+                    key: 'percentage',
+                    header: 'Attendance %',
+                    render: (row: any) => (
+                      <StatusBadge variant={row.percentage >= 75 ? 'success' : 'danger'}>
+                        {row.percentage}%
+                      </StatusBadge>
+                    )
+                  }
+                ]}
+                data={defaulters}
+                keyExtractor={(item) => item.id}
+                isLoading={defaultersLoading}
+                emptyMessage="No defaulters found"
+              />
+            </div>
+          </div>
+
           {/* Today's Attendance Status */}
           <div className="lg:col-span-2">
             <h2 className="text-lg font-semibold text-foreground mb-4">

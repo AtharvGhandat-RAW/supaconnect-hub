@@ -38,6 +38,7 @@ const adminNavItems: NavItem[] = [
   { label: 'Subjects', path: '/admin/subjects', icon: <BookOpen className="w-5 h-5" /> },
   { label: 'Allocations', path: '/admin/allocations', icon: <Link2 className="w-5 h-5" /> },
   { label: 'Students', path: '/admin/students', icon: <Users className="w-5 h-5" /> },
+  { label: 'Batches', path: '/admin/batches', icon: <Users className="w-5 h-5" /> },
   { label: 'Timetable', path: '/admin/timetable', icon: <Calendar className="w-5 h-5" /> },
   { label: 'Faculty Leave', path: '/admin/faculty-leave', icon: <CalendarOff className="w-5 h-5" /> },
   { label: 'Attendance', path: '/admin/attendance-monitor', icon: <ClipboardList className="w-5 h-5" /> },
@@ -54,6 +55,8 @@ const facultyNavItems: NavItem[] = [
   { label: 'Leave', path: '/faculty/leave', icon: <CalendarOff className="w-5 h-5" /> },
   { label: 'Reports', path: '/faculty/reports', icon: <FileBarChart className="w-5 h-5" /> },
   { label: 'My Subjects', path: '/faculty/subjects', icon: <BookOpen className="w-5 h-5" /> },
+  { label: 'Batches', path: '/faculty/batches', icon: <Users className="w-5 h-5" /> },
+  { label: 'Syllabus', path: '/faculty/syllabus', icon: <BookOpen className="w-5 h-5" /> },
   { label: 'Settings', path: '/faculty/settings', icon: <Settings className="w-5 h-5" /> },
 ];
 
@@ -83,7 +86,7 @@ export const PageShell: React.FC<PageShellProps> = ({ children, role }) => {
   });
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary-900 via-secondary-700/30 to-black">
+    <div className="min-h-screen bg-background text-foreground transition-colors duration-300">
       {/* Mobile Header */}
       <header className="lg:hidden fixed top-0 left-0 right-0 z-50 glass-card border-b border-border/50">
         <div className="flex items-center justify-between p-4">
@@ -147,8 +150,8 @@ export const PageShell: React.FC<PageShellProps> = ({ children, role }) => {
                           to={item.path}
                           onClick={() => setSidebarOpen(false)}
                           className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 ${isActive
-                              ? 'bg-primary/20 text-primary border border-primary/30'
-                              : 'text-muted-foreground hover:text-foreground hover:bg-white/5'
+                            ? 'bg-primary/20 text-primary border border-primary/30'
+                            : 'text-muted-foreground hover:text-foreground hover:bg-white/5'
                             }`}
                         >
                           {item.icon}
@@ -202,8 +205,8 @@ export const PageShell: React.FC<PageShellProps> = ({ children, role }) => {
                   <Link
                     to={item.path}
                     className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 ${isActive
-                        ? 'bg-primary/20 text-primary border border-primary/30'
-                        : 'text-muted-foreground hover:text-foreground hover:bg-white/5'
+                      ? 'bg-primary/20 text-primary border border-primary/30'
+                      : 'text-muted-foreground hover:text-foreground hover:bg-white/5'
                       }`}
                   >
                     {item.icon}

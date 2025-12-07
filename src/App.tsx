@@ -26,6 +26,7 @@ import AdminDefaulters from "./pages/admin/Defaulters";
 import AdminPromotion from "./pages/admin/Promotion";
 import AdminReports from "./pages/admin/Reports";
 import AdminSettings from "./pages/admin/Settings";
+import AdminBatches from "./pages/admin/Batches";
 
 // Faculty Pages
 import FacultyDashboard from "./pages/faculty/Dashboard";
@@ -35,6 +36,7 @@ import FacultyAttendanceView from "./pages/faculty/AttendanceView";
 import FacultyLeave from "./pages/faculty/Leave";
 import FacultyReports from "./pages/faculty/Reports";
 import FacultySubjects from "./pages/faculty/Subjects";
+import FacultySyllabus from "./pages/faculty/Syllabus";
 import FacultySettings from "./pages/faculty/Settings";
 
 const queryClient = new QueryClient();
@@ -64,6 +66,7 @@ const App = () => (
           <Route path="/admin/syllabus-progress" element={<RouteGuard allowedRole="ADMIN"><AdminSyllabusProgress /></RouteGuard>} />
           <Route path="/admin/defaulters" element={<RouteGuard allowedRole="ADMIN"><AdminDefaulters /></RouteGuard>} />
           <Route path="/admin/promotion" element={<RouteGuard allowedRole="ADMIN"><AdminPromotion /></RouteGuard>} />
+          <Route path="/admin/batches" element={<RouteGuard allowedRole="ADMIN"><AdminBatches /></RouteGuard>} />
           <Route path="/admin/reports" element={<RouteGuard allowedRole="ADMIN"><AdminReports /></RouteGuard>} />
           <Route path="/admin/settings" element={<RouteGuard allowedRole="ADMIN"><AdminSettings /></RouteGuard>} />
 
@@ -75,6 +78,8 @@ const App = () => (
           <Route path="/faculty/leave" element={<RouteGuard allowedRole="FACULTY"><FacultyLeave /></RouteGuard>} />
           <Route path="/faculty/reports" element={<RouteGuard allowedRole="FACULTY"><FacultyReports /></RouteGuard>} />
           <Route path="/faculty/subjects" element={<RouteGuard allowedRole="FACULTY"><FacultySubjects /></RouteGuard>} />
+          <Route path="/faculty/batches" element={<RouteGuard allowedRole="FACULTY"><AdminBatches role="faculty" /></RouteGuard>} />
+          <Route path="/faculty/syllabus" element={<RouteGuard allowedRole="FACULTY"><FacultySyllabus /></RouteGuard>} />
           <Route path="/faculty/settings" element={<RouteGuard allowedRole="FACULTY"><FacultySettings /></RouteGuard>} />
 
           {/* 404 */}

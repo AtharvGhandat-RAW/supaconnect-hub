@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
-import { Plus, Search, Upload, MoreVertical, UserCog, Download } from 'lucide-react';
+import { Download, Upload, Search, UserCog, MoreVertical, Plus, RefreshCw } from 'lucide-react';
 import PageShell from '@/components/layout/PageShell';
 import DataTable from '@/components/ui/DataTable';
 import StatusBadge from '@/components/ui/StatusBadge';
@@ -83,10 +83,10 @@ const AdminFacultyPage: React.FC = () => {
       fetchFaculty();
     } catch (error: unknown) {
       console.error('Error adding faculty:', error);
-      toast({ 
-        title: 'Error', 
-        description: error instanceof Error ? error.message : 'Failed to add faculty', 
-        variant: 'destructive' 
+      toast({
+        title: 'Error',
+        description: error instanceof Error ? error.message : 'Failed to add faculty',
+        variant: 'destructive'
       });
     } finally {
       setIsSubmitting(false);
@@ -112,7 +112,7 @@ const AdminFacultyPage: React.FC = () => {
       const text = event.target?.result as string;
       const lines = text.split('\n').filter(line => line.trim());
       const headers = lines[0].split(',').map(h => h.trim().toLowerCase());
-      
+
       const nameIdx = headers.indexOf('name');
       const emailIdx = headers.indexOf('email');
       const empCodeIdx = headers.indexOf('employee_code');
@@ -145,7 +145,10 @@ const AdminFacultyPage: React.FC = () => {
       }
 
       toast({ title: 'Import Complete', description: `${success} added, ${failed} failed` });
-      fetchFaculty();
+      // Small delay to allow DB to process
+      setTimeout(() => {
+        fetchFaculty();
+      }, 1000);
     };
     reader.readAsText(file);
     if (fileInputRef.current) fileInputRef.current.value = '';
@@ -167,9 +170,9 @@ const AdminFacultyPage: React.FC = () => {
         </div>
       ),
     },
-    { 
-      key: 'account', 
-      header: 'Account', 
+    {
+      key: 'account',
+      header: 'Account',
       render: (f: Faculty) => (
         <StatusBadge variant={f.profile_id ? 'success' : 'danger'}>
           {f.profile_id ? 'Created' : 'Pending'}
@@ -216,6 +219,9 @@ const AdminFacultyPage: React.FC = () => {
             <Button variant="outline" size="sm" onClick={() => downloadTemplate('faculty')}>
               <Download className="w-4 h-4 mr-2" />
               Template
+            </Button>
+            <Button variant="outline" size="sm" onClick={fetchFaculty} disabled={loading}>
+              <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
             </Button>
             <input
               ref={fileInputRef}
@@ -287,8 +293,8 @@ const AdminFacultyPage: React.FC = () => {
                       className="bg-muted/50 border-border/50"
                     />
                   </div>
-                  <Button 
-                    onClick={handleAddFaculty} 
+                  <Button
+                    onClick={handleAddFaculty}
                     className="w-full btn-gradient"
                     disabled={isSubmitting}
                   >

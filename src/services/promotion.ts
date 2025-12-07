@@ -59,15 +59,28 @@ export async function executePromotion(
 
   // Promote students
   for (const student of promoteStudents) {
-    await supabase
-      .from('students')
-      .update({
-        class_id: targetClassId,
-        semester: targetSemester,
-        roll_no: student.newRollNo,
-        year: Math.ceil(targetSemester / 2),
-      })
-      .eq('id', student.id);
+    if (targetClassId === 'COMPLETED') {
+      await supabase
+        .from('students')
+        .update({
+          class_id: null,
+          status: 'COMPLETED',
+          // Keep semester/year as record of last state or clear them? 
+          // Usually we keep them or move to an alumni table. 
+          // For now, just marking status as COMPLETED and removing class_id is enough to hide them from active lists.
+        })
+        .eq('id', student.id);
+    } else {
+      await supabase
+        .from('students')
+        .update({
+          class_id: targetClassId,
+          semester: targetSemester,
+          roll_no: student.newRollNo,
+          year: Math.ceil(targetSemester / 2),
+        })
+        .eq('id', student.id);
+    }
   }
 
   // Mark YD students

@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { BarChart3, BookOpen } from 'lucide-react';
+import { BarChart3, BookOpen, ArrowLeft } from 'lucide-react';
 import PageShell from '@/components/layout/PageShell';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Progress } from '@/components/ui/progress';
+import { Button } from '@/components/ui/button';
 import { toast } from '@/hooks/use-toast';
 import { getClasses, type Class } from '@/services/classes';
 import { getSubjects, type Subject } from '@/services/subjects';
@@ -14,11 +15,39 @@ interface UnitProgress {
   covered: number;
 }
 
+const SubjectProgressCard = ({ subject, onClick }: { subject: Subject, onClick: () => void }) => {
+  const [progress, setProgress] = useState<{ percentage: number; coveredTopics: number; totalTopics: number } | null>(null);
+
+  useEffect(() => {
+    getSyllabusProgress(subject.id).then(p => setProgress(p)).catch(console.error);
+  }, [subject.id]);
+
+  if (!progress) return <div className="glass-card p-6 animate-pulse h-32 rounded-xl"></div>;
+
+  return (
+    <div onClick={onClick} className="glass-card p-6 cursor-pointer hover:border-primary/50 transition-all hover:scale-[1.02] rounded-xl">
+      <div className="flex justify-between items-start mb-4">
+        <div>
+          <h3 className="font-semibold text-foreground">{subject.name}</h3>
+          <p className="text-xs text-muted-foreground">{subject.subject_code}</p>
+        </div>
+        <span className={`text-lg font-bold ${progress.percentage >= 75 ? 'text-green-500' : progress.percentage >= 50 ? 'text-yellow-500' : 'text-red-500'}`}>
+          {progress.percentage}%
+        </span>
+      </div>
+      <Progress value={progress.percentage} className="h-2 mb-2" />
+      <p className="text-xs text-muted-foreground text-right">
+        {progress.coveredTopics}/{progress.totalTopics} topics
+      </p>
+    </div>
+  );
+};
+
 const AdminSyllabusProgressPage: React.FC = () => {
   const [classes, setClasses] = useState<Class[]>([]);
   const [subjects, setSubjects] = useState<Subject[]>([]);
   const [loading, setLoading] = useState(true);
-  const [classFilter, setClassFilter] = useState('');
+  const [classFilter, setClassFilter] = useState('all');
   const [selectedSubject, setSelectedSubject] = useState('');
   const [progress, setProgress] = useState<{
     totalTopics: number;
@@ -63,44 +92,47 @@ const AdminSyllabusProgressPage: React.FC = () => {
     fetchProgress();
   }, [selectedSubject]);
 
-  const filteredSubjects = classFilter
+  const filteredSubjects = classFilter && classFilter !== 'all'
     ? subjects.filter(s => {
-        const classData = classes.find(c => c.id === classFilter);
-        return classData && s.semester === classData.semester;
-      })
+      const classData = classes.find(c => c.id === classFilter);
+      if (!classData) return true;
+      // Match by semester AND year to be precise
+      return String(s.semester) === String(classData.semester) && String(s.year) === String(classData.year);
+    })
     : subjects;
 
   return (
     <PageShell role="admin">
       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
-        <div>
-          <h1 className="text-2xl lg:text-3xl font-display font-bold text-foreground">Syllabus Progress</h1>
-          <p className="text-muted-foreground mt-1">Track syllabus completion across classes and subjects</p>
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl lg:text-3xl font-display font-bold text-foreground">Syllabus Progress</h1>
+            <p className="text-muted-foreground mt-1">Track syllabus completion across classes and subjects</p>
+          </div>
+          {selectedSubject && (
+            <Button variant="ghost" onClick={() => setSelectedSubject('')}>
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              Back to All
+            </Button>
+          )}
         </div>
 
         {/* Filters */}
-        <div className="flex flex-col sm:flex-row gap-4">
-          <Select value={classFilter} onValueChange={setClassFilter}>
-            <SelectTrigger className="w-full sm:w-48 bg-white/5 border-border/50">
-              <SelectValue placeholder="Select Class" />
-            </SelectTrigger>
-            <SelectContent>
-              {classes.map(c => (
-                <SelectItem key={c.id} value={c.id}>{c.name} {c.division}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <Select value={selectedSubject} onValueChange={setSelectedSubject}>
-            <SelectTrigger className="w-full sm:w-64 bg-white/5 border-border/50">
-              <SelectValue placeholder="Select Subject" />
-            </SelectTrigger>
-            <SelectContent>
-              {filteredSubjects.map(s => (
-                <SelectItem key={s.id} value={s.id}>{s.name} ({s.subject_code})</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
+        {!selectedSubject && (
+          <div className="flex flex-col sm:flex-row gap-4">
+            <Select value={classFilter} onValueChange={setClassFilter}>
+              <SelectTrigger className="w-full sm:w-48 bg-white/5 border-border/50">
+                <SelectValue placeholder="All Classes" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Classes</SelectItem>
+                {classes.map(c => (
+                  <SelectItem key={c.id} value={c.id}>{c.name} {c.division}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        )}
 
         {/* Progress Display */}
         {loading ? (
@@ -108,9 +140,16 @@ const AdminSyllabusProgressPage: React.FC = () => {
             <div className="h-32 bg-muted rounded"></div>
           </div>
         ) : !selectedSubject ? (
-          <div className="glass-card rounded-xl p-8 text-center">
-            <BarChart3 className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-            <p className="text-muted-foreground">Select a class and subject to view syllabus progress</p>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {filteredSubjects.length > 0 ? (
+              filteredSubjects.map(s => (
+                <SubjectProgressCard key={s.id} subject={s} onClick={() => setSelectedSubject(s.id)} />
+              ))
+            ) : (
+              <div className="col-span-full text-center py-12 text-muted-foreground">
+                No subjects found for the selected filter.
+              </div>
+            )}
           </div>
         ) : !progress || progress.totalTopics === 0 ? (
           <div className="glass-card rounded-xl p-8 text-center">
@@ -136,7 +175,7 @@ const AdminSyllabusProgressPage: React.FC = () => {
             <div className="glass-card rounded-xl p-6">
               <h2 className="text-lg font-semibold text-foreground mb-4">Unit-wise Progress</h2>
               <div className="space-y-4">
-                {[1, 2, 3, 4, 5].map(unit => {
+                {[1, 2, 3, 4, 5, 6].map(unit => {
                   const unitData = progress.unitProgress[unit];
                   if (!unitData || unitData.total === 0) return null;
 

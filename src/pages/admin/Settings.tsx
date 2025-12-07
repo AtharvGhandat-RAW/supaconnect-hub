@@ -1,15 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Settings as SettingsIcon, Save } from 'lucide-react';
+import { Settings as SettingsIcon, Save, Moon, Sun } from 'lucide-react';
 import PageShell from '@/components/layout/PageShell';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { toast } from '@/hooks/use-toast';
+import { useTheme } from '@/hooks/useTheme';
 import { getSettings, updateSettings, type Settings } from '@/services/settings';
 
 const AdminSettingsPage: React.FC = () => {
+  const { theme, toggleTheme } = useTheme();
   const [settings, setSettings] = useState<Partial<Settings>>({
     current_academic_year: '2025-26',
     current_semester: 1,
@@ -126,6 +128,22 @@ const AdminSettingsPage: React.FC = () => {
           <div className="glass-card rounded-xl p-6">
             <h2 className="text-lg font-semibold text-foreground mb-4">Features</h2>
             <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <Label>Dark Mode</Label>
+                  <p className="text-xs text-muted-foreground">
+                    Toggle dark/light theme
+                  </p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Sun className="w-4 h-4 text-muted-foreground" />
+                  <Switch
+                    checked={theme === 'dark'}
+                    onCheckedChange={toggleTheme}
+                  />
+                  <Moon className="w-4 h-4 text-muted-foreground" />
+                </div>
+              </div>
               <div className="flex items-center justify-between">
                 <div>
                   <Label>Auto Substitution</Label>
