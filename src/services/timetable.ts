@@ -1,4 +1,5 @@
 import { supabase } from '@/integrations/supabase/client';
+import { DAYS_OF_WEEK } from '@/lib/constants';
 
 export interface TimetableSlot {
   id: string;
@@ -40,8 +41,7 @@ export async function getTimetableSlots(filters?: {
 }
 
 export async function getTodaySlots(facultyId?: string) {
-  const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-  const today = days[new Date().getDay()];
+  const today = DAYS_OF_WEEK[new Date().getDay()];
   const todayDate = new Date().toISOString().split('T')[0];
 
   let query = supabase

@@ -10,7 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from '@/hooks/use-toast';
-import { getStudents, createStudent, bulkCreateStudents, type Student } from '@/services/students';
+import { getStudents, createStudent, bulkCreateStudents, updateStudent, type Student } from '@/services/students';
 import { getClasses, type Class } from '@/services/classes';
 import { downloadTemplate } from '@/utils/export';
 import { supabase } from '@/integrations/supabase/client';
@@ -23,6 +23,9 @@ const AdminStudentsPage: React.FC = () => {
   const [classFilter, setClassFilter] = useState('all');
   const [statusFilter, setStatusFilter] = useState('all');
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
   const [isPromoteDialogOpen, setIsPromoteDialogOpen] = useState(false);
   const [promoteFrom, setPromoteFrom] = useState('');
   const [promoteTo, setPromoteTo] = useState('');
@@ -169,9 +172,6 @@ const AdminStudentsPage: React.FC = () => {
         return;
       }
 
-      console.log('CSV Headers:', headers);
-      console.log('Available classes:', classes);
-
       // Helper function to find class by year and division
       const findClassId = (year: number, division: string): string | null => {
         // First try to match by year and division
@@ -179,18 +179,15 @@ const AdminStudentsPage: React.FC = () => {
           c.year === year && c.division?.toUpperCase() === division?.toUpperCase()
         );
         if (matchedClass) {
-          console.log(`Found class for Year ${year}, Division ${division}:`, matchedClass);
           return matchedClass.id;
         }
 
         // Try to match by year only
         const yearMatch = classes.find(c => c.year === year);
         if (yearMatch) {
-          console.log(`Found class for Year ${year} (any division):`, yearMatch);
           return yearMatch.id;
         }
 
-        console.log(`No class found for Year ${year}, Division ${division}`);
         return null;
       };
 
@@ -227,8 +224,6 @@ const AdminStudentsPage: React.FC = () => {
           class_id: classId,
         });
       }
-
-      console.log('Students to create:', studentsToCreate);
 
       try {
         if (studentsToCreate.length > 0) {
@@ -281,12 +276,39 @@ const AdminStudentsPage: React.FC = () => {
     {
       key: 'actions',
       header: '',
-      render: () => (
+      render: (s: Student) => (
         <div className="flex gap-2">
-          <Button variant="ghost" size="sm">
+          <Button 
+            variant="ghost" 
+            size="sm"
+            onClick={() => {
+              setSelectedStudent(s);
+              setIsViewDialogOpen(true);
+            }}
+            aria-label={`View ${s.name}`}
+          >
             <Eye className="w-4 h-4" />
           </Button>
-          <Button variant="ghost" size="sm">
+          <Button 
+            variant="ghost" 
+            size="sm"
+            onClick={() => {
+              setSelectedStudent(s);
+              setFormData({
+                name: s.name,
+                enrollment_no: s.enrollment_no || '',
+                roll_no: s.roll_no,
+                year: s.year,
+                semester: s.semester,
+                class_id: s.class_id || '',
+                division: s.division || 'A',
+                mobile: s.mobile || '',
+                email: s.email || '',
+              });
+              setIsEditDialogOpen(true);
+            }}
+            aria-label={`Edit ${s.name}`}
+          >
             <Edit2 className="w-4 h-4" />
           </Button>
         </div>
@@ -521,6 +543,187 @@ const AdminStudentsPage: React.FC = () => {
           isLoading={loading}
           emptyMessage="No students found"
         />
+
+        {/* View Student Dialog */}
+        <Dialog open={isViewDialogOpen} onOpenChange={setIsViewDialogOpen}>
+          <DialogContent className="glass-card border-border/50 max-w-lg">
+            <DialogHeader>
+              <DialogTitle>Student Details</DialogTitle>
+            </DialogHeader>
+            {selectedStudent && (
+              <div className="space-y-4 mt-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label className="text-muted-foreground text-xs">Name</Label>
+                    <p className="font-medium">{selectedStudent.name}</p>
+                  </div>
+                  <div>
+                    <Label className="text-muted-foreground text-xs">Roll No</Label>
+                    <p className="font-medium">{selectedStudent.roll_no || '-'}</p>
+                  </div>
+                  <div>
+                    <Label className="text-muted-foreground text-xs">Enrollment No</Label>
+                    <p className="font-medium">{selectedStudent.enrollment_no || '-'}</p>
+                  </div>
+                  <div>
+                    <Label className="text-muted-foreground text-xs">Year / Semester</Label>
+                    <p className="font-medium">{selectedStudent.year} / {selectedStudent.semester}</p>
+                  </div>
+                  <div>
+                    <Label className="text-muted-foreground text-xs">Division</Label>
+                    <p className="font-medium">{selectedStudent.division || '-'}</p>
+                  </div>
+                  <div>
+                    <Label className="text-muted-foreground text-xs">Status</Label>
+                    <StatusBadge variant={selectedStudent.status === 'ACTIVE' ? 'success' : selectedStudent.status === 'YD' ? 'warning' : 'outline'}>
+                      {selectedStudent.status}
+                    </StatusBadge>
+                  </div>
+                  <div>
+                    <Label className="text-muted-foreground text-xs">Mobile</Label>
+                    <p className="font-medium">{selectedStudent.mobile || '-'}</p>
+                  </div>
+                  <div>
+                    <Label className="text-muted-foreground text-xs">Email</Label>
+                    <p className="font-medium">{selectedStudent.email || '-'}</p>
+                  </div>
+                </div>
+                <Button 
+                  onClick={() => setIsViewDialogOpen(false)} 
+                  className="w-full"
+                  variant="outline"
+                >
+                  Close
+                </Button>
+              </div>
+            )}
+          </DialogContent>
+        </Dialog>
+
+        {/* Edit Student Dialog */}
+        <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+          <DialogContent className="glass-card border-border/50 max-w-lg">
+            <DialogHeader>
+              <DialogTitle>Edit Student</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4 mt-4">
+              <div>
+                <Label>Name *</Label>
+                <Input
+                  value={formData.name}
+                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  className="bg-muted/50 border-border/50"
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label>Roll No</Label>
+                  <Input
+                    type="number"
+                    value={formData.roll_no || ''}
+                    onChange={(e) => setFormData({ ...formData, roll_no: parseInt(e.target.value) || null })}
+                    className="bg-muted/50 border-border/50"
+                  />
+                </div>
+                <div>
+                  <Label>Enrollment No</Label>
+                  <Input
+                    value={formData.enrollment_no}
+                    onChange={(e) => setFormData({ ...formData, enrollment_no: e.target.value })}
+                    className="bg-muted/50 border-border/50"
+                  />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label>Year</Label>
+                  <Select value={formData.year.toString()} onValueChange={(v) => setFormData({ ...formData, year: parseInt(v) })}>
+                    <SelectTrigger className="bg-muted/50 border-border/50">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="1">1st Year</SelectItem>
+                      <SelectItem value="2">2nd Year</SelectItem>
+                      <SelectItem value="3">3rd Year</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label>Semester</Label>
+                  <Select value={formData.semester.toString()} onValueChange={(v) => setFormData({ ...formData, semester: parseInt(v) })}>
+                    <SelectTrigger className="bg-muted/50 border-border/50">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {[1, 2, 3, 4, 5, 6].map(s => (
+                        <SelectItem key={s} value={s.toString()}>Sem {s}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <div>
+                <Label>Class</Label>
+                <Select value={formData.class_id} onValueChange={(v) => setFormData({ ...formData, class_id: v })}>
+                  <SelectTrigger className="bg-muted/50 border-border/50">
+                    <SelectValue placeholder="Select class" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {classes.map((c) => (
+                      <SelectItem key={c.id} value={c.id}>{c.name} {c.division}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label>Mobile</Label>
+                  <Input
+                    value={formData.mobile}
+                    onChange={(e) => setFormData({ ...formData, mobile: e.target.value })}
+                    className="bg-muted/50 border-border/50"
+                  />
+                </div>
+                <div>
+                  <Label>Email</Label>
+                  <Input
+                    type="email"
+                    value={formData.email}
+                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                    className="bg-muted/50 border-border/50"
+                  />
+                </div>
+              </div>
+              <Button 
+                onClick={async () => {
+                  if (!selectedStudent) return;
+                  try {
+                    await updateStudent(selectedStudent.id, {
+                      name: formData.name,
+                      enrollment_no: formData.enrollment_no || null,
+                      roll_no: formData.roll_no,
+                      year: formData.year,
+                      semester: formData.semester,
+                      class_id: formData.class_id || null,
+                      division: formData.division,
+                      mobile: formData.mobile || null,
+                      email: formData.email || null,
+                    });
+                    toast({ title: 'Success', description: 'Student updated' });
+                    setIsEditDialogOpen(false);
+                    setSelectedStudent(null);
+                    fetchData();
+                  } catch (error) {
+                    toast({ title: 'Error', description: 'Failed to update student', variant: 'destructive' });
+                  }
+                }} 
+                className="w-full btn-gradient"
+              >
+                Save Changes
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
       </motion.div>
     </PageShell>
   );

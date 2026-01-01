@@ -17,7 +17,6 @@ const AdminSettingsPage: React.FC = () => {
     current_semester: 1,
     defaulter_threshold: 75,
     auto_substitution: true,
-    ai_suggestion: true,
   });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -154,18 +153,6 @@ const AdminSettingsPage: React.FC = () => {
                 <Switch
                   checked={settings.auto_substitution || false}
                   onCheckedChange={(checked) => setSettings({ ...settings, auto_substitution: checked })}
-                />
-              </div>
-              <div className="flex items-center justify-between">
-                <div>
-                  <Label>AI Suggestions</Label>
-                  <p className="text-xs text-muted-foreground">
-                    Enable AI-powered insights and suggestions
-                  </p>
-                </div>
-                <Switch
-                  checked={settings.ai_suggestion || false}
-                  onCheckedChange={(checked) => setSettings({ ...settings, ai_suggestion: checked })}
                 />
               </div>
             </div>

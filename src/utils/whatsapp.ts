@@ -1,4 +1,5 @@
 // WhatsApp Click-to-Chat utilities
+import { INDIA_COUNTRY_CODE } from '@/lib/constants';
 
 /**
  * Normalize Indian phone numbers to E.164 format
@@ -9,28 +10,29 @@ export function normalizeIndiaPhone(phone: string | null | undefined): string | 
   if (!phone) return null;
 
   // Remove all non-digit characters
-  let digits = phone.replace(/\D/g, '');
+  let digits = phone.replace(/\\D/g, '');
 
   // Handle various Indian phone formats
   if (digits.length === 10) {
-    // 10 digit: add 91 prefix
-    digits = '91' + digits;
+    // 10 digit: add country code prefix
+    digits = INDIA_COUNTRY_CODE + digits;
   } else if (digits.length === 11 && digits.startsWith('0')) {
-    // 11 digit starting with 0: remove 0, add 91
-    digits = '91' + digits.slice(1);
-  } else if (digits.length === 12 && digits.startsWith('91')) {
+    // 11 digit starting with 0: remove 0, add country code
+    digits = INDIA_COUNTRY_CODE + digits.slice(1);
+  } else if (digits.length === 12 && digits.startsWith(INDIA_COUNTRY_CODE)) {
     // Already has country code
     // digits is fine
-  } else if (digits.length === 13 && digits.startsWith('091')) {
+  } else if (digits.length === 13 && digits.startsWith('0' + INDIA_COUNTRY_CODE)) {
     // 091 prefix
-    digits = '91' + digits.slice(3);
+    digits = INDIA_COUNTRY_CODE + digits.slice(3);
   } else {
     // Invalid format
     return null;
   }
 
-  // Validate: must be 12 digits starting with 91 and then a valid mobile prefix (6-9)
-  if (digits.length === 12 && digits.startsWith('91') && /^91[6-9]\d{9}$/.test(digits)) {
+  // Validate: must be 12 digits starting with country code and then a valid mobile prefix (6-9)
+  const pattern = new RegExp(`^${INDIA_COUNTRY_CODE}[6-9]\\d{9}$`);
+  if (digits.length === 12 && digits.startsWith(INDIA_COUNTRY_CODE) && pattern.test(digits)) {
     return digits;
   }
 

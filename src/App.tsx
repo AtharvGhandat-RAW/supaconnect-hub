@@ -6,7 +6,6 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import RouteGuard from "@/components/auth/RouteGuard";
 
 // Pages
-import Splash from "./pages/Splash";
 import AdminLogin from "./pages/AdminLogin";
 import FacultyLogin from "./pages/FacultyLogin";
 import NotFound from "./pages/NotFound";
@@ -46,10 +45,10 @@ const App = () => (
     <TooltipProvider>
       <Toaster />
       <Sonner />
-      <BrowserRouter>
+      <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
         <Routes>
           {/* Public routes */}
-          <Route path="/" element={<Splash />} />
+          <Route path="/" element={<FacultyLogin />} />
           <Route path="/login/admin" element={<AdminLogin />} />
           <Route path="/login/faculty" element={<FacultyLogin />} />
 

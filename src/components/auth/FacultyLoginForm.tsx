@@ -8,8 +8,6 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
 import { toast } from '@/hooks/use-toast';
-import GlowPanel from '@/components/ui/GlowPanel';
-import FloatingOrbs from '@/components/ui/FloatingOrbs';
 import ritLogo from '@/assets/rit-logo.jpg';
 
 const FacultyLoginForm: React.FC = () => {
@@ -126,15 +124,13 @@ const FacultyLoginForm: React.FC = () => {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background p-4 relative overflow-hidden">
-      <FloatingOrbs count={5} opacity={0.12} />
-      
       <motion.div
         className="w-full max-w-md relative z-10"
         variants={containerVariants}
         initial="hidden"
         animate="visible"
       >
-        <GlowPanel glowColor="accent" className="group">
+        <div className="group">
           {/* Header */}
           <motion.div variants={itemVariants} className="text-center mb-8">
             <motion.div
@@ -244,7 +240,7 @@ const FacultyLoginForm: React.FC = () => {
               Admin login →
             </Link>
           </motion.div>
-        </GlowPanel>
+        </div>
       </motion.div>
     </div>
   );

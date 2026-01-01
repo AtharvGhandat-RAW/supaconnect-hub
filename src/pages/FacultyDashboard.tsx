@@ -4,7 +4,6 @@ import { LogOut, GraduationCap } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
-import FloatingOrbs from '@/components/ui/FloatingOrbs';
 
 const FacultyDashboard: React.FC = () => {
   const navigate = useNavigate();
@@ -17,12 +16,6 @@ const FacultyDashboard: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-indigo-950 via-violet-900/40 to-black relative overflow-hidden">
-      <FloatingOrbs 
-        count={4} 
-        opacity={0.1}
-        colors={['bg-indigo-500', 'bg-violet-600', 'bg-cyan-500']}
-      />
-      
       <div className="relative z-10 p-6 md:p-10">
         {/* Header */}
         <motion.header

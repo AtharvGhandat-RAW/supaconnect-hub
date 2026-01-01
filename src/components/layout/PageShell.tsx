@@ -22,7 +22,6 @@ import {
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
-import NotificationCenter from '@/components/faculty/NotificationCenter';
 import ritLogo from '@/assets/rit-logo.jpg';
 
 interface NavItem {
@@ -242,7 +241,7 @@ export const PageShell: React.FC<PageShellProps> = ({ children, role }) => {
             <p className="text-sm text-muted-foreground">{today}</p>
           </div>
           <div className="flex items-center gap-4">
-            {role === 'faculty' && <NotificationCenter />}
+            {/* Notifications removed */}
           </div>
         </div>
 

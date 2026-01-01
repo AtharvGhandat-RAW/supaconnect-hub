@@ -5,6 +5,7 @@ export interface SubjectAllocation {
   faculty_id: string;
   class_id: string;
   subject_id: string;
+  batch_id?: string | null;
   created_at: string;
   subjects?: {
     id: string;
@@ -18,6 +19,10 @@ export interface SubjectAllocation {
     id: string;
     name: string;
     division: string;
+  };
+  batches?: {
+    id: string;
+    name: string;
   };
   faculty?: {
     id: string;
@@ -44,6 +49,7 @@ export async function getSubjectAllocations(facultyId?: string) {
 }
 
 export async function getAllAllocationsWithFaculty() {
+  // First try with batches relation
   const { data, error } = await supabase
     .from('subject_allocations')
     .select(`
@@ -54,34 +60,83 @@ export async function getAllAllocationsWithFaculty() {
     `);
 
   if (error) throw error;
-  return data as SubjectAllocation[];
+  
+  // Try to fetch batch info separately if batch_id exists
+  const allocationsWithBatches = await Promise.all(
+    (data || []).map(async (alloc) => {
+      if (alloc.batch_id) {
+        try {
+          const { data: batchData } = await supabase
+            .from('batches')
+            .select('id, name')
+            .eq('id', alloc.batch_id)
+            .single();
+          return { ...alloc, batches: batchData };
+        } catch {
+          return alloc;
+        }
+      }
+      return alloc;
+    })
+  );
+  
+  return allocationsWithBatches as SubjectAllocation[];
 }
 
 export async function createSubjectAllocation(allocation: {
   faculty_id: string;
   class_id: string;
   subject_id: string;
+  batch_id?: string | null;
 }) {
-  // Check if already exists
+  // Check if already exists (without batch_id check since column may not exist)
   const { data: existing } = await supabase
     .from('subject_allocations')
     .select('id')
     .eq('faculty_id', allocation.faculty_id)
     .eq('class_id', allocation.class_id)
     .eq('subject_id', allocation.subject_id)
-    .single();
+    .maybeSingle();
 
   if (existing) {
     throw new Error('This allocation already exists');
   }
 
+  // Only include the core fields that definitely exist
+  const insertData: Record<string, unknown> = {
+    faculty_id: allocation.faculty_id,
+    class_id: allocation.class_id,
+    subject_id: allocation.subject_id,
+  };
+
+  // Try to include batch_id if provided - it will fail silently if column doesn't exist
+  if (allocation.batch_id) {
+    insertData.batch_id = allocation.batch_id;
+  }
+
   const { data, error } = await supabase
     .from('subject_allocations')
-    .insert(allocation)
+    .insert(insertData)
     .select()
     .single();
 
-  if (error) throw error;
+  if (error) {
+    // If error is about batch_id column not existing, retry without it
+    if (error.message?.includes('batch_id')) {
+      const { data: retryData, error: retryError } = await supabase
+        .from('subject_allocations')
+        .insert({
+          faculty_id: allocation.faculty_id,
+          class_id: allocation.class_id,
+          subject_id: allocation.subject_id,
+        })
+        .select()
+        .single();
+      if (retryError) throw retryError;
+      return retryData;
+    }
+    throw error;
+  }
   return data;
 }
 
@@ -99,28 +154,29 @@ export async function syncAllocationsFromTimetable() {
   // Get all timetable slots
   const { data: slots, error: slotsError } = await supabase
     .from('timetable_slots')
-    .select('faculty_id, class_id, subject_id');
+    .select('faculty_id, class_id, subject_id, batch_id');
 
   if (slotsError) throw slotsError;
 
   // Get existing allocations
   const { data: existingAllocs } = await supabase
     .from('subject_allocations')
-    .select('faculty_id, class_id, subject_id');
+    .select('faculty_id, class_id, subject_id, batch_id');
 
   const existingSet = new Set(
-    (existingAllocs || []).map(a => `${a.faculty_id}-${a.class_id}-${a.subject_id}`)
+    (existingAllocs || []).map(a => `${a.faculty_id}-${a.class_id}-${a.subject_id}-${a.batch_id || 'null'}`)
   );
 
   // Find unique combinations from timetable not in allocations
-  const toCreate = new Map<string, { faculty_id: string; class_id: string; subject_id: string }>();
+  const toCreate = new Map<string, { faculty_id: string; class_id: string; subject_id: string; batch_id?: string | null }>();
   (slots || []).forEach(slot => {
-    const key = `${slot.faculty_id}-${slot.class_id}-${slot.subject_id}`;
+    const key = `${slot.faculty_id}-${slot.class_id}-${slot.subject_id}-${slot.batch_id || 'null'}`;
     if (!existingSet.has(key) && !toCreate.has(key)) {
       toCreate.set(key, {
         faculty_id: slot.faculty_id,
         class_id: slot.class_id,
         subject_id: slot.subject_id,
+        batch_id: slot.batch_id || null,
       });
     }
   });

@@ -89,17 +89,41 @@ const AdminFacultyLeavePage: React.FC = () => {
     }
   };
 
-  const handleStatusUpdate = async (id: string, status: 'APPROVED' | 'REJECTED', facultyName: string) => {
+  const handleStatusUpdate = async (id: string, status: 'APPROVED' | 'REJECTED', facultyName: string, leave: LeaveWithFaculty) => {
     try {
       await updateLeaveStatus(id, status);
       
       // Log activity
       await createActivityLog(`Leave ${status.toLowerCase()} for ${facultyName}`);
       
-      // If approved, trigger substitution (would call edge function here)
+      // If approved, trigger substitution via edge function
       if (status === 'APPROVED') {
-        // TODO: Call assign-substitute edge function
-        toast({ title: 'Success', description: 'Leave approved. Substitution will be assigned.' });
+        try {
+          const response = await supabase.functions.invoke('assign-substitute', {
+            body: {
+              faculty_id: leave.faculty_id,
+              date: leave.date,
+              window: leave.leave_type || 'FULL_DAY',
+            },
+          });
+          
+          if (response.error) {
+            console.error('Substitution error:', response.error);
+            toast({ title: 'Warning', description: 'Leave approved but substitution assignment failed. Please assign manually.', variant: 'default' });
+          } else {
+            const data = response.data;
+            const assignedCount = data?.assignments?.length || 0;
+            toast({ 
+              title: 'Success', 
+              description: assignedCount > 0 
+                ? `Leave approved. ${assignedCount} substitution(s) assigned automatically.`
+                : 'Leave approved. No slots needed substitution.' 
+            });
+          }
+        } catch (subError) {
+          console.error('Substitution call failed:', subError);
+          toast({ title: 'Success', description: 'Leave approved. Substitution will need manual assignment.' });
+        }
       } else {
         toast({ title: 'Success', description: 'Leave rejected' });
       }
@@ -159,16 +183,18 @@ const AdminFacultyLeavePage: React.FC = () => {
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => handleStatusUpdate(leave.id, 'APPROVED', leave.faculty?.profiles?.name || '')}
+            onClick={() => handleStatusUpdate(leave.id, 'APPROVED', leave.faculty?.profiles?.name || '', leave)}
             className="text-success hover:text-success"
+            aria-label="Approve leave"
           >
             <Check className="w-4 h-4" />
           </Button>
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => handleStatusUpdate(leave.id, 'REJECTED', leave.faculty?.profiles?.name || '')}
+            onClick={() => handleStatusUpdate(leave.id, 'REJECTED', leave.faculty?.profiles?.name || '', leave)}
             className="text-danger hover:text-danger"
+            aria-label="Reject leave"
           >
             <X className="w-4 h-4" />
           </Button>

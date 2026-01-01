@@ -56,7 +56,9 @@ const AdminTimetablePage: React.FC = () => {
 
   useEffect(() => {
     if (formData.class_id) {
-      getBatches(formData.class_id).then(setBatches).catch(console.error);
+      getBatches(formData.class_id)
+        .then(setBatches)
+        .catch(() => setBatches([]));
     } else {
       setBatches([]);
     }
@@ -116,10 +118,10 @@ const AdminTimetablePage: React.FC = () => {
 
   const handleAddSlot = async () => {
     try {
-      // Convert empty batch_id to null to avoid UUID errors
+      // Convert empty or 'none' batch_id to null to avoid UUID errors
       const slotData = {
         ...formData,
-        batch_id: formData.batch_id || null
+        batch_id: (formData.batch_id && formData.batch_id !== 'none') ? formData.batch_id : null
       };
       await createTimetableSlot(slotData);
       toast({ title: 'Success', description: 'Timetable slot created' });
@@ -429,12 +431,13 @@ const AdminTimetablePage: React.FC = () => {
                       </SelectContent>
                     </Select>
                   </div>
-                  {subjects.find(s => s.id === formData.subject_id)?.type === 'PR' && (
+                  {batches.length > 0 && (
                     <div>
-                      <Label>Batch (Optional)</Label>
+                      <Label>Batch (Optional - for practicals)</Label>
                       <Select value={formData.batch_id} onValueChange={(v) => setFormData({ ...formData, batch_id: v })}>
-                        <SelectTrigger className="bg-white/5 border-border/50"><SelectValue placeholder="Select batch" /></SelectTrigger>
+                        <SelectTrigger className="bg-white/5 border-border/50"><SelectValue placeholder="Select batch (optional)" /></SelectTrigger>
                         <SelectContent>
+                          <SelectItem value="none">None (Whole Class)</SelectItem>
                           {batches.map(b => <SelectItem key={b.id} value={b.id}>{b.name}</SelectItem>)}
                         </SelectContent>
                       </Select>

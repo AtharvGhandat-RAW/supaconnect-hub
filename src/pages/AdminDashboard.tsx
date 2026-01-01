@@ -4,7 +4,6 @@ import { LogOut, Shield } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
-import FloatingOrbs from '@/components/ui/FloatingOrbs';
 
 const AdminDashboard: React.FC = () => {
   const navigate = useNavigate();
@@ -17,8 +16,6 @@ const AdminDashboard: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary-900 via-secondary-700/30 to-black relative overflow-hidden">
-      <FloatingOrbs count={4} opacity={0.1} />
-      
       <div className="relative z-10 p-6 md:p-10">
         {/* Header */}
         <motion.header

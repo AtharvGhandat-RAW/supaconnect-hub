@@ -20,12 +20,14 @@ import {
 import { getFaculty, type Faculty } from '@/services/faculty';
 import { getClasses, type Class } from '@/services/classes';
 import { getSubjects, type Subject } from '@/services/subjects';
+import { getBatches, type Batch } from '@/services/batches';
 
 const AdminAllocationsPage: React.FC = () => {
     const [allocations, setAllocations] = useState<SubjectAllocation[]>([]);
     const [faculty, setFaculty] = useState<Faculty[]>([]);
     const [classes, setClasses] = useState<Class[]>([]);
     const [subjects, setSubjects] = useState<Subject[]>([]);
+    const [batches, setBatches] = useState<Batch[]>([]);
     const [loading, setLoading] = useState(true);
     const [syncing, setSyncing] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
@@ -34,6 +36,7 @@ const AdminAllocationsPage: React.FC = () => {
         faculty_id: '',
         class_id: '',
         subject_id: '',
+        batch_id: '',
     });
 
     const fetchData = async () => {
@@ -60,6 +63,19 @@ const AdminAllocationsPage: React.FC = () => {
         fetchData();
     }, []);
 
+    useEffect(() => {
+        if (newAllocation.class_id) {
+            getBatches(newAllocation.class_id)
+                .then(setBatches)
+                .catch(() => {
+                    setBatches([]);
+                    // Silently fail - batches are optional
+                });
+        } else {
+            setBatches([]);
+        }
+    }, [newAllocation.class_id]);
+
     const handleSync = async () => {
         setSyncing(true);
         try {
@@ -84,10 +100,13 @@ const AdminAllocationsPage: React.FC = () => {
         }
 
         try {
-            await createSubjectAllocation(newAllocation);
+            await createSubjectAllocation({
+                ...newAllocation,
+                batch_id: (newAllocation.batch_id && newAllocation.batch_id !== 'none') ? newAllocation.batch_id : null,
+            });
             toast({ title: 'Success', description: 'Allocation created' });
             setIsAddDialogOpen(false);
-            setNewAllocation({ faculty_id: '', class_id: '', subject_id: '' });
+            setNewAllocation({ faculty_id: '', class_id: '', subject_id: '', batch_id: '' });
             fetchData();
         } catch (error) {
             const message = error instanceof Error ? error.message : 'Failed to create allocation';
@@ -143,9 +162,16 @@ const AdminAllocationsPage: React.FC = () => {
         },
         {
             key: 'class',
-            header: 'Class',
+            header: 'Class / Batch',
             render: (a: SubjectAllocation) => (
-                <span className="text-foreground">{a.classes?.name} {a.classes?.division}</span>
+                <div>
+                    <span className="text-foreground">{a.classes?.name} {a.classes?.division}</span>
+                    {a.batches && (
+                        <span className="ml-2 text-xs bg-accent/20 text-accent px-2 py-0.5 rounded-full">
+                            {a.batches.name}
+                        </span>
+                    )}
+                </div>
             ),
         },
         {
@@ -176,6 +202,7 @@ const AdminAllocationsPage: React.FC = () => {
                     size="sm"
                     onClick={() => handleDelete(a.id)}
                     className="text-danger hover:text-danger"
+                    aria-label={`Delete allocation for ${a.subjects?.name || 'subject'}`}
                 >
                     <Trash2 className="w-4 h-4" />
                 </Button>
@@ -237,7 +264,7 @@ const AdminAllocationsPage: React.FC = () => {
                                         <Label>Class</Label>
                                         <Select
                                             value={newAllocation.class_id}
-                                            onValueChange={(v) => setNewAllocation({ ...newAllocation, class_id: v, subject_id: '' })}
+                                            onValueChange={(v) => setNewAllocation({ ...newAllocation, class_id: v, subject_id: '', batch_id: '' })}
                                         >
                                             <SelectTrigger className="bg-white/5 border-border/50 mt-1">
                                                 <SelectValue placeholder="Select class" />
@@ -251,6 +278,28 @@ const AdminAllocationsPage: React.FC = () => {
                                             </SelectContent>
                                         </Select>
                                     </div>
+
+                                    {batches.length > 0 && (
+                                        <div>
+                                            <Label>Batch (Optional)</Label>
+                                            <Select
+                                                value={newAllocation.batch_id}
+                                                onValueChange={(v) => setNewAllocation({ ...newAllocation, batch_id: v })}
+                                            >
+                                                <SelectTrigger className="bg-white/5 border-border/50 mt-1">
+                                                    <SelectValue placeholder="Select batch (for practicals)" />
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                    <SelectItem value="none">None (Whole Class)</SelectItem>
+                                                    {batches.map((b) => (
+                                                        <SelectItem key={b.id} value={b.id}>
+                                                            {b.name}
+                                                        </SelectItem>
+                                                    ))}
+                                                </SelectContent>
+                                            </Select>
+                                        </div>
+                                    )}
 
                                     <div>
                                         <Label>Subject</Label>

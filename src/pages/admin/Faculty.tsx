@@ -198,6 +198,7 @@ const AdminFacultyPage: React.FC = () => {
           size="sm"
           onClick={() => handleToggleStatus(f.id, f.status)}
           className="text-muted-foreground hover:text-foreground"
+          aria-label={`Toggle status for ${f.profiles?.name || 'faculty'}`}
         >
           <MoreVertical className="w-4 h-4" />
         </Button>
@@ -220,7 +221,7 @@ const AdminFacultyPage: React.FC = () => {
               <Download className="w-4 h-4 mr-2" />
               Template
             </Button>
-            <Button variant="outline" size="sm" onClick={fetchFaculty} disabled={loading}>
+            <Button variant="outline" size="sm" onClick={fetchFaculty} disabled={loading} aria-label="Refresh faculty list">
               <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
             </Button>
             <input
