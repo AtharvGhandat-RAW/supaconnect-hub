@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
-import { Plus, Search, BookOpen, Edit2, ChevronDown, ChevronRight, Check, X, Trash2, FileText, Download, Upload, RefreshCw } from 'lucide-react';
+import { Plus, Search, BookOpen, Edit2, Check, X, Trash2, Download, Upload, RefreshCw } from 'lucide-react';
 import PageShell from '@/components/layout/PageShell';
 import DataTable from '@/components/ui/DataTable';
 import StatusBadge from '@/components/ui/StatusBadge';
@@ -8,20 +8,11 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from '@/hooks/use-toast';
 import { getSubjects, createSubject, updateSubject, deleteSubject, type Subject } from '@/services/subjects';
 import { downloadTemplate } from '@/utils/export';
-import { supabase } from '@/integrations/supabase/client';
-import {
-  getSyllabusTopics,
-  createSyllabusTopic,
-  updateSyllabusTopic,
-  deleteSyllabusTopic,
-  type SyllabusTopic
-} from '@/services/syllabus';
 
 const AdminSubjectsPage: React.FC = () => {
   const [subjects, setSubjects] = useState<Subject[]>([]);
@@ -33,16 +24,6 @@ const AdminSubjectsPage: React.FC = () => {
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [subjectToDelete, setSubjectToDelete] = useState<Subject | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-
-  // Syllabus management state
-  const [syllabusDialogOpen, setSyllabusDialogOpen] = useState(false);
-  const [selectedSubject, setSelectedSubject] = useState<Subject | null>(null);
-  const [topics, setTopics] = useState<SyllabusTopic[]>([]);
-  const [loadingTopics, setLoadingTopics] = useState(false);
-  const [expandedUnits, setExpandedUnits] = useState<Set<number>>(new Set([1, 2, 3, 4, 5]));
-  const [addingTopicFor, setAddingTopicFor] = useState<number | null>(null);
-  const [newTopicText, setNewTopicText] = useState('');
-  const [editingTopic, setEditingTopic] = useState<{ id: string; text: string } | null>(null);
 
   const [formData, setFormData] = useState({
     subject_code: '',
@@ -198,86 +179,6 @@ const AdminSubjectsPage: React.FC = () => {
     }
   };
 
-  // Syllabus management functions
-  const openSyllabusDialog = async (subject: Subject) => {
-    setSelectedSubject(subject);
-    setSyllabusDialogOpen(true);
-    setLoadingTopics(true);
-    try {
-      const topicData = await getSyllabusTopics(subject.id);
-      setTopics(topicData);
-    } catch (error) {
-      console.error('Error loading topics:', error);
-      toast({ title: 'Error', description: 'Failed to load syllabus', variant: 'destructive' });
-    } finally {
-      setLoadingTopics(false);
-    }
-  };
-
-  const handleAddTopic = async () => {
-    if (!selectedSubject || addingTopicFor === null || !newTopicText.trim()) return;
-
-    try {
-      await createSyllabusTopic({
-        subject_id: selectedSubject.id,
-        unit_no: addingTopicFor,
-        topic_text: newTopicText.trim(),
-      });
-      toast({ title: 'Success', description: 'Topic added' });
-      setAddingTopicFor(null);
-      setNewTopicText('');
-      // Refresh topics
-      const topicData = await getSyllabusTopics(selectedSubject.id);
-      setTopics(topicData);
-    } catch (error) {
-      const message = error instanceof Error ? error.message : 'Failed to add topic';
-      toast({ title: 'Error', description: message, variant: 'destructive' });
-    }
-  };
-
-  const handleUpdateTopic = async () => {
-    if (!editingTopic || !editingTopic.text.trim() || !selectedSubject) return;
-
-    try {
-      await updateSyllabusTopic(editingTopic.id, { topic_text: editingTopic.text.trim() });
-      toast({ title: 'Success', description: 'Topic updated' });
-      setEditingTopic(null);
-      const topicData = await getSyllabusTopics(selectedSubject.id);
-      setTopics(topicData);
-    } catch (error) {
-      const message = error instanceof Error ? error.message : 'Failed to update topic';
-      toast({ title: 'Error', description: message, variant: 'destructive' });
-    }
-  };
-
-  const handleDeleteTopic = async (topicId: string) => {
-    if (!selectedSubject) return;
-    if (!confirm('Delete this topic? This will also remove any coverage records.')) return;
-
-    try {
-      await deleteSyllabusTopic(topicId, true);
-      toast({ title: 'Success', description: 'Topic deleted' });
-      const topicData = await getSyllabusTopics(selectedSubject.id);
-      setTopics(topicData);
-    } catch (error) {
-      toast({ title: 'Error', description: 'Failed to delete topic', variant: 'destructive' });
-    }
-  };
-
-  const toggleUnit = (unitNo: number) => {
-    setExpandedUnits(prev => {
-      const newSet = new Set(prev);
-      if (newSet.has(unitNo)) {
-        newSet.delete(unitNo);
-      } else {
-        newSet.add(unitNo);
-      }
-      return newSet;
-    });
-  };
-
-  const getTopicsByUnit = (unitNo: number) => topics.filter(t => t.unit_no === unitNo);
-
   const columns = [
     { key: 'subject_code', header: 'Code' },
     {
@@ -318,9 +219,6 @@ const AdminSubjectsPage: React.FC = () => {
       header: '',
       render: (s: Subject) => (
         <div className="flex gap-1">
-          <Button variant="ghost" size="sm" onClick={() => openSyllabusDialog(s)} title="Manage Syllabus">
-            <FileText className="w-4 h-4" />
-          </Button>
           <Button variant="ghost" size="sm" onClick={() => handleEdit(s)} title="Edit Subject">
             <Edit2 className="w-4 h-4" />
           </Button>
@@ -474,154 +372,6 @@ const AdminSubjectsPage: React.FC = () => {
           isLoading={loading}
           emptyMessage="No subjects found"
         />
-
-        {/* Syllabus Management Dialog */}
-        <Dialog open={syllabusDialogOpen} onOpenChange={setSyllabusDialogOpen}>
-          <DialogContent className="glass-card border-border/50 max-w-3xl max-h-[85vh] overflow-hidden flex flex-col">
-            <DialogHeader>
-              <DialogTitle className="flex items-center gap-2">
-                <BookOpen className="w-5 h-5 text-accent" />
-                Syllabus: {selectedSubject?.name}
-                <span className="text-sm text-muted-foreground font-normal">({selectedSubject?.subject_code})</span>
-              </DialogTitle>
-            </DialogHeader>
-
-            <div className="flex-1 overflow-y-auto mt-4 space-y-3">
-              {loadingTopics ? (
-                <div className="space-y-3">
-                  {[1, 2, 3].map(i => (
-                    <div key={i} className="h-20 bg-muted/20 rounded-lg animate-pulse" />
-                  ))}
-                </div>
-              ) : (
-                [1, 2, 3, 4, 5].map(unitNo => {
-                  const unitTopics = getTopicsByUnit(unitNo);
-                  const isExpanded = expandedUnits.has(unitNo);
-
-                  return (
-                    <div key={unitNo} className="border border-border/30 rounded-lg overflow-hidden">
-                      <button
-                        onClick={() => toggleUnit(unitNo)}
-                        className="w-full p-3 flex items-center justify-between bg-white/5 hover:bg-white/10 transition-colors"
-                      >
-                        <div className="flex items-center gap-2">
-                          {isExpanded ? (
-                            <ChevronDown className="w-4 h-4 text-muted-foreground" />
-                          ) : (
-                            <ChevronRight className="w-4 h-4 text-muted-foreground" />
-                          )}
-                          <span className="font-medium text-foreground">Unit {unitNo}</span>
-                          <span className="text-xs text-muted-foreground">
-                            ({unitTopics.length} topic{unitTopics.length !== 1 ? 's' : ''})
-                          </span>
-                        </div>
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setAddingTopicFor(unitNo);
-                            setNewTopicText('');
-                          }}
-                          className="h-7 text-xs"
-                        >
-                          <Plus className="w-3 h-3 mr-1" />
-                          Add Topic
-                        </Button>
-                      </button>
-
-                      {isExpanded && (
-                        <div className="p-3 space-y-2 bg-black/10">
-                          {/* Add topic form */}
-                          {addingTopicFor === unitNo && (
-                            <div className="p-3 bg-accent/10 rounded-lg border border-accent/30">
-                              <Textarea
-                                value={newTopicText}
-                                onChange={(e) => setNewTopicText(e.target.value)}
-                                placeholder="Enter topic text (no character limit)..."
-                                className="bg-white/5 border-border/50 min-h-[80px] text-sm"
-                                autoFocus
-                              />
-                              <div className="flex gap-2 mt-2">
-                                <Button size="sm" onClick={handleAddTopic} className="btn-gradient">
-                                  <Check className="w-4 h-4 mr-1" />
-                                  Add
-                                </Button>
-                                <Button size="sm" variant="ghost" onClick={() => setAddingTopicFor(null)}>
-                                  <X className="w-4 h-4 mr-1" />
-                                  Cancel
-                                </Button>
-                              </div>
-                            </div>
-                          )}
-
-                          {unitTopics.length === 0 && addingTopicFor !== unitNo ? (
-                            <p className="text-sm text-muted-foreground text-center py-4">
-                              No topics in this unit yet
-                            </p>
-                          ) : (
-                            unitTopics.map((topic, idx) => (
-                              <div key={topic.id} className="flex items-start gap-2 p-2 rounded-lg hover:bg-white/5 group">
-                                <span className="text-xs text-muted-foreground w-6 pt-1">{idx + 1}.</span>
-                                {editingTopic?.id === topic.id ? (
-                                  <div className="flex-1">
-                                    <Textarea
-                                      value={editingTopic.text}
-                                      onChange={(e) => setEditingTopic({ ...editingTopic, text: e.target.value })}
-                                      className="bg-white/5 border-border/50 min-h-[60px] text-sm"
-                                      autoFocus
-                                    />
-                                    <div className="flex gap-2 mt-2">
-                                      <Button size="sm" onClick={handleUpdateTopic}>
-                                        <Check className="w-3 h-3 mr-1" />
-                                        Save
-                                      </Button>
-                                      <Button size="sm" variant="ghost" onClick={() => setEditingTopic(null)}>
-                                        Cancel
-                                      </Button>
-                                    </div>
-                                  </div>
-                                ) : (
-                                  <>
-                                    <p className="flex-1 text-sm text-foreground whitespace-pre-wrap">{topic.topic_text}</p>
-                                    <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                      <Button
-                                        size="sm"
-                                        variant="ghost"
-                                        onClick={() => setEditingTopic({ id: topic.id, text: topic.topic_text })}
-                                        className="h-7 w-7 p-0"
-                                      >
-                                        <Edit2 className="w-3 h-3" />
-                                      </Button>
-                                      <Button
-                                        size="sm"
-                                        variant="ghost"
-                                        onClick={() => handleDeleteTopic(topic.id)}
-                                        className="h-7 w-7 p-0 text-danger hover:text-danger"
-                                      >
-                                        <Trash2 className="w-3 h-3" />
-                                      </Button>
-                                    </div>
-                                  </>
-                                )}
-                              </div>
-                            ))
-                          )}
-                        </div>
-                      )}
-                    </div>
-                  );
-                })
-              )}
-            </div>
-
-            <div className="pt-4 border-t border-border/30 mt-4">
-              <p className="text-sm text-muted-foreground text-center">
-                📚 Total: {topics.length} topic{topics.length !== 1 ? 's' : ''} across all units
-              </p>
-            </div>
-          </DialogContent>
-        </Dialog>
 
         {/* Delete Confirmation Dialog */}
         <Dialog open={deleteConfirmOpen} onOpenChange={setDeleteConfirmOpen}>

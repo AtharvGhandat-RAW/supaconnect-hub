@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Settings as SettingsIcon, Save, Moon, Sun } from 'lucide-react';
+import { Settings as SettingsIcon, Save, Moon, Sun, Calendar } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import PageShell from '@/components/layout/PageShell';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -9,6 +10,7 @@ import { Switch } from '@/components/ui/switch';
 import { toast } from '@/hooks/use-toast';
 import { useTheme } from '@/hooks/useTheme';
 import { getSettings, updateSettings, type Settings } from '@/services/settings';
+import { getUpcomingHolidays } from '@/services/holidays';
 
 const AdminSettingsPage: React.FC = () => {
   const { theme, toggleTheme } = useTheme();

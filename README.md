@@ -9,18 +9,19 @@ A premium, production-ready attendance and academic management web application f
 - Faculty, Classes, Subjects, and Students management
 - Timetable import and management
 - Faculty leave approval with auto-substitution
-- Syllabus progress tracking
+- Holiday and calendar management
+- Manual substitution assignments
 - Defaulter list generation with PDF/CSV exports
 - Student promotion/YD wizard
 - Comprehensive reports and analytics
 
 ### Faculty Dashboard
 - Today's lectures overview
-- Attendance marking with syllabus coverage
+- Attendance marking
+- Lecture transfer requests
 - Auto-generated absent messages (English & Marathi)
 - Leave request management
 - Subject-wise reports
-- Syllabus topic management
 
 ## Tech Stack
 
@@ -152,8 +153,8 @@ The application uses the following main tables:
 - `attendance_records` - Individual student attendance
 - `faculty_leaves` - Leave requests
 - `substitution_assignments` - Substitute faculty assignments
-- `syllabus_topics` - Syllabus content
-- `syllabus_coverage` - Topics covered per session
+- `holidays` - Holiday and calendar management
+- `lecture_transfers` - Faculty lecture transfer requests
 - `activity_log` - System activity log
 - `settings` - Application settings
 

@@ -20,12 +20,13 @@ import AdminAllocations from "./pages/admin/Allocations";
 import AdminTimetable from "./pages/admin/Timetable";
 import AdminFacultyLeave from "./pages/admin/FacultyLeave";
 import AdminAttendanceMonitor from "./pages/admin/AttendanceMonitor";
-import AdminSyllabusProgress from "./pages/admin/SyllabusProgress";
 import AdminDefaulters from "./pages/admin/Defaulters";
 import AdminPromotion from "./pages/admin/Promotion";
 import AdminReports from "./pages/admin/Reports";
 import AdminSettings from "./pages/admin/Settings";
 import AdminBatches from "./pages/admin/Batches";
+import AdminHolidays from "./pages/admin/Holidays";
+import AdminSubstitutions from "./pages/admin/Substitutions";
 
 // Faculty Pages
 import FacultyDashboard from "./pages/faculty/Dashboard";
@@ -35,8 +36,8 @@ import FacultyAttendanceView from "./pages/faculty/AttendanceView";
 import FacultyLeave from "./pages/faculty/Leave";
 import FacultyReports from "./pages/faculty/Reports";
 import FacultySubjects from "./pages/faculty/Subjects";
-import FacultySyllabus from "./pages/faculty/Syllabus";
 import FacultySettings from "./pages/faculty/Settings";
+import FacultyTransfers from "./pages/faculty/Transfers";
 
 const queryClient = new QueryClient();
 
@@ -62,10 +63,11 @@ const App = () => (
           <Route path="/admin/timetable" element={<RouteGuard allowedRole="ADMIN"><AdminTimetable /></RouteGuard>} />
           <Route path="/admin/faculty-leave" element={<RouteGuard allowedRole="ADMIN"><AdminFacultyLeave /></RouteGuard>} />
           <Route path="/admin/attendance-monitor" element={<RouteGuard allowedRole="ADMIN"><AdminAttendanceMonitor /></RouteGuard>} />
-          <Route path="/admin/syllabus-progress" element={<RouteGuard allowedRole="ADMIN"><AdminSyllabusProgress /></RouteGuard>} />
           <Route path="/admin/defaulters" element={<RouteGuard allowedRole="ADMIN"><AdminDefaulters /></RouteGuard>} />
           <Route path="/admin/promotion" element={<RouteGuard allowedRole="ADMIN"><AdminPromotion /></RouteGuard>} />
           <Route path="/admin/batches" element={<RouteGuard allowedRole="ADMIN"><AdminBatches /></RouteGuard>} />
+          <Route path="/admin/holidays" element={<RouteGuard allowedRole="ADMIN"><AdminHolidays /></RouteGuard>} />
+          <Route path="/admin/substitutions" element={<RouteGuard allowedRole="ADMIN"><AdminSubstitutions /></RouteGuard>} />
           <Route path="/admin/reports" element={<RouteGuard allowedRole="ADMIN"><AdminReports /></RouteGuard>} />
           <Route path="/admin/settings" element={<RouteGuard allowedRole="ADMIN"><AdminSettings /></RouteGuard>} />
 
@@ -78,7 +80,7 @@ const App = () => (
           <Route path="/faculty/reports" element={<RouteGuard allowedRole="FACULTY"><FacultyReports /></RouteGuard>} />
           <Route path="/faculty/subjects" element={<RouteGuard allowedRole="FACULTY"><FacultySubjects /></RouteGuard>} />
           <Route path="/faculty/batches" element={<RouteGuard allowedRole="FACULTY"><AdminBatches role="faculty" /></RouteGuard>} />
-          <Route path="/faculty/syllabus" element={<RouteGuard allowedRole="FACULTY"><FacultySyllabus /></RouteGuard>} />
+          <Route path="/faculty/transfers" element={<RouteGuard allowedRole="FACULTY"><FacultyTransfers /></RouteGuard>} />
           <Route path="/faculty/settings" element={<RouteGuard allowedRole="FACULTY"><FacultySettings /></RouteGuard>} />
 
           {/* 404 */}

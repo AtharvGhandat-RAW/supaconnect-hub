@@ -44,6 +44,18 @@ export async function getTodaySlots(facultyId?: string) {
   const today = DAYS_OF_WEEK[new Date().getDay()];
   const todayDate = new Date().toISOString().split('T')[0];
 
+  // Check if today is a holiday
+  const { data: holiday } = await supabase
+    .from('holidays')
+    .select('id, name, holiday_type')
+    .eq('date', todayDate)
+    .single();
+
+  // If it's a full holiday, return empty array
+  if (holiday && holiday.holiday_type === 'HOLIDAY') {
+    return [];
+  }
+
   let query = supabase
     .from('timetable_slots')
     .select(`
@@ -58,6 +70,12 @@ export async function getTodaySlots(facultyId?: string) {
     .order('start_time', { ascending: true });
 
   if (facultyId) query = query.eq('faculty_id', facultyId);
+
+  // If it's a half day, filter by time
+  if (holiday && holiday.holiday_type === 'HALF_DAY') {
+    // Assuming half day means afternoon off
+    query = query.lt('start_time', '12:30:00');
+  }
 
   const { data, error } = await query;
   if (error) throw error;

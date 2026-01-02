@@ -15,10 +15,12 @@ import {
   X,
   UserCog,
   CalendarOff,
-  BarChart3,
   AlertTriangle,
   ArrowUpCircle,
   Link2,
+  CalendarDays,
+  RefreshCw,
+  ArrowRightLeft,
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
@@ -39,9 +41,10 @@ const adminNavItems: NavItem[] = [
   { label: 'Students', path: '/admin/students', icon: <Users className="w-5 h-5" /> },
   { label: 'Batches', path: '/admin/batches', icon: <Users className="w-5 h-5" /> },
   { label: 'Timetable', path: '/admin/timetable', icon: <Calendar className="w-5 h-5" /> },
+  { label: 'Holidays', path: '/admin/holidays', icon: <CalendarDays className="w-5 h-5" /> },
   { label: 'Faculty Leave', path: '/admin/faculty-leave', icon: <CalendarOff className="w-5 h-5" /> },
+  { label: 'Substitutions', path: '/admin/substitutions', icon: <RefreshCw className="w-5 h-5" /> },
   { label: 'Attendance', path: '/admin/attendance-monitor', icon: <ClipboardList className="w-5 h-5" /> },
-  { label: 'Syllabus', path: '/admin/syllabus-progress', icon: <BarChart3 className="w-5 h-5" /> },
   { label: 'Defaulters', path: '/admin/defaulters', icon: <AlertTriangle className="w-5 h-5" /> },
   { label: 'Promotion', path: '/admin/promotion', icon: <ArrowUpCircle className="w-5 h-5" /> },
   { label: 'Reports', path: '/admin/reports', icon: <FileBarChart className="w-5 h-5" /> },
@@ -52,10 +55,10 @@ const facultyNavItems: NavItem[] = [
   { label: 'Dashboard', path: '/faculty/dashboard', icon: <LayoutDashboard className="w-5 h-5" /> },
   { label: "Today's Lectures", path: '/faculty/today', icon: <Calendar className="w-5 h-5" /> },
   { label: 'Leave', path: '/faculty/leave', icon: <CalendarOff className="w-5 h-5" /> },
+  { label: 'Transfers', path: '/faculty/transfers', icon: <ArrowRightLeft className="w-5 h-5" /> },
   { label: 'Reports', path: '/faculty/reports', icon: <FileBarChart className="w-5 h-5" /> },
   { label: 'My Subjects', path: '/faculty/subjects', icon: <BookOpen className="w-5 h-5" /> },
   { label: 'Batches', path: '/faculty/batches', icon: <Users className="w-5 h-5" /> },
-  { label: 'Syllabus', path: '/faculty/syllabus', icon: <BookOpen className="w-5 h-5" /> },
   { label: 'Settings', path: '/faculty/settings', icon: <Settings className="w-5 h-5" /> },
 ];
 
@@ -94,7 +97,6 @@ export const PageShell: React.FC<PageShellProps> = ({ children, role }) => {
             <span className="font-display font-semibold text-foreground">RIT AIML</span>
           </div>
           <div className="flex items-center gap-2">
-            {role === 'faculty' && <NotificationCenter />}
             <Button
               variant="ghost"
               size="icon"
