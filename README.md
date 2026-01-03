@@ -66,17 +66,6 @@ npm run dev
 
 The app will be available at `http://localhost:5173`
 
-## Deploy on Lovable Cloud
-
-1. Open the project in [Lovable](https://lovable.dev)
-2. Click **Share → Publish**
-3. Your app will be deployed automatically
-
-### Custom Domain
-
-1. Go to **Project > Settings > Domains**
-2. Click **Connect Domain**
-3. Follow the DNS configuration instructions
 
 ## Edge Functions
 
@@ -123,7 +112,6 @@ Generates monthly attendance summary and insights.
 
 ### Deploying Edge Functions
 
-Edge functions are automatically deployed with the Lovable platform. For local development:
 
 ```bash
 # Install Supabase CLI

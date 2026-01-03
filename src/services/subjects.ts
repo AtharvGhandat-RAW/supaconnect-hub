@@ -47,6 +47,30 @@ export async function getSubjectById(id: string) {
 }
 
 export async function createSubject(subject: Omit<Subject, 'id' | 'created_at' | 'updated_at'>) {
+  // Check for duplicate subject code
+  const { data: existingByCode } = await supabase
+    .from('subjects')
+    .select('id')
+    .ilike('subject_code', subject.subject_code)
+    .maybeSingle();
+
+  if (existingByCode) {
+    throw new Error(`Subject with code "${subject.subject_code}" already exists`);
+  }
+
+  // Check for duplicate subject name in same semester
+  const { data: existingByName } = await supabase
+    .from('subjects')
+    .select('id')
+    .ilike('name', subject.name)
+    .eq('semester', subject.semester)
+    .eq('type', subject.type)
+    .maybeSingle();
+
+  if (existingByName) {
+    throw new Error(`Subject "${subject.name}" (${subject.type}) already exists for Semester ${subject.semester}`);
+  }
+
   const { data, error } = await supabase
     .from('subjects')
     .insert(subject)

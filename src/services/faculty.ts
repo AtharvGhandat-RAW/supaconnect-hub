@@ -50,6 +50,30 @@ export async function createFaculty(faculty: {
   designation?: string;
   department?: string;
 }) {
+  // Check for duplicate employee code if provided
+  if (faculty.employee_code) {
+    const { data: existingByCode } = await supabase
+      .from('faculty')
+      .select('id')
+      .ilike('employee_code', faculty.employee_code)
+      .maybeSingle();
+
+    if (existingByCode) {
+      throw new Error(`Faculty with employee code "${faculty.employee_code}" already exists`);
+    }
+  }
+
+  // Check if profile is already linked to a faculty
+  const { data: existingByProfile } = await supabase
+    .from('faculty')
+    .select('id')
+    .eq('profile_id', faculty.profile_id)
+    .maybeSingle();
+
+  if (existingByProfile) {
+    throw new Error('This profile is already linked to a faculty record');
+  }
+
   const { data, error } = await supabase
     .from('faculty')
     .insert(faculty)

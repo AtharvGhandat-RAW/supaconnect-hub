@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
-import { Plus, Search, BookOpen, Edit2, Check, X, Trash2, Download, Upload, RefreshCw } from 'lucide-react';
+import { Plus, Search, BookOpen, Edit2, Check, X, Trash2, Download, Upload, RefreshCw, Copy } from 'lucide-react';
 import PageShell from '@/components/layout/PageShell';
 import DataTable from '@/components/ui/DataTable';
 import StatusBadge from '@/components/ui/StatusBadge';
@@ -13,6 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { toast } from '@/hooks/use-toast';
 import { getSubjects, createSubject, updateSubject, deleteSubject, type Subject } from '@/services/subjects';
 import { downloadTemplate } from '@/utils/export';
+import { Checkbox } from '@/components/ui/checkbox';
 
 const AdminSubjectsPage: React.FC = () => {
   const [subjects, setSubjects] = useState<Subject[]>([]);
@@ -35,6 +36,7 @@ const AdminSubjectsPage: React.FC = () => {
     weekly_lectures: 3,
     status: 'Active',
   });
+  const [createBothTypes, setCreateBothTypes] = useState(false); // Create both TH and PR versions
 
   const fetchData = async () => {
     try {
@@ -72,6 +74,7 @@ const AdminSubjectsPage: React.FC = () => {
       status: 'Active',
     });
     setEditingSubject(null);
+    setCreateBothTypes(false);
   };
 
   const handleSubmit = async () => {
@@ -79,6 +82,30 @@ const AdminSubjectsPage: React.FC = () => {
       if (editingSubject) {
         await updateSubject(editingSubject.id, formData);
         toast({ title: 'Success', description: 'Subject updated successfully' });
+      } else if (createBothTypes) {
+        // Create both TH and PR versions
+        const baseCode = formData.subject_code.replace(/-(TH|PR|TU)$/i, ''); // Remove any existing suffix
+        const baseName = formData.name.replace(/\s*(Theory|Practical|Tutorial)$/i, ''); // Remove any existing suffix
+        
+        // Create Theory version
+        await createSubject({
+          ...formData,
+          subject_code: `${baseCode}-TH`,
+          name: `${baseName} (Theory)`,
+          type: 'TH',
+          weekly_lectures: formData.weekly_lectures,
+        });
+        
+        // Create Practical version
+        await createSubject({
+          ...formData,
+          subject_code: `${baseCode}-PR`,
+          name: `${baseName} (Practical)`,
+          type: 'PR',
+          weekly_lectures: 2, // Practicals usually have 2 hours
+        });
+        
+        toast({ title: 'Success', description: 'Created both Theory and Practical subjects' });
       } else {
         await createSubject(formData);
         toast({ title: 'Success', description: 'Subject created successfully' });
@@ -275,13 +302,17 @@ const AdminSubjectsPage: React.FC = () => {
                       <Input
                         value={formData.subject_code}
                         onChange={(e) => setFormData({ ...formData, subject_code: e.target.value })}
-                        placeholder="CS101"
+                        placeholder={createBothTypes ? "CS101 (will add -TH and -PR)" : "CS101"}
                         className="bg-white/5 border-border/50"
                       />
                     </div>
                     <div>
                       <Label>Type</Label>
-                      <Select value={formData.type} onValueChange={(v) => setFormData({ ...formData, type: v as 'TH' | 'PR' | 'TU' })}>
+                      <Select 
+                        value={formData.type} 
+                        onValueChange={(v) => setFormData({ ...formData, type: v as 'TH' | 'PR' | 'TU' })}
+                        disabled={createBothTypes}
+                      >
                         <SelectTrigger className="bg-white/5 border-border/50"><SelectValue /></SelectTrigger>
                         <SelectContent>
                           <SelectItem value="TH">Theory</SelectItem>
@@ -291,19 +322,42 @@ const AdminSubjectsPage: React.FC = () => {
                       </Select>
                     </div>
                   </div>
+                  
+                  {/* Create Both TH and PR Checkbox */}
+                  {!editingSubject && (
+                    <label className="flex items-center gap-3 p-3 rounded-lg border border-border/50 bg-white/5 cursor-pointer hover:bg-white/10 transition-colors">
+                      <Checkbox 
+                        checked={createBothTypes} 
+                        onCheckedChange={(checked) => setCreateBothTypes(checked === true)}
+                      />
+                      <div>
+                        <span className="font-medium text-foreground">Create both Theory (TH) and Practical (PR)</span>
+                        <p className="text-xs text-muted-foreground mt-0.5">
+                          Automatically creates two entries: {formData.subject_code || 'CODE'}-TH and {formData.subject_code || 'CODE'}-PR
+                        </p>
+                      </div>
+                    </label>
+                  )}
+                  
                   <div>
                     <Label>Subject Name</Label>
                     <Input
                       value={formData.name}
                       onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                      placeholder="Introduction to AI"
+                      placeholder={createBothTypes ? "Introduction to AI (will add Theory/Practical)" : "Introduction to AI"}
                       className="bg-white/5 border-border/50"
                     />
                   </div>
                   <div className="grid grid-cols-3 gap-4">
                     <div>
                       <Label>Year</Label>
-                      <Select value={formData.year.toString()} onValueChange={(v) => setFormData({ ...formData, year: parseInt(v) })}>
+                      <Select value={formData.year.toString()} onValueChange={(v) => {
+                        const year = parseInt(v);
+                        // Auto-adjust semester based on year
+                        const validSemesters: Record<number, number[]> = { 1: [1, 2], 2: [3, 4], 3: [5, 6] };
+                        const newSemester = validSemesters[year]?.[0] || 1;
+                        setFormData({ ...formData, year, semester: newSemester });
+                      }}>
                         <SelectTrigger className="bg-white/5 border-border/50"><SelectValue /></SelectTrigger>
                         <SelectContent>
                           <SelectItem value="1">1st Year</SelectItem>
@@ -314,27 +368,38 @@ const AdminSubjectsPage: React.FC = () => {
                     </div>
                     <div>
                       <Label>Semester</Label>
-                      <Select value={formData.semester.toString()} onValueChange={(v) => setFormData({ ...formData, semester: parseInt(v) })}>
+                      <Select value={formData.semester.toString()} onValueChange={(v) => {
+                        const semester = parseInt(v);
+                        // Auto-adjust year based on semester
+                        const yearForSem = semester <= 2 ? 1 : semester <= 4 ? 2 : 3;
+                        setFormData({ ...formData, semester, year: yearForSem });
+                      }}>
                         <SelectTrigger className="bg-white/5 border-border/50"><SelectValue /></SelectTrigger>
                         <SelectContent>
-                          {[1, 2, 3, 4, 5, 6].map((s) => (
-                            <SelectItem key={s} value={s.toString()}>Sem {s}</SelectItem>
-                          ))}
+                          {(() => {
+                            const validSemesters: Record<number, number[]> = { 1: [1, 2], 2: [3, 4], 3: [5, 6] };
+                            return (validSemesters[formData.year] || [1, 2]).map((s) => (
+                              <SelectItem key={s} value={s.toString()}>Sem {s}</SelectItem>
+                            ));
+                          })()}
                         </SelectContent>
                       </Select>
                     </div>
                     <div>
-                      <Label>Weekly Lectures</Label>
+                      <Label>{createBothTypes ? 'Weekly (TH)' : 'Weekly Lectures'}</Label>
                       <Input
                         type="number"
                         value={formData.weekly_lectures}
                         onChange={(e) => setFormData({ ...formData, weekly_lectures: parseInt(e.target.value) || 0 })}
                         className="bg-white/5 border-border/50"
                       />
+                      {createBothTypes && (
+                        <p className="text-xs text-muted-foreground mt-1">PR will default to 2 hours</p>
+                      )}
                     </div>
                   </div>
                   <Button onClick={handleSubmit} className="w-full btn-gradient">
-                    {editingSubject ? 'Update Subject' : 'Create Subject'}
+                    {editingSubject ? 'Update Subject' : createBothTypes ? 'Create Both Subjects' : 'Create Subject'}
                   </Button>
                 </div>
               </DialogContent>

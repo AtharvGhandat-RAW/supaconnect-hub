@@ -1,16 +1,17 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
-import { Plus, Search, Upload, Users, Edit2, Eye, Download, RefreshCw, ArrowUpCircle } from 'lucide-react';
+import { Plus, Search, Upload, Users, Edit2, Eye, Download, RefreshCw, ArrowUpCircle, Trash2 } from 'lucide-react';
 import PageShell from '@/components/layout/PageShell';
 import DataTable from '@/components/ui/DataTable';
 import StatusBadge from '@/components/ui/StatusBadge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from '@/hooks/use-toast';
-import { getStudents, createStudent, bulkCreateStudents, updateStudent, type Student } from '@/services/students';
+import { getStudents, createStudent, bulkCreateStudents, updateStudent, deleteStudent, type Student } from '@/services/students';
 import { getClasses, type Class } from '@/services/classes';
 import { downloadTemplate } from '@/utils/export';
 import { supabase } from '@/integrations/supabase/client';
@@ -27,6 +28,8 @@ const AdminStudentsPage: React.FC = () => {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
   const [isPromoteDialogOpen, setIsPromoteDialogOpen] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [studentToDelete, setStudentToDelete] = useState<Student | null>(null);
   const [promoteFrom, setPromoteFrom] = useState('');
   const [promoteTo, setPromoteTo] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -41,6 +44,27 @@ const AdminStudentsPage: React.FC = () => {
     mobile: '',
     email: '',
   });
+
+  // Auto-update year, semester, division when class is selected
+  const handleClassChange = (classId: string) => {
+    if (classId === 'none' || !classId) {
+      setFormData({ ...formData, class_id: '' });
+      return;
+    }
+    
+    const selectedClass = classes.find(c => c.id === classId);
+    if (selectedClass) {
+      setFormData({
+        ...formData,
+        class_id: classId,
+        year: selectedClass.year,
+        semester: selectedClass.semester,
+        division: selectedClass.division || 'A',
+      });
+    } else {
+      setFormData({ ...formData, class_id: classId });
+    }
+  };
 
   const fetchData = async () => {
     try {
@@ -144,6 +168,21 @@ const AdminStudentsPage: React.FC = () => {
       fetchData();
     } catch (error) {
       toast({ title: 'Error', description: 'Failed to add student', variant: 'destructive' });
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!studentToDelete) return;
+    
+    try {
+      await deleteStudent(studentToDelete.id);
+      toast({ title: 'Success', description: `${studentToDelete.name} has been deleted` });
+      setIsDeleteDialogOpen(false);
+      setStudentToDelete(null);
+      fetchData();
+    } catch (error) {
+      console.error('Error deleting student:', error);
+      toast({ title: 'Error', description: 'Failed to delete student', variant: 'destructive' });
     }
   };
 
@@ -311,6 +350,18 @@ const AdminStudentsPage: React.FC = () => {
           >
             <Edit2 className="w-4 h-4" />
           </Button>
+          <Button 
+            variant="ghost" 
+            size="sm"
+            className="text-destructive hover:text-destructive hover:bg-destructive/10"
+            onClick={() => {
+              setStudentToDelete(s);
+              setIsDeleteDialogOpen(true);
+            }}
+            aria-label={`Delete ${s.name}`}
+          >
+            <Trash2 className="w-4 h-4" />
+          </Button>
         </div>
       ),
     },
@@ -407,15 +458,6 @@ const AdminStudentsPage: React.FC = () => {
                   </div>
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <Label>Enrollment No</Label>
-                      <Input
-                        value={formData.enrollment_no}
-                        onChange={(e) => setFormData({ ...formData, enrollment_no: e.target.value })}
-                        placeholder="ENR001"
-                        className="bg-muted/50 border-border/50"
-                      />
-                    </div>
-                    <div>
                       <Label>Roll No</Label>
                       <Input
                         type="number"
@@ -425,72 +467,81 @@ const AdminStudentsPage: React.FC = () => {
                         className="bg-muted/50 border-border/50"
                       />
                     </div>
-                  </div>
-                  <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <Label>Year</Label>
-                      <Select value={formData.year.toString()} onValueChange={(v) => setFormData({ ...formData, year: parseInt(v) })}>
-                        <SelectTrigger className="bg-muted/50 border-border/50"><SelectValue /></SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="1">1st Year</SelectItem>
-                          <SelectItem value="2">2nd Year</SelectItem>
-                          <SelectItem value="3">3rd Year</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div>
-                      <Label>Semester</Label>
-                      <Select value={formData.semester.toString()} onValueChange={(v) => setFormData({ ...formData, semester: parseInt(v) })}>
-                        <SelectTrigger className="bg-muted/50 border-border/50"><SelectValue /></SelectTrigger>
-                        <SelectContent>
-                          {[1, 2, 3, 4, 5, 6].map((s) => (
-                            <SelectItem key={s} value={s.toString()}>Sem {s}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <Label>Class</Label>
-                      <Select value={formData.class_id || 'none'} onValueChange={(v) => setFormData({ ...formData, class_id: v === 'none' ? '' : v })}>
-                        <SelectTrigger className="bg-muted/50 border-border/50"><SelectValue placeholder="Select class" /></SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="none">Not assigned</SelectItem>
-                          {classes.map((c) => (
-                            <SelectItem key={c.id} value={c.id}>{c.name} {c.division}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div>
-                      <Label>Division</Label>
+                      <Label>Enrollment No</Label>
                       <Input
-                        value={formData.division}
-                        onChange={(e) => setFormData({ ...formData, division: e.target.value })}
-                        placeholder="A"
+                        value={formData.enrollment_no}
+                        onChange={(e) => setFormData({ ...formData, enrollment_no: e.target.value })}
+                        placeholder="23212840055"
                         className="bg-muted/50 border-border/50"
                       />
                     </div>
                   </div>
+                  
+                  {/* Class Selection - Primary field */}
                   <div>
-                    <Label>Mobile</Label>
-                    <Input
-                      value={formData.mobile}
-                      onChange={(e) => setFormData({ ...formData, mobile: e.target.value })}
-                      placeholder="9876543210"
-                      className="bg-muted/50 border-border/50"
-                    />
+                    <Label>Class *</Label>
+                    <Select value={formData.class_id || 'none'} onValueChange={handleClassChange}>
+                      <SelectTrigger className="bg-muted/50 border-border/50">
+                        <SelectValue placeholder="Select class" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="none">Select a class...</SelectItem>
+                        {/* Group classes by year for better organization */}
+                        {[1, 2, 3].map(year => {
+                          const yearClasses = classes.filter(c => c.year === year);
+                          if (yearClasses.length === 0) return null;
+                          const yearLabel = year === 1 ? 'FY' : year === 2 ? 'SY' : 'TY';
+                          return (
+                            <div key={year}>
+                              <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground bg-muted/30">
+                                {yearLabel} - Year {year}
+                              </div>
+                              {yearClasses.map((c) => (
+                                <SelectItem key={c.id} value={c.id}>
+                                  {c.name} {c.division}
+                                </SelectItem>
+                              ))}
+                            </div>
+                          );
+                        })}
+                      </SelectContent>
+                    </Select>
+                    {formData.class_id && (
+                      <p className="text-xs text-muted-foreground mt-1.5 flex items-center gap-2">
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-primary/10 text-primary text-xs">
+                          Year {formData.year}
+                        </span>
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-secondary/10 text-secondary text-xs">
+                          Sem {formData.semester}
+                        </span>
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-accent/10 text-accent text-xs">
+                          Div {formData.division}
+                        </span>
+                      </p>
+                    )}
                   </div>
-                  <div>
-                    <Label>Email</Label>
-                    <Input
-                      type="email"
-                      value={formData.email}
-                      onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                      placeholder="student@rit.edu"
-                      className="bg-muted/50 border-border/50"
-                    />
+                  
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label>Mobile</Label>
+                      <Input
+                        value={formData.mobile}
+                        onChange={(e) => setFormData({ ...formData, mobile: e.target.value })}
+                        placeholder="9876543210"
+                        className="bg-muted/50 border-border/50"
+                      />
+                    </div>
+                    <div>
+                      <Label>Email</Label>
+                      <Input
+                        type="email"
+                        value={formData.email}
+                        onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                        placeholder="student@rit.edu"
+                        className="bg-muted/50 border-border/50"
+                      />
+                    </div>
                   </div>
                   <Button onClick={handleSubmit} className="w-full btn-gradient">
                     Add Student
@@ -634,47 +685,50 @@ const AdminStudentsPage: React.FC = () => {
                   />
                 </div>
               </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label>Year</Label>
-                  <Select value={formData.year.toString()} onValueChange={(v) => setFormData({ ...formData, year: parseInt(v) })}>
-                    <SelectTrigger className="bg-muted/50 border-border/50">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="1">1st Year</SelectItem>
-                      <SelectItem value="2">2nd Year</SelectItem>
-                      <SelectItem value="3">3rd Year</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div>
-                  <Label>Semester</Label>
-                  <Select value={formData.semester.toString()} onValueChange={(v) => setFormData({ ...formData, semester: parseInt(v) })}>
-                    <SelectTrigger className="bg-muted/50 border-border/50">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {[1, 2, 3, 4, 5, 6].map(s => (
-                        <SelectItem key={s} value={s.toString()}>Sem {s}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
+              
+              {/* Class Selection - Primary field */}
               <div>
                 <Label>Class</Label>
-                <Select value={formData.class_id} onValueChange={(v) => setFormData({ ...formData, class_id: v })}>
+                <Select value={formData.class_id} onValueChange={handleClassChange}>
                   <SelectTrigger className="bg-muted/50 border-border/50">
                     <SelectValue placeholder="Select class" />
                   </SelectTrigger>
                   <SelectContent>
-                    {classes.map((c) => (
-                      <SelectItem key={c.id} value={c.id}>{c.name} {c.division}</SelectItem>
-                    ))}
+                    {/* Group classes by year for better organization */}
+                    {[1, 2, 3].map(year => {
+                      const yearClasses = classes.filter(c => c.year === year);
+                      if (yearClasses.length === 0) return null;
+                      const yearLabel = year === 1 ? 'FY' : year === 2 ? 'SY' : 'TY';
+                      return (
+                        <div key={year}>
+                          <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground bg-muted/30">
+                            {yearLabel} - Year {year}
+                          </div>
+                          {yearClasses.map((c) => (
+                            <SelectItem key={c.id} value={c.id}>
+                              {c.name} {c.division}
+                            </SelectItem>
+                          ))}
+                        </div>
+                      );
+                    })}
                   </SelectContent>
                 </Select>
+                {formData.class_id && (
+                  <p className="text-xs text-muted-foreground mt-1.5 flex items-center gap-2">
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-primary/10 text-primary text-xs">
+                      Year {formData.year}
+                    </span>
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-secondary/10 text-secondary text-xs">
+                      Sem {formData.semester}
+                    </span>
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-accent/10 text-accent text-xs">
+                      Div {formData.division}
+                    </span>
+                  </p>
+                )}
               </div>
+              
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <Label>Mobile</Label>
@@ -724,6 +778,28 @@ const AdminStudentsPage: React.FC = () => {
             </div>
           </DialogContent>
         </Dialog>
+
+        {/* Delete Confirmation Dialog */}
+        <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Delete Student</AlertDialogTitle>
+              <AlertDialogDescription>
+                Are you sure you want to delete <span className="font-semibold text-foreground">{studentToDelete?.name}</span>? 
+                This action cannot be undone and will permanently remove the student record.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel onClick={() => setStudentToDelete(null)}>Cancel</AlertDialogCancel>
+              <AlertDialogAction 
+                onClick={handleDelete}
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              >
+                Delete
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </motion.div>
     </PageShell>
   );

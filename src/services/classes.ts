@@ -53,6 +53,31 @@ export async function createClass(classData: {
   department?: string;
   class_teacher_id?: string;
 }) {
+  // Check for duplicate class (same name and division)
+  const { data: existingByName } = await supabase
+    .from('classes')
+    .select('id')
+    .ilike('name', classData.name)
+    .ilike('division', classData.division)
+    .maybeSingle();
+
+  if (existingByName) {
+    throw new Error(`Class "${classData.name} ${classData.division}" already exists`);
+  }
+
+  // Check for duplicate (same year, semester, division)
+  const { data: existingByYearSem } = await supabase
+    .from('classes')
+    .select('id')
+    .eq('year', classData.year)
+    .eq('semester', classData.semester)
+    .ilike('division', classData.division)
+    .maybeSingle();
+
+  if (existingByYearSem) {
+    throw new Error(`A class for Year ${classData.year}, Semester ${classData.semester}, Division ${classData.division} already exists`);
+  }
+
   const { data, error } = await supabase
     .from('classes')
     .insert(classData)

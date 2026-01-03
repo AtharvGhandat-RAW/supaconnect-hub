@@ -212,3 +212,72 @@ export async function getDefaulters(filters?: { class_id?: string; subject_id?: 
   // Sort by percentage ascending (lowest attendance first)
   return result.sort((a, b) => a.percentage - b.percentage);
 }
+
+// Get the last attendance session for a class-subject combination
+export async function getLastAttendanceSession(classId: string, subjectId: string) {
+  const { data, error } = await supabase
+    .from('attendance_sessions')
+    .select('id, date, start_time')
+    .eq('class_id', classId)
+    .eq('subject_id', subjectId)
+    .order('date', { ascending: false })
+    .order('start_time', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (error) throw error;
+  return data;
+}
+
+// Get attendance records with student info for a session
+export async function getAttendanceRecordsWithStatus(sessionId: string): Promise<Map<string, 'PRESENT' | 'ABSENT'>> {
+  const { data, error } = await supabase
+    .from('attendance_records')
+    .select('student_id, status')
+    .eq('session_id', sessionId);
+
+  if (error) throw error;
+  
+  const statusMap = new Map<string, 'PRESENT' | 'ABSENT'>();
+  data?.forEach(record => {
+    statusMap.set(record.student_id, record.status as 'PRESENT' | 'ABSENT');
+  });
+  
+  return statusMap;
+}
+
+// Get recent absence count for students (last N sessions)
+export async function getRecentAbsencePatterns(classId: string, subjectId: string, lastNSessions: number = 5): Promise<Map<string, number>> {
+  // Get last N sessions
+  const { data: sessions, error: sessionsError } = await supabase
+    .from('attendance_sessions')
+    .select('id')
+    .eq('class_id', classId)
+    .eq('subject_id', subjectId)
+    .order('date', { ascending: false })
+    .order('start_time', { ascending: false })
+    .limit(lastNSessions);
+
+  if (sessionsError) throw sessionsError;
+  if (!sessions || sessions.length === 0) return new Map();
+
+  const sessionIds = sessions.map(s => s.id);
+
+  // Get absence records
+  const { data: records, error: recordsError } = await supabase
+    .from('attendance_records')
+    .select('student_id, status')
+    .in('session_id', sessionIds)
+    .eq('status', 'ABSENT');
+
+  if (recordsError) throw recordsError;
+
+  // Count absences per student
+  const absenceCount = new Map<string, number>();
+  records?.forEach(r => {
+    absenceCount.set(r.student_id, (absenceCount.get(r.student_id) || 0) + 1);
+  });
+
+  return absenceCount;
+}
+

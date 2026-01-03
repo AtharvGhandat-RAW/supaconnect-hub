@@ -89,7 +89,7 @@ export async function createSubjectAllocation(allocation: {
   subject_id: string;
   batch_id?: string | null;
 }) {
-  // Check if already exists (without batch_id check since column may not exist)
+  // Check if this exact allocation already exists
   const { data: existing } = await supabase
     .from('subject_allocations')
     .select('id')
@@ -97,6 +97,22 @@ export async function createSubjectAllocation(allocation: {
     .eq('class_id', allocation.class_id)
     .eq('subject_id', allocation.subject_id)
     .maybeSingle();
+
+  if (existing) {
+    throw new Error('This subject is already allocated to this faculty for this class');
+  }
+
+  // Also check if subject-class combo is already allocated to another faculty
+  const { data: existingAlloc } = await supabase
+    .from('subject_allocations')
+    .select('id, faculty_id')
+    .eq('class_id', allocation.class_id)
+    .eq('subject_id', allocation.subject_id)
+    .maybeSingle();
+
+  if (existingAlloc && existingAlloc.faculty_id !== allocation.faculty_id) {
+    throw new Error('This subject is already allocated to another faculty for this class');
+  }
 
   if (existing) {
     throw new Error('This allocation already exists');

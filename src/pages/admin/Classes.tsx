@@ -28,6 +28,33 @@ const AdminClassesPage: React.FC = () => {
     class_teacher_id: '',
   });
 
+  // Helper functions for year-semester relationship
+  const getSemestersForYear = (year: number): number[] => {
+    switch (year) {
+      case 1: return [1, 2];
+      case 2: return [3, 4];
+      case 3: return [5, 6];
+      default: return [1, 2];
+    }
+  };
+
+  const getYearForSemester = (semester: number): number => {
+    if (semester <= 2) return 1;
+    if (semester <= 4) return 2;
+    return 3;
+  };
+
+  const handleYearChange = (year: number) => {
+    const validSemesters = getSemestersForYear(year);
+    const newSemester = validSemesters[0]; // Default to first semester of that year
+    setFormData({ ...formData, year, semester: newSemester });
+  };
+
+  const handleSemesterChange = (semester: number) => {
+    const correspondingYear = getYearForSemester(semester);
+    setFormData({ ...formData, semester, year: correspondingYear });
+  };
+
   const fetchData = async () => {
     try {
       const [classData, facultyData] = await Promise.all([getClasses(), getFaculty()]);
@@ -161,7 +188,7 @@ const AdminClassesPage: React.FC = () => {
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <Label>Year</Label>
-                    <Select value={formData.year.toString()} onValueChange={(v) => setFormData({ ...formData, year: parseInt(v) })}>
+                    <Select value={formData.year.toString()} onValueChange={(v) => handleYearChange(parseInt(v))}>
                       <SelectTrigger className="bg-white/5 border-border/50">
                         <SelectValue />
                       </SelectTrigger>
@@ -174,12 +201,12 @@ const AdminClassesPage: React.FC = () => {
                   </div>
                   <div>
                     <Label>Semester</Label>
-                    <Select value={formData.semester.toString()} onValueChange={(v) => setFormData({ ...formData, semester: parseInt(v) })}>
+                    <Select value={formData.semester.toString()} onValueChange={(v) => handleSemesterChange(parseInt(v))}>
                       <SelectTrigger className="bg-white/5 border-border/50">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        {[1, 2, 3, 4, 5, 6].map((s) => (
+                        {getSemestersForYear(formData.year).map((s) => (
                           <SelectItem key={s} value={s.toString()}>Sem {s}</SelectItem>
                         ))}
                       </SelectContent>
@@ -189,12 +216,18 @@ const AdminClassesPage: React.FC = () => {
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <Label>Division</Label>
-                    <Input
-                      value={formData.division}
-                      onChange={(e) => setFormData({ ...formData, division: e.target.value })}
-                      placeholder="A"
-                      className="bg-white/5 border-border/50"
-                    />
+                    <Select value={formData.division} onValueChange={(v) => setFormData({ ...formData, division: v })}>
+                      <SelectTrigger className="bg-white/5 border-border/50">
+                        <SelectValue placeholder="Select division" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="A">Division A</SelectItem>
+                        <SelectItem value="B">Division B</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Both divisions A & B share the same semester
+                    </p>
                   </div>
                 </div>
                 <div>

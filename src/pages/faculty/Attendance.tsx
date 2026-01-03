@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { Link, useLocation, useNavigate, useParams } from 'react-router-dom';
-import { Check, Copy, Users, BookOpen, AlertCircle, Send } from 'lucide-react';
+import { Check, Copy, Users, BookOpen, AlertCircle, Send, RotateCcw, Zap, AlertTriangle } from 'lucide-react';
 import PageShell from '@/components/layout/PageShell';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -10,7 +10,13 @@ import { toast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { getStudents, type Student } from '@/services/students';
-import { createAttendanceSession, createAttendanceRecords } from '@/services/attendance';
+import { 
+  createAttendanceSession, 
+  createAttendanceRecords,
+  getLastAttendanceSession,
+  getAttendanceRecordsWithStatus,
+  getRecentAbsencePatterns
+} from '@/services/attendance';
 import { getSyllabusTopics, getCoverageForSession, markTopicsCovered, type SyllabusTopic } from '@/services/syllabus';
 import { createActivityLog } from '@/services/activity';
 import { shareToWhatsApp } from '@/utils/whatsapp';
@@ -18,6 +24,7 @@ import { checkTimeGate } from '@/utils/timeGate';
 
 interface StudentAttendance extends Student {
   isPresent: boolean;
+  recentAbsences?: number; // Number of absences in last 5 sessions
 }
 
 const FacultyAttendancePage: React.FC = () => {
@@ -35,6 +42,9 @@ const FacultyAttendancePage: React.FC = () => {
   const [submitted, setSubmitted] = useState(false);
   const [absentStudents, setAbsentStudents] = useState<Student[]>([]);
   const [timeGateError, setTimeGateError] = useState<string | null>(null);
+  const [hasLastSession, setHasLastSession] = useState(false);
+  const [lastSessionDate, setLastSessionDate] = useState<string | null>(null);
+  const [absencePatterns, setAbsencePatterns] = useState<Map<string, number>>(new Map());
 
   const state = location.state as {
     classId: string;
@@ -74,9 +84,27 @@ const FacultyAttendancePage: React.FC = () => {
           setTimeGateError(timeGate.reason || 'Attendance window not available');
         }
 
-        // Fetch students for the class
-        const studentData = await getStudents({ class_id: state.classId, status: 'ACTIVE' });
-        setStudents(studentData.map(s => ({ ...s, isPresent: true })));
+        // Fetch students for the class and absence patterns in parallel
+        const [studentData, patterns, lastSession] = await Promise.all([
+          getStudents({ class_id: state.classId, status: 'ACTIVE' }),
+          getRecentAbsencePatterns(state.classId, state.subjectId, 5),
+          getLastAttendanceSession(state.classId, state.subjectId),
+        ]);
+
+        setAbsencePatterns(patterns);
+        
+        // Check if there's a previous session to copy from
+        if (lastSession) {
+          setHasLastSession(true);
+          setLastSessionDate(lastSession.date);
+        }
+
+        // Set students with absence patterns
+        setStudents(studentData.map(s => ({ 
+          ...s, 
+          isPresent: true,
+          recentAbsences: patterns.get(s.id) || 0
+        })));
 
         // Fetch syllabus topics for the subject
         const topicData = await getSyllabusTopics(state.subjectId);
@@ -86,7 +114,7 @@ const FacultyAttendancePage: React.FC = () => {
         if (sessionId && sessionId !== 'new') {
           const existingCoverage = await getCoverageForSession(sessionId);
           if (existingCoverage.length > 0) {
-            setSelectedTopics(new Set(existingCoverage));
+            setSelectedTopics(new Set(existingCoverage.map(c => c.topic_id)));
           }
         }
       } catch (error) {
@@ -107,6 +135,52 @@ const FacultyAttendancePage: React.FC = () => {
 
   const handleMarkAllPresent = () => {
     setStudents(prev => prev.map(s => ({ ...s, isPresent: true })));
+  };
+
+  const handleMarkAllAbsent = () => {
+    setStudents(prev => prev.map(s => ({ ...s, isPresent: false })));
+  };
+
+  // Copy attendance from last lecture
+  const handleCopyFromLastLecture = useCallback(async () => {
+    if (!state) return;
+    
+    try {
+      const lastSession = await getLastAttendanceSession(state.classId, state.subjectId);
+      if (!lastSession) {
+        toast({ title: 'No Previous Session', description: 'No previous attendance record found for this subject', variant: 'destructive' });
+        return;
+      }
+
+      const lastRecords = await getAttendanceRecordsWithStatus(lastSession.id);
+      
+      setStudents(prev => prev.map(s => ({
+        ...s,
+        isPresent: lastRecords.get(s.id) === 'PRESENT'
+      })));
+
+      toast({ 
+        title: 'Copied from Last Lecture', 
+        description: `Loaded attendance from ${new Date(lastSession.date).toLocaleDateString('en-IN')}. Review and make changes if needed.` 
+      });
+    } catch (error) {
+      console.error('Error copying from last lecture:', error);
+      toast({ title: 'Error', description: 'Failed to load previous attendance', variant: 'destructive' });
+    }
+  }, [state]);
+
+  // Quick mark frequent absentees as absent
+  const handleMarkFrequentAbsenteesAbsent = () => {
+    setStudents(prev => prev.map(s => ({
+      ...s,
+      isPresent: (s.recentAbsences || 0) < 3 // Mark as absent if absent 3+ times in last 5 sessions
+    })));
+    
+    const frequentAbsentees = students.filter(s => (s.recentAbsences || 0) >= 3).length;
+    toast({ 
+      title: 'Frequent Absentees Marked', 
+      description: `${frequentAbsentees} students with 3+ recent absences marked as absent. Verify and adjust.` 
+    });
   };
 
   const handleToggleTopic = (topicId: string) => {
@@ -288,8 +362,34 @@ ${studentDetails}
                   <StatusBadge variant="info" className="mt-2">Substitution Lecture</StatusBadge>
                 )}
               </div>
-              <Button variant="outline" onClick={handleMarkAllPresent}>
-                Mark All Present
+              <div className="flex flex-wrap gap-2">
+                {hasLastSession && (
+                  <Button variant="outline" onClick={handleCopyFromLastLecture} className="gap-2">
+                    <RotateCcw className="w-4 h-4" />
+                    Copy from Last ({lastSessionDate ? new Date(lastSessionDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' }) : ''})
+                  </Button>
+                )}
+                <Button variant="outline" onClick={handleMarkAllPresent}>
+                  Mark All Present
+                </Button>
+              </div>
+            </div>
+
+            {/* Quick Actions */}
+            <div className="flex flex-wrap gap-2">
+              {absencePatterns.size > 0 && Array.from(absencePatterns.values()).some(v => v >= 3) && (
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={handleMarkFrequentAbsenteesAbsent}
+                  className="gap-2 text-warning border-warning/30 hover:bg-warning/10"
+                >
+                  <Zap className="w-4 h-4" />
+                  Auto-mark Frequent Absentees
+                </Button>
+              )}
+              <Button variant="ghost" size="sm" onClick={handleMarkAllAbsent} className="text-muted-foreground">
+                Mark All Absent
               </Button>
             </div>
 
@@ -310,9 +410,10 @@ ${studentDetails}
                   {students.map(student => (
                     <div
                       key={student.id}
-                      className={`flex items-center justify-between p-3 rounded-lg border transition-colors ${student.isPresent
-                        ? 'bg-success/10 border-success/30'
-                        : 'bg-danger/10 border-danger/30'
+                      onClick={() => handleTogglePresent(student.id)}
+                      className={`flex items-center justify-between p-3 rounded-lg border transition-colors cursor-pointer ${student.isPresent
+                        ? 'bg-success/10 border-success/30 hover:bg-success/20'
+                        : 'bg-danger/10 border-danger/30 hover:bg-danger/20'
                         }`}
                     >
                       <div className="flex items-center gap-3">
@@ -320,8 +421,18 @@ ${studentDetails}
                           {student.roll_no?.toString().padStart(2, '0')}
                         </span>
                         <span className="font-medium text-foreground">{student.name}</span>
+                        {/* Frequent absentee indicator */}
+                        {(student.recentAbsences || 0) >= 3 && (
+                          <span 
+                            className="flex items-center gap-1 text-xs bg-warning/20 text-warning px-1.5 py-0.5 rounded" 
+                            title={`Absent ${student.recentAbsences} times in last 5 lectures`}
+                          >
+                            <AlertTriangle className="w-3 h-3" />
+                            {student.recentAbsences}x absent
+                          </span>
+                        )}
                       </div>
-                      <div className="flex gap-2">
+                      <div className="flex gap-2" onClick={(e) => e.stopPropagation()}>
                         <Button
                           size="sm"
                           variant={student.isPresent ? 'default' : 'outline'}

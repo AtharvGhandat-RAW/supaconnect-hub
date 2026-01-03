@@ -17,7 +17,7 @@ const LoadingSpinner: React.FC<LoadingSpinnerProps> = ({
   className,
 }) => {
   return (
-    <div className={cn('relative', sizes[size], className)}>
+    <div className={cn('relative', sizes[size], className)} style={{ filter: 'drop-shadow(0 0 8px rgba(37, 211, 102, 0.3))' }}>
       <svg
         className={cn('animate-loader-spin', sizes[size])}
         viewBox="0 0 50 50"

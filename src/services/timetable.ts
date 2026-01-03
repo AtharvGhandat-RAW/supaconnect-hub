@@ -102,6 +102,36 @@ async function ensureAllocation(facultyId: string, classId: string, subjectId: s
 }
 
 export async function createTimetableSlot(slot: Omit<TimetableSlot, 'id' | 'created_at'>) {
+  // Check for duplicate slot (same class, day, time)
+  const { data: existingSlot } = await supabase
+    .from('timetable_slots')
+    .select('id')
+    .eq('class_id', slot.class_id)
+    .eq('day_of_week', slot.day_of_week)
+    .eq('start_time', slot.start_time)
+    .lte('valid_from', slot.valid_to)
+    .gte('valid_to', slot.valid_from)
+    .maybeSingle();
+
+  if (existingSlot) {
+    throw new Error(`A timetable slot already exists for this class at the same day and time`);
+  }
+
+  // Check if faculty is already assigned at this time
+  const { data: facultyBusy } = await supabase
+    .from('timetable_slots')
+    .select('id')
+    .eq('faculty_id', slot.faculty_id)
+    .eq('day_of_week', slot.day_of_week)
+    .eq('start_time', slot.start_time)
+    .lte('valid_from', slot.valid_to)
+    .gte('valid_to', slot.valid_from)
+    .maybeSingle();
+
+  if (facultyBusy) {
+    throw new Error(`This faculty is already assigned to another class at the same day and time`);
+  }
+
   const { data, error } = await supabase
     .from('timetable_slots')
     .insert(slot)

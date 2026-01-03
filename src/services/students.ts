@@ -50,6 +50,17 @@ export async function getStudentById(id: string) {
 }
 
 export async function createStudent(student: Omit<Student, 'id' | 'created_at' | 'updated_at'>) {
+  // Check for duplicate enrollment number
+  const { data: existingByEnrollment } = await supabase
+    .from('students')
+    .select('id')
+    .ilike('enrollment_no', student.enrollment_no)
+    .maybeSingle();
+
+  if (existingByEnrollment) {
+    throw new Error(`Student with enrollment number "${student.enrollment_no}" already exists`);
+  }
+
   const { data, error } = await supabase
     .from('students')
     .insert(student)
@@ -103,6 +114,16 @@ export async function bulkCreateStudents(students: Omit<Student, 'id' | 'created
     throw error;
   }
   return data;
+}
+
+export async function deleteStudent(id: string) {
+  const { error } = await supabase
+    .from('students')
+    .delete()
+    .eq('id', id);
+
+  if (error) throw error;
+  return true;
 }
 
 export async function getStudentCount() {

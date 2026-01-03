@@ -40,6 +40,18 @@ export async function getBatches(classId: string) {
 }
 
 export async function createBatch(name: string, classId: string, studentIds: string[]) {
+    // Check for duplicate batch name in same class
+    const { data: existing } = await supabase
+        .from('batches')
+        .select('id')
+        .eq('class_id', classId)
+        .ilike('name', name)
+        .maybeSingle();
+
+    if (existing) {
+        throw new Error(`Batch "${name}" already exists in this class`);
+    }
+
     // 1. Create Batch
     const { data: batch, error: batchError } = await supabase
         .from('batches')
