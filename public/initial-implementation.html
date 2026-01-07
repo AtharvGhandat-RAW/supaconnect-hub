@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Initial Implementation Diagram</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 30px;
+        }
+
+        .container {
+            width: 1100px;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 20px;
+            padding: 40px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .title {
+            text-align: center;
+            color: #fff;
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 40px;
+        }
+
+        .title span {
+            color: #22c55e;
+        }
+
+        .diagram {
+            display: flex;
+            flex-direction: column;
+            gap: 30px;
+        }
+
+        /* Users Row */
+        .users-row {
+            display: flex;
+            justify-content: center;
+            gap: 80px;
+        }
+
+        .user-box {
+            text-align: center;
+        }
+
+        .user-icon {
+            width: 70px;
+            height: 70px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 10px;
+            font-size: 28px;
+        }
+
+        .admin-icon { background: linear-gradient(135deg, #3b82f6, #1d4ed8); }
+        .faculty-icon { background: linear-gradient(135deg, #22c55e, #16a34a); }
+
+        .user-label {
+            color: #fff;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        /* Arrow */
+        .arrow-down {
+            text-align: center;
+            color: #64748b;
+            font-size: 24px;
+        }
+
+        /* Frontend Box */
+        .frontend-box {
+            background: linear-gradient(135deg, #0ea5e9, #0284c7);
+            border-radius: 16px;
+            padding: 25px;
+            text-align: center;
+        }
+
+        .frontend-title {
+            color: #fff;
+            font-size: 18px;
+            font-weight: 700;
+            margin-bottom: 15px;
+        }
+
+        .tech-tags {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .tech-tag {
+            background: rgba(255,255,255,0.2);
+            color: #fff;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        /* Modules Row */
+        .modules-row {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 15px;
+        }
+
+        .module-box {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 12px;
+            padding: 15px;
+            text-align: center;
+        }
+
+        .module-icon {
+            font-size: 24px;
+            margin-bottom: 8px;
+        }
+
+        .module-name {
+            color: #fff;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .module-items {
+            color: #94a3b8;
+            font-size: 10px;
+            margin-top: 5px;
+            line-height: 1.4;
+        }
+
+        /* Backend Box */
+        .backend-box {
+            background: linear-gradient(135deg, #22c55e, #16a34a);
+            border-radius: 16px;
+            padding: 25px;
+        }
+
+        .backend-title {
+            color: #fff;
+            font-size: 18px;
+            font-weight: 700;
+            text-align: center;
+            margin-bottom: 15px;
+        }
+
+        .backend-features {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+        }
+
+        .backend-item {
+            text-align: center;
+            color: #fff;
+        }
+
+        .backend-item-icon {
+            font-size: 28px;
+            margin-bottom: 5px;
+        }
+
+        .backend-item-label {
+            font-size: 11px;
+            font-weight: 500;
+        }
+
+        /* Database Box */
+        .database-box {
+            background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+            border-radius: 16px;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .database-title {
+            color: #fff;
+            font-size: 16px;
+            font-weight: 700;
+            margin-bottom: 12px;
+        }
+
+        .tables-list {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .table-tag {
+            background: rgba(255,255,255,0.2);
+            color: #fff;
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 10px;
+        }
+
+        .footer {
+            text-align: center;
+            margin-top: 30px;
+            color: #64748b;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 class="title">Initial Implementation <span>Diagram</span></h1>
+        
+        <div class="diagram">
+            <!-- Users -->
+            <div class="users-row">
+                <div class="user-box">
+                    <div class="user-icon admin-icon">👨‍💼</div>
+                    <div class="user-label">Admin</div>
+                </div>
+                <div class="user-box">
+                    <div class="user-icon faculty-icon">👨‍🏫</div>
+                    <div class="user-label">Faculty</div>
+                </div>
+            </div>
+
+            <div class="arrow-down">▼</div>
+
+            <!-- Frontend -->
+            <div class="frontend-box">
+                <div class="frontend-title">🖥️ Frontend (React + TypeScript)</div>
+                <div class="tech-tags">
+                    <span class="tech-tag">Vite</span>
+                    <span class="tech-tag">Tailwind CSS</span>
+                    <span class="tech-tag">Shadcn/UI</span>
+                    <span class="tech-tag">TanStack Query</span>
+                    <span class="tech-tag">React Router</span>
+                </div>
+            </div>
+
+            <div class="arrow-down">▼</div>
+
+            <!-- Modules -->
+            <div class="modules-row">
+                <div class="module-box">
+                    <div class="module-icon">📊</div>
+                    <div class="module-name">Master Data</div>
+                    <div class="module-items">Faculty, Class, Student<br>Subject, Batch, Allocation</div>
+                </div>
+                <div class="module-box">
+                    <div class="module-icon">✅</div>
+                    <div class="module-name">Attendance</div>
+                    <div class="module-items">Mark, View, Monitor<br>Time-Gate, Reports</div>
+                </div>
+                <div class="module-box">
+                    <div class="module-icon">📅</div>
+                    <div class="module-name">Scheduling</div>
+                    <div class="module-items">Timetable, Holidays<br>Leave, Substitution</div>
+                </div>
+                <div class="module-box">
+                    <div class="module-icon">📈</div>
+                    <div class="module-name">Reports</div>
+                    <div class="module-items">Defaulters, Export<br>PDF, CSV, WhatsApp</div>
+                </div>
+            </div>
+
+            <div class="arrow-down">▼</div>
+
+            <!-- Backend -->
+            <div class="backend-box">
+                <div class="backend-title">⚡ Backend (Supabase)</div>
+                <div class="backend-features">
+                    <div class="backend-item">
+                        <div class="backend-item-icon">🔐</div>
+                        <div class="backend-item-label">Auth</div>
+                    </div>
+                    <div class="backend-item">
+                        <div class="backend-item-icon">🔄</div>
+                        <div class="backend-item-label">Realtime</div>
+                    </div>
+                    <div class="backend-item">
+                        <div class="backend-item-icon">⚙️</div>
+                        <div class="backend-item-label">Edge Functions</div>
+                    </div>
+                    <div class="backend-item">
+                        <div class="backend-item-icon">🛡️</div>
+                        <div class="backend-item-label">RLS Policies</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="arrow-down">▼</div>
+
+            <!-- Database -->
+            <div class="database-box">
+                <div class="database-title">🗄️ PostgreSQL Database (12+ Tables)</div>
+                <div class="tables-list">
+                    <span class="table-tag">profiles</span>
+                    <span class="table-tag">classes</span>
+                    <span class="table-tag">students</span>
+                    <span class="table-tag">subjects</span>
+                    <span class="table-tag">batches</span>
+                    <span class="table-tag">allocations</span>
+                    <span class="table-tag">timetable</span>
+                    <span class="table-tag">attendance</span>
+                    <span class="table-tag">leaves</span>
+                    <span class="table-tag">substitutions</span>
+                    <span class="table-tag">holidays</span>
+                    <span class="table-tag">settings</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="footer">SupaConnect Hub - Polytechnic Attendance Management System</div>
+    </div>
+</body>
+</html>

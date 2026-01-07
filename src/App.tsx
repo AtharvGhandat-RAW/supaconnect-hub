@@ -38,10 +38,23 @@ import FacultyReports from "./pages/faculty/Reports";
 import FacultySubjects from "./pages/faculty/Subjects";
 import FacultySettings from "./pages/faculty/Settings";
 import FacultyTransfers from "./pages/faculty/Transfers";
+import { useEffect } from "react";
+import { App as CapacitorApp } from "@capacitor/app";
 
 const queryClient = new QueryClient();
 
-const App = () => (
+const App = () => {
+  useEffect(() => {
+    CapacitorApp.addListener('backButton', ({ canGoBack }) => {
+      if (!canGoBack) {
+        CapacitorApp.exitApp();
+      } else {
+        window.history.back();
+      }
+    });
+  }, []);
+
+  return (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
       <Toaster />
@@ -89,6 +102,7 @@ const App = () => (
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>
-);
+  );
+};
 
 export default App;
