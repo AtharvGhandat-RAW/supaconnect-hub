@@ -1,6 +1,10 @@
+import { Capacitor } from '@capacitor/core';
+import { Filesystem, Directory, Encoding } from '@capacitor/filesystem';
+import { Share } from '@capacitor/share';
+
 // Export utilities for CSV/XLSX and PDF generation
 
-export function downloadCSV<T extends object>(data: T[], filename: string, columns?: { key: string; header: string }[]) {
+export async function downloadCSV<T extends object>(data: T[], filename: string, columns?: { key: string; header: string }[]) {
   if (data.length === 0) return;
 
   const headers = columns ? columns.map(c => c.header) : Object.keys(data[0]);
@@ -10,6 +14,7 @@ export function downloadCSV<T extends object>(data: T[], filename: string, colum
     headers.join(','),
     ...data.map(row =>
       keys.map(key => {
+        // @ts-ignore
         const value = row[key];
         if (value === null || value === undefined) return '';
         const str = String(value);
@@ -22,12 +27,34 @@ export function downloadCSV<T extends object>(data: T[], filename: string, colum
     )
   ].join('\n');
 
-  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-  const link = document.createElement('a');
-  link.href = URL.createObjectURL(blob);
-  link.download = `${filename}.csv`;
-  link.click();
-  URL.revokeObjectURL(link.href);
+  if (Capacitor.isNativePlatform()) {
+    try {
+      const fileNameStr = `${filename}.csv`;
+      const result = await Filesystem.writeFile({
+        path: fileNameStr,
+        data: csvContent,
+        directory: Directory.Cache,
+        encoding: Encoding.UTF8,
+      });
+
+      await Share.share({
+        title: filename,
+        text: `Exported CSV: ${filename}`,
+        url: result.uri,
+        dialogTitle: 'Share CSV',
+      });
+    } catch (e) {
+      console.error('Mobile export failed', e);
+      // Fallback
+    }
+  } else {
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = `${filename}.csv`;
+    link.click();
+    URL.revokeObjectURL(link.href);
+  }
 }
 
 export function generatePDFContent(options: {
@@ -147,30 +174,56 @@ export function generatePDFContent(options: {
   `;
 }
 
-export function printPDF(htmlContent: string) {
-  const printWindow = window.open('', '_blank');
-  if (printWindow) {
-    printWindow.document.write(htmlContent);
-    printWindow.document.close();
-    printWindow.onload = () => {
-      printWindow.print();
-    };
+export async function printPDF(htmlContent: string, title: string = 'Report') {
+  if (Capacitor.isNativePlatform()) {
+    try {
+      const fileNameStr = `${title.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.html`;
+      const result = await Filesystem.writeFile({
+        path: fileNameStr,
+        data: htmlContent,
+        directory: Directory.Cache,
+        encoding: Encoding.UTF8,
+      });
+
+      await Share.share({
+        title: title,
+        text: `Usage Report: ${title}`,
+        url: result.uri,
+        dialogTitle: 'Share Report',
+      });
+    } catch (e) {
+      console.error('Mobile report share failed', e);
+    }
+  } else {
+    const printWindow = window.open('', '_blank');
+    if (printWindow) {
+      printWindow.document.write(htmlContent);
+      printWindow.document.close();
+      printWindow.onload = () => {
+        printWindow.print();
+      };
+    }
   }
 }
 
 export function downloadPDF(htmlContent: string, filename: string) {
-  const printWindow = window.open('', '_blank');
-  if (printWindow) {
-    printWindow.document.write(htmlContent);
-    printWindow.document.close();
-    printWindow.onload = () => {
-      printWindow.print();
-    };
+  // Reuse printPDF logic for mobile consistency if needed
+  if (Capacitor.isNativePlatform()) {
+      printPDF(htmlContent, filename);
+  } else {
+    const printWindow = window.open('', '_blank');
+    if (printWindow) {
+      printWindow.document.write(htmlContent);
+      printWindow.document.close();
+      printWindow.onload = () => {
+        printWindow.print();
+      };
+    }
   }
 }
 
 // Template download for imports
-export function downloadTemplate(templateName: string) {
+export async function downloadTemplate(templateName: string) {
   const templates: Record<string, { headers: string[]; sample: string[][] }> = {
     students: {
       headers: ['name', 'enrollment_no', 'roll_no', 'year', 'semester', 'division', 'mobile', 'email'],
@@ -208,10 +261,28 @@ export function downloadTemplate(templateName: string) {
     ...template.sample.map(row => row.join(','))
   ].join('\n');
 
-  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-  const link = document.createElement('a');
-  link.href = URL.createObjectURL(blob);
-  link.download = `${templateName}_template.csv`;
-  link.click();
-  URL.revokeObjectURL(link.href);
+  if (Capacitor.isNativePlatform()) {
+      try {
+        const fileNameStr = `${templateName}_template.csv`;
+        const result = await Filesystem.writeFile({
+            path: fileNameStr,
+            data: csvContent,
+            directory: Directory.Cache,
+            encoding: Encoding.UTF8,
+        });
+        await Share.share({
+            title: templateName,
+            text: `Template: ${templateName}`,
+            url: result.uri,
+            dialogTitle: 'Share Template'
+        });
+      } catch(e) { console.error(e); }
+  } else {
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = `${templateName}_template.csv`;
+    link.click();
+    URL.revokeObjectURL(link.href);
+  }
 }

@@ -108,3 +108,23 @@ export async function deleteClass(id: string) {
 
   if (error) throw error;
 }
+
+export async function getClassWithTeacher(classId: string) {
+  const { data, error } = await supabase
+    .from('classes')
+    .select(`
+      *,
+      faculty:class_teacher_id (
+        id,
+        profiles (
+          name,
+          phone
+        )
+      )
+    `)
+    .eq('id', classId)
+    .single();
+
+  if (error) throw error;
+  return data;
+}

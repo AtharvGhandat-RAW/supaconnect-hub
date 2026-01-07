@@ -34,8 +34,10 @@ interface TimetableSlot {
   id: string;
   start_time: string;
   day_of_week: string;
-  classes?: { name: string; division: string };
-  subjects?: { name: string; subject_code: string };
+  class_id?: string;
+  subject_id?: string;
+  classes?: { id?: string; name: string; division: string };
+  subjects?: { id?: string; name: string; subject_code: string };
 }
 
 const FacultyTransfersPage: React.FC = () => {
@@ -120,9 +122,39 @@ const FacultyTransfersPage: React.FC = () => {
     try {
       // Fetch my today's slots
       const slots = await getTodaySlots(facultyId);
-      setMySlots(slots || []);
+
+      // Fetch completed sessions for today to filter them out
+      const now = new Date();
+      // Adjust for timezone to match getTodaySlots logic which uses local date
+      const offset = now.getTimezoneOffset();
+      const localDate = new Date(now.getTime() - (offset * 60 * 1000));
+      const todayDate = localDate.toISOString().split('T')[0];
+
+      const { data: completedSessions } = await supabase
+        .from('attendance_sessions')
+        .select('class_id, subject_id, start_time')
+        .eq('faculty_id', facultyId)
+        .eq('date', todayDate);
+
+      const completedKeys = new Set(completedSessions?.map(s => {
+        const time = s.start_time.substring(0, 5);
+        return `${s.class_id}-${s.subject_id}-${time}`;
+      }) || []);
+
+      const validSlots = (slots || []).filter((slot: any) => {
+        const cId = slot.class_id || slot.classes?.id;
+        const sId = slot.subject_id || slot.subjects?.id;
+        const time = slot.start_time.substring(0, 5);
+        
+        if (!cId || !sId) return true; // keep if we can't identify
+        const key = `${cId}-${sId}-${time}`;
+        return !completedKeys.has(key);
+      });
+
+      setMySlots(validSlots);
       setIsCreateDialogOpen(true);
     } catch (error) {
+      console.error(error);
       toast({ title: 'Error', description: 'Failed to load your slots', variant: 'destructive' });
     }
   };

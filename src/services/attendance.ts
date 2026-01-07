@@ -18,6 +18,9 @@ export interface AttendanceRecord {
   status: 'PRESENT' | 'ABSENT';
   remark: string | null;
   created_at: string;
+  is_admin_override?: boolean;
+  modified_by?: string;
+  modified_at?: string;
 }
 
 export async function getAttendanceSessions(filters?: {
@@ -99,9 +102,29 @@ export async function createAttendanceRecords(records: {
 }
 
 export async function updateAttendanceRecord(id: string, updates: Partial<AttendanceRecord>) {
+  // Check if the current user is an admin to set the override flag
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error('Not authenticated');
+
+  // Check role
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('role')
+    .eq('id', user.id)
+    .single();
+
+  const finalUpdates = {
+    ...updates,
+    ...(profile?.role === 'ADMIN' ? {
+      is_admin_override: true,
+      modified_by: user.id,
+      modified_at: new Date().toISOString()
+    } : {})
+  };
+
   const { data, error } = await supabase
     .from('attendance_records')
-    .update(updates)
+    .update(finalUpdates)
     .eq('id', id)
     .select()
     .single();
@@ -267,6 +290,43 @@ export async function getRecentAbsencePatterns(classId: string, subjectId: strin
   const { data: records, error: recordsError } = await supabase
     .from('attendance_records')
     .select('student_id, status')
+    .in('session_id', sessionIds)
+    .eq('status', 'ABSENT');
+
+  if (recordsError) throw recordsError;
+
+  // Count absences per student
+  const absenceCount = new Map<string, number>();
+  records?.forEach(r => {
+    absenceCount.set(r.student_id, (absenceCount.get(r.student_id) || 0) + 1);
+  });
+
+  return absenceCount;
+}
+
+export async function getMonthlySubjectAbsences(classId: string, subjectId: string): Promise<Map<string, number>> {
+  const date = new Date();
+  const firstDay = new Date(date.getFullYear(), date.getMonth(), 1).toISOString().split('T')[0];
+  const lastDay = new Date(date.getFullYear(), date.getMonth() + 1, 0).toISOString().split('T')[0];
+
+  // Get sessions for this month
+  const { data: sessions, error: sessionsError } = await supabase
+    .from('attendance_sessions')
+    .select('id')
+    .eq('class_id', classId)
+    .eq('subject_id', subjectId)
+    .gte('date', firstDay)
+    .lte('date', lastDay);
+
+  if (sessionsError) throw sessionsError;
+  if (!sessions || sessions.length === 0) return new Map();
+
+  const sessionIds = sessions.map(s => s.id);
+
+  // Get absence records
+  const { data: records, error: recordsError } = await supabase
+    .from('attendance_records')
+    .select('student_id')
     .in('session_id', sessionIds)
     .eq('status', 'ABSENT');
 

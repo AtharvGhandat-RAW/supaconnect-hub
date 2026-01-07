@@ -27,6 +27,7 @@ interface AttendanceRecordWithStudent {
   status: 'PRESENT' | 'ABSENT';
   remark: string | null;
   students?: { id: string; name: string; roll_no: number; enrollment_no: string };
+  is_admin_override?: boolean;
 }
 
 const AdminAttendanceMonitorPage: React.FC = () => {
@@ -139,10 +140,17 @@ const AdminAttendanceMonitorPage: React.FC = () => {
       key: 'status',
       header: 'Status',
       render: (r: AttendanceRecordWithStudent) => (
-        <StatusBadge variant={r.status === 'PRESENT' ? 'success' : 'danger'}>
-          {r.status === 'PRESENT' ? <CheckCircle className="w-3 h-3 mr-1" /> : <XCircle className="w-3 h-3 mr-1" />}
-          {r.status}
-        </StatusBadge>
+        <div className="flex flex-col gap-1 items-start">
+          <StatusBadge variant={r.status === 'PRESENT' ? 'success' : 'danger'}>
+            {r.status === 'PRESENT' ? <CheckCircle className="w-3 h-3 mr-1" /> : <XCircle className="w-3 h-3 mr-1" />}
+            {r.status}
+          </StatusBadge>
+          {r.is_admin_override && (
+             <span className="text-[10px] text-accent font-medium px-1 py-0.5 border border-accent/50 bg-accent/10 rounded">
+               Marked by HOD
+             </span>
+          )}
+        </div>
       ),
     },
     { key: 'remark', header: 'Remark', render: (r: AttendanceRecordWithStudent) => r.remark || '-' },

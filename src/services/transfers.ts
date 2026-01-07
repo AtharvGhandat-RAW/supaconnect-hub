@@ -165,8 +165,10 @@ export async function getAvailableFacultyForTransfer(
   
   const busyFacultyIds = new Set(busyFaculty?.map(f => f.faculty_id) || []);
   
-  // Filter available faculty
-  const availableFaculty = allFaculty?.filter(f => !busyFacultyIds.has(f.id)) || [];
+  // Return all faculty as per requirement (even if busy)
+  // We map them to include an isBusy flag if we wanted to support it in UI later, 
+  // but for now we just return all of them as requested.
+  const allFacultyList = allFaculty || [];
   
-  return availableFaculty;
+  return allFacultyList;
 }

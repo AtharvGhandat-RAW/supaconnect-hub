@@ -10,12 +10,14 @@ import { toast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { getStudents, type Student } from '@/services/students';
+import { getClassWithTeacher } from '@/services/classes';
 import { 
   createAttendanceSession, 
   createAttendanceRecords,
   getLastAttendanceSession,
   getAttendanceRecordsWithStatus,
-  getRecentAbsencePatterns
+  getRecentAbsencePatterns,
+  getMonthlySubjectAbsences
 } from '@/services/attendance';
 import { getSyllabusTopics, getCoverageForSession, markTopicsCovered, type SyllabusTopic } from '@/services/syllabus';
 import { createActivityLog } from '@/services/activity';
@@ -45,6 +47,8 @@ const FacultyAttendancePage: React.FC = () => {
   const [hasLastSession, setHasLastSession] = useState(false);
   const [lastSessionDate, setLastSessionDate] = useState<string | null>(null);
   const [absencePatterns, setAbsencePatterns] = useState<Map<string, number>>(new Map());
+  const [monthlyAbsences, setMonthlyAbsences] = useState<Map<string, number>>(new Map());
+  const [classTeacher, setClassTeacher] = useState<{name: string, phone?: string} | null>(null);
 
   const state = location.state as {
     classId: string;
@@ -84,15 +88,41 @@ const FacultyAttendancePage: React.FC = () => {
           setTimeGateError(timeGate.reason || 'Attendance window not available');
         }
 
-        // Fetch students for the class and absence patterns in parallel
-        const [studentData, patterns, lastSession] = await Promise.all([
+        // Fetch students, class teacher info, patterns in parallel
+        const [studentData, patterns, monthlyStats, classInfo, lastSession] = await Promise.all([
           getStudents({ class_id: state.classId, status: 'ACTIVE' }),
           getRecentAbsencePatterns(state.classId, state.subjectId, 5),
+          getMonthlySubjectAbsences(state.classId, state.subjectId),
+          getClassWithTeacher(state.classId),
           getLastAttendanceSession(state.classId, state.subjectId),
         ]);
 
         setAbsencePatterns(patterns);
+        setMonthlyAbsences(monthlyStats);
+
+        // Set class teacher info
+        if (classInfo && classInfo.faculty && classInfo.faculty.profiles) {
+           setClassTeacher({
+             name: classInfo.faculty.profiles.name,
+             phone: classInfo.faculty.profiles.phone
+           });
+        }
         
+        // Critical: Check if attendance for this session already exists
+        if (lastSession && sessionId === 'new') {
+           const today = new Date().toISOString().split('T')[0];
+           // Simple loose equality for time (e.g. 09:00:00 vs 09:00)
+           if (lastSession.date === today && lastSession.start_time.startsWith(state.startTime)) {
+              toast({ 
+                title: "Attendance Already Taken", 
+                description: "Attendance for this lecture has already been submitted.", 
+                variant: "destructive" 
+              });
+              navigate('/faculty/today');
+              return;
+           }
+        }
+
         // Check if there's a previous session to copy from
         if (lastSession) {
           setHasLastSession(true);
@@ -195,20 +225,24 @@ const FacultyAttendancePage: React.FC = () => {
     });
   };
 
+
   // Generate comprehensive message with ALL absent students - English only
   const generateFullMessageEN = () => {
     if (!state || absentStudents.length === 0) return '';
-    const today = new Date().toLocaleDateString('en-IN');
-    const studentDetails = absentStudents.map(s =>
-      `  • Roll ${s.roll_no?.toString().padStart(2, '0')} - ${s.name}`
-    ).join('\n');
+    const today = new Date().toLocaleDateString('en-GB');
+    const studentDetails = absentStudents.map(s => {
+      const absences = monthlyAbsences.get(s.id) || 0;
+      const currentMonthTotal = absences + 1;
+      return `  • Roll ${s.roll_no?.toString().padStart(2, '0')} - ${s.name} (Absence: ${currentMonthTotal} this month)`;
+    }).join('\n');
 
     return `🔔 *ATTENDANCE ALERT*
 ━━━━━━━━━━━━━━━━━━━━
 📚 Class: ${state.className}
 📖 Subject: ${state.subjectName}
 📅 Date: ${today}
-👨‍🏫 Faculty: Prof. ${facultyName}
+👨‍🏫 Subject Teacher: Prof. ${facultyName}
+${classTeacher ? `👨‍🏫 Class Teacher: Prof. ${classTeacher.name} ${classTeacher.phone ? `(${classTeacher.phone})` : ''}` : ''}
 ━━━━━━━━━━━━━━━━━━━━
 
 ❌ *ABSENT STUDENTS (${absentStudents.length}):*
@@ -227,16 +261,19 @@ Contact class teacher for any concerns.
   const generateFullMessageMR = () => {
     if (!state || absentStudents.length === 0) return '';
     const today = new Date().toLocaleDateString('en-IN');
-    const studentDetails = absentStudents.map(s =>
-      `  • रोल ${s.roll_no?.toString().padStart(2, '0')} - ${s.name}`
-    ).join('\n');
+    const studentDetails = absentStudents.map(s => {
+      const absences = monthlyAbsences.get(s.id) || 0;
+      const currentMonthTotal = absences + 1;
+      return `  • रोल ${s.roll_no?.toString().padStart(2, '0')} - ${s.name} (ह्या महिन्यातील गैरहजेरी: ${currentMonthTotal})`;
+    }).join('\n');
 
     return `🔔 *उपस्थिती सूचना*
 ━━━━━━━━━━━━━━━━━━━━
 📚 इयत्ता: ${state.className}
 📖 विषय: ${state.subjectName}
 📅 दिनांक: ${today}
-👨‍🏫 प्राध्यापक: प्रो. ${facultyName}
+👨‍🏫 विषय शिक्षक: प्रो. ${facultyName}
+${classTeacher ? `👨‍🏫 वर्ग शिक्षक: प्रो. ${classTeacher.name} ${classTeacher.phone ? `(${classTeacher.phone})` : ''}` : ''}
 ━━━━━━━━━━━━━━━━━━━━
 
 ❌ *गैरहजर विद्यार्थी (${absentStudents.length}):*
