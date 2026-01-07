@@ -41,8 +41,13 @@ export async function getTimetableSlots(filters?: {
 }
 
 export async function getTodaySlots(facultyId?: string) {
-  const today = DAYS_OF_WEEK[new Date().getDay()];
-  const todayDate = new Date().toISOString().split('T')[0];
+  const now = new Date();
+  const today = DAYS_OF_WEEK[now.getDay()];
+  
+  // Get local date string in YYYY-MM-DD format to handle timezone issues correctly
+  const offset = now.getTimezoneOffset();
+  const localDate = new Date(now.getTime() - (offset * 60 * 1000));
+  const todayDate = localDate.toISOString().split('T')[0];
 
   // Check if today is a holiday
   const { data: holiday } = await supabase

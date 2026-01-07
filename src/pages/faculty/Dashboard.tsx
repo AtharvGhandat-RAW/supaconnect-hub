@@ -10,7 +10,6 @@ import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { getTodaySlots } from '@/services/timetable';
 import { getSubjectAllocations, type SubjectAllocation } from '@/services/allocations';
-import { getSyllabusProgress } from '@/services/syllabus';
 import { getRecentActivity } from '@/services/activity';
 import { getClassByTeacherId, type Class } from '@/services/classes';
 
@@ -46,7 +45,6 @@ const FacultyDashboardPage: React.FC = () => {
     completed: 0,
     pending: 0,
     substitutions: 0,
-    avgSyllabusProgress: 0,
   });
   const [loading, setLoading] = useState(true);
 
@@ -124,7 +122,7 @@ const FacultyDashboardPage: React.FC = () => {
   const fetchAllData = async (fId: string, profileId?: string) => {
     await Promise.all([
       fetchTodayData(fId),
-      fetchSyllabusProgress(fId),
+      fetchAllocations(fId),
       fetchAssignedClass(fId),
       profileId ? fetchActivity(profileId) : Promise.resolve(),
     ]);
@@ -210,27 +208,12 @@ const FacultyDashboardPage: React.FC = () => {
     }
   };
 
-  const fetchSyllabusProgress = async (fId: string) => {
+  const fetchAllocations = async (fId: string) => {
     try {
       const allocationsData = await getSubjectAllocations(fId);
       setAllocations(allocationsData);
-
-      if (allocationsData.length === 0) {
-        setStats(prev => ({ ...prev, avgSyllabusProgress: 0 }));
-        return;
-      }
-
-      const progressPromises = allocationsData.map(alloc => getSyllabusProgress(alloc.subject_id));
-      const progressResults = await Promise.all(progressPromises);
-
-      const validProgress = progressResults.filter(p => p.totalTopics > 0);
-      const avgProgress = validProgress.length > 0
-        ? Math.round(validProgress.reduce((sum, p) => sum + p.percentage, 0) / validProgress.length)
-        : 0;
-
-      setStats(prev => ({ ...prev, avgSyllabusProgress: avgProgress }));
     } catch (error) {
-      console.error('Error fetching syllabus progress:', error);
+      console.error('Error fetching allocations:', error);
     }
   };
 
@@ -334,12 +317,6 @@ const FacultyDashboardPage: React.FC = () => {
             icon={RefreshCw}
             color="accent"
           />
-          <StatCard
-            title="Syllabus Progress"
-            value={loading ? '...' : `${stats.avgSyllabusProgress}%`}
-            icon={BookOpen}
-            color="secondary"
-          />
         </div>
 
         {assignedClass && (
@@ -354,9 +331,7 @@ const FacultyDashboardPage: React.FC = () => {
               </div>
               <div>
                 <h3 className="text-lg font-semibold text-foreground">Class Teacher</h3>
-                <p className="text-muted-foreground">
-                  You are the class teacher of <span className="text-foreground font-medium">{assignedClass.name} {assignedClass.division}</span>
-                </p>
+                <p className="text-muted-foreground">You are the class teacher for <span className="text-foreground font-medium">{assignedClass.name} {assignedClass.division}</span></p>
               </div>
             </div>
           </motion.div>
