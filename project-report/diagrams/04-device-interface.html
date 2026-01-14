@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Figure 4 - Device Interface Diagram</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Times New Roman', Times, serif; background: #f5f5f5; padding: 20px; }
+        .controls { text-align: center; margin-bottom: 15px; }
+        .btn { background: #1e3a5f; color: #fff; border: none; padding: 8px 20px; font-size: 11pt; cursor: pointer; border-radius: 3px; margin: 0 5px; }
+        .btn:hover { background: #2d4a6f; }
+        
+        .diagram-wrap { background: #fff; width: 560px; margin: 0 auto; padding: 18px 20px; border: 1px solid #ccc; }
+        .diagram-title { text-align: center; font-size: 11pt; font-weight: bold; margin-bottom: 12px; }
+        .section-title { font-size: 9pt; font-weight: bold; margin: 12px 0 8px 0; border-bottom: 1px solid #ccc; padding-bottom: 3px; }
+        
+        /* Wiring diagram */
+        .wiring { display: flex; justify-content: center; gap: 30px; align-items: center; }
+        .device { border: 1.5px solid #333; padding: 8px 12px; text-align: center; font-size: 8pt; background: #f9f9f9; border-radius: 4px; min-width: 80px; }
+        .device-name { font-weight: bold; margin-bottom: 4px; }
+        .pins { font-size: 7pt; color: #555; }
+        .conn { display: flex; flex-direction: column; align-items: center; font-size: 7pt; color: #666; }
+        .conn-line { width: 50px; height: 2px; background: #333; margin: 3px 0; }
+        .conn-label { font-size: 6.5pt; }
+        
+        /* Pin table */
+        .pin-table { width: 100%; border-collapse: collapse; font-size: 7.5pt; margin-top: 8px; }
+        .pin-table th, .pin-table td { border: 1px solid #333; padding: 4px 6px; text-align: left; }
+        .pin-table th { background: #1e3a5f; color: #fff; font-size: 8pt; }
+        .pin-table tr:nth-child(even) { background: #f5f5f5; }
+        
+        /* OLED states */
+        .oled-states { display: flex; justify-content: center; gap: 12px; flex-wrap: wrap; margin-top: 8px; }
+        .oled { width: 90px; height: 45px; background: #000; border: 2px solid #333; border-radius: 4px; display: flex; flex-direction: column; justify-content: center; align-items: center; color: #0f0; font-family: monospace; font-size: 6pt; line-height: 1.3; }
+        .oled-label { font-size: 7pt; text-align: center; margin-top: 4px; color: #333; }
+        
+        .caption { text-align: center; font-size: 10pt; margin-top: 14px; font-style: italic; }
+    </style>
+</head>
+<body>
+    <div class="controls">
+        <button class="btn" onclick="downloadPNG()">⬇ Download PNG</button>
+        <button class="btn" onclick="window.print()">🖨 Print</button>
+    </div>
+
+    <div class="diagram-wrap" id="diagram">
+        <div class="diagram-title">DEVICE INTERFACE – ESP32 BIOMETRIC TERMINAL</div>
+
+        <!-- Wiring Block Diagram -->
+        <div class="section-title">A. Component Wiring</div>
+        <div class="wiring">
+            <div class="device">
+                <div class="device-name">R307</div>
+                <div class="pins">Fingerprint<br/>Sensor</div>
+            </div>
+            <div class="conn">
+                <div class="conn-label">UART</div>
+                <div class="conn-line"></div>
+                <div class="conn-label">TX/RX</div>
+            </div>
+            <div class="device" style="background:#e0f2fe;">
+                <div class="device-name">ESP32</div>
+                <div class="pins">DevKit V1<br/>MCU</div>
+            </div>
+            <div class="conn">
+                <div class="conn-label">I²C</div>
+                <div class="conn-line"></div>
+                <div class="conn-label">SDA/SCL</div>
+            </div>
+            <div class="device">
+                <div class="device-name">SSD1306</div>
+                <div class="pins">OLED<br/>128×64</div>
+            </div>
+        </div>
+
+        <!-- Pin Table -->
+        <div class="section-title">B. Pin Configuration</div>
+        <table class="pin-table">
+            <tr><th>Component</th><th>Pin</th><th>ESP32 GPIO</th><th>Description</th></tr>
+            <tr><td>R307</td><td>TX</td><td>GPIO16 (RX2)</td><td>Sensor transmit</td></tr>
+            <tr><td>R307</td><td>RX</td><td>GPIO17 (TX2)</td><td>Sensor receive</td></tr>
+            <tr><td>R307</td><td>VCC</td><td>3.3V</td><td>Power supply</td></tr>
+            <tr><td>R307</td><td>GND</td><td>GND</td><td>Ground</td></tr>
+            <tr><td>SSD1306</td><td>SDA</td><td>GPIO21</td><td>I²C data</td></tr>
+            <tr><td>SSD1306</td><td>SCL</td><td>GPIO22</td><td>I²C clock</td></tr>
+        </table>
+
+        <!-- OLED States -->
+        <div class="section-title">C. OLED Display States</div>
+        <div class="oled-states">
+            <div>
+                <div class="oled">
+                    <div>ATTENDRO</div>
+                    <div>Connecting...</div>
+                </div>
+                <div class="oled-label">Boot</div>
+            </div>
+            <div>
+                <div class="oled">
+                    <div>Ready</div>
+                    <div>Scan finger</div>
+                </div>
+                <div class="oled-label">Ready</div>
+            </div>
+            <div>
+                <div class="oled">
+                    <div>✓ Present</div>
+                    <div>John Doe</div>
+                </div>
+                <div class="oled-label">Success</div>
+            </div>
+            <div>
+                <div class="oled" style="color:#f00;">
+                    <div>✗ Not found</div>
+                    <div>Try again</div>
+                </div>
+                <div class="oled-label">Failure</div>
+            </div>
+            <div>
+                <div class="oled" style="color:#ff0;">
+                    <div>Offline</div>
+                    <div>Queued: 5</div>
+                </div>
+                <div class="oled-label">Offline</div>
+            </div>
+        </div>
+
+        <div class="caption">Figure 4: ESP32 device wiring and OLED interface states</div>
+    </div>
+
+    <script>
+        function downloadPNG() {
+            const el = document.getElementById('diagram');
+            html2canvas(el, { scale: 3, backgroundColor: '#ffffff' }).then(canvas => {
+                const link = document.createElement('a');
+                link.download = 'fig4-device-interface.png';
+                link.href = canvas.toDataURL('image/png');
+                link.click();
+            });
+        }
+    </script>
+</body>
+</html>

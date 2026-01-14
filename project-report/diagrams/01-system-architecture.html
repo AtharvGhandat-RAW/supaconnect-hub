@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Figure 1 - System Architecture</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Times New Roman', Times, serif; background: #f5f5f5; padding: 20px; }
+        .controls { text-align: center; margin-bottom: 15px; }
+        .btn { background: #1e3a5f; color: #fff; border: none; padding: 8px 20px; font-size: 11pt; cursor: pointer; border-radius: 3px; margin: 0 5px; }
+        .btn:hover { background: #2d4a6f; }
+        
+        /* Diagram Canvas - A4 half-page width ~160mm ≈ 560px */
+        .diagram-wrap { background: #fff; width: 560px; margin: 0 auto; padding: 20px 25px; border: 1px solid #ccc; }
+        .diagram-title { text-align: center; font-size: 11pt; font-weight: bold; margin-bottom: 15px; }
+        
+        /* Layers */
+        .arch { display: flex; flex-direction: column; gap: 8px; }
+        .layer { border: 1.5px solid #333; border-radius: 4px; padding: 10px 12px; background: #fafafa; position: relative; }
+        .layer-label { position: absolute; top: -9px; left: 12px; background: #fff; padding: 0 6px; font-weight: bold; font-size: 9pt; }
+        .layer-row { display: flex; justify-content: center; gap: 10px; flex-wrap: wrap; padding-top: 6px; }
+        .box { border: 1px solid #333; border-radius: 3px; padding: 5px 10px; font-size: 8pt; text-align: center; min-width: 70px; background: #fff; }
+        .box.blue { background: #2563eb; color: #fff; border-color: #1d4ed8; }
+        .box.green { background: #059669; color: #fff; border-color: #047857; }
+        .box.red { background: #dc2626; color: #fff; border-color: #b91c1c; }
+        .box.orange { background: #ea580c; color: #fff; border-color: #c2410c; }
+        
+        /* Arrows */
+        .arrow { text-align: center; font-size: 14pt; color: #555; line-height: 1; }
+        
+        /* Legend */
+        .legend { display: flex; justify-content: center; gap: 15px; margin-top: 12px; flex-wrap: wrap; }
+        .leg-item { display: flex; align-items: center; gap: 4px; font-size: 8pt; }
+        .leg-box { width: 14px; height: 10px; border: 1px solid #333; border-radius: 2px; }
+        
+        /* Caption */
+        .caption { text-align: center; font-size: 10pt; margin-top: 12px; font-style: italic; }
+    </style>
+</head>
+<body>
+    <div class="controls">
+        <button class="btn" onclick="downloadPNG()">⬇ Download PNG</button>
+        <button class="btn" onclick="window.print()">🖨 Print</button>
+    </div>
+
+    <div class="diagram-wrap" id="diagram">
+        <div class="diagram-title">SYSTEM ARCHITECTURE – ATTENDRO</div>
+
+        <div class="arch">
+            <!-- Presentation Layer -->
+            <div class="layer">
+                <span class="layer-label">Presentation Layer</span>
+                <div class="layer-row">
+                    <div class="box blue">Admin Web</div>
+                    <div class="box blue">Faculty Web</div>
+                    <div class="box blue">Mobile App</div>
+                    <div class="box red">ESP32 Device</div>
+                </div>
+            </div>
+
+            <div class="arrow">↓ ↑</div>
+
+            <!-- API Layer -->
+            <div class="layer">
+                <span class="layer-label">API / Gateway</span>
+                <div class="layer-row">
+                    <div class="box green">PostgREST</div>
+                    <div class="box green">Auth API</div>
+                    <div class="box green">Realtime</div>
+                    <div class="box orange">Edge Func</div>
+                </div>
+            </div>
+
+            <div class="arrow">↓ ↑</div>
+
+            <!-- Business Layer -->
+            <div class="layer">
+                <span class="layer-label">Business Logic</span>
+                <div class="layer-row">
+                    <div class="box">Session Mgmt</div>
+                    <div class="box">RBAC / RLS</div>
+                    <div class="box">Token Validator</div>
+                    <div class="box">Sync Engine</div>
+                </div>
+            </div>
+
+            <div class="arrow">↓ ↑</div>
+
+            <!-- Data Layer -->
+            <div class="layer">
+                <span class="layer-label">Data Layer</span>
+                <div class="layer-row">
+                    <div class="box">PostgreSQL</div>
+                    <div class="box">Storage</div>
+                    <div class="box">Audit Logs</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Legend -->
+        <div class="legend">
+            <div class="leg-item"><div class="leg-box" style="background:#2563eb;"></div>Web/Mobile</div>
+            <div class="leg-item"><div class="leg-box" style="background:#dc2626;"></div>IoT Device</div>
+            <div class="leg-item"><div class="leg-box" style="background:#059669;"></div>Supabase API</div>
+            <div class="leg-item"><div class="leg-box" style="background:#ea580c;"></div>Edge Function</div>
+            <div class="leg-item"><div class="leg-box" style="background:#fff;"></div>Internal Module</div>
+        </div>
+
+        <div class="caption">Figure 1: Four-tier system architecture of Attendro</div>
+    </div>
+
+    <script>
+        function downloadPNG() {
+            const el = document.getElementById('diagram');
+            html2canvas(el, { scale: 3, backgroundColor: '#ffffff' }).then(canvas => {
+                const link = document.createElement('a');
+                link.download = 'fig1-system-architecture.png';
+                link.href = canvas.toDataURL('image/png');
+                link.click();
+            });
+        }
+    </script>
+</body>
+</html>

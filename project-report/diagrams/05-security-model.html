@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Figure 5 - Security Model</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Times New Roman', Times, serif; background: #f5f5f5; padding: 20px; }
+        .controls { text-align: center; margin-bottom: 15px; }
+        .btn { background: #1e3a5f; color: #fff; border: none; padding: 8px 20px; font-size: 11pt; cursor: pointer; border-radius: 3px; margin: 0 5px; }
+        .btn:hover { background: #2d4a6f; }
+        
+        .diagram-wrap { background: #fff; width: 560px; margin: 0 auto; padding: 18px 20px; border: 1px solid #ccc; }
+        .diagram-title { text-align: center; font-size: 11pt; font-weight: bold; margin-bottom: 12px; }
+        .section-title { font-size: 9pt; font-weight: bold; margin: 10px 0 6px 0; border-bottom: 1px solid #ccc; padding-bottom: 3px; }
+        
+        /* Security Layers */
+        .layers { display: flex; flex-direction: column; gap: 4px; }
+        .layer { display: flex; align-items: center; border: 1px solid #333; background: #fff; }
+        .layer-num { width: 22px; background: #1e3a5f; color: #fff; font-size: 8pt; font-weight: bold; text-align: center; padding: 5px 0; }
+        .layer-name { flex: 1; padding: 5px 10px; font-size: 8pt; border-right: 1px solid #ddd; font-weight: bold; }
+        .layer-desc { flex: 2; padding: 5px 10px; font-size: 7.5pt; color: #444; }
+        
+        /* Auth Flow */
+        .auth-flow { display: flex; align-items: center; justify-content: center; gap: 8px; flex-wrap: wrap; margin-top: 6px; }
+        .af-box { border: 1px solid #333; padding: 4px 8px; font-size: 7pt; text-align: center; background: #f9f9f9; border-radius: 3px; }
+        .af-arrow { font-size: 10pt; color: #555; }
+        
+        /* Token structure */
+        .token { background: #1e1e1e; color: #0f0; font-family: monospace; font-size: 7pt; padding: 8px 10px; border-radius: 4px; margin-top: 6px; line-height: 1.4; overflow-x: auto; }
+        
+        /* Threat matrix */
+        .threat-table { width: 100%; border-collapse: collapse; font-size: 7pt; margin-top: 6px; }
+        .threat-table th, .threat-table td { border: 1px solid #333; padding: 3px 5px; }
+        .threat-table th { background: #1e3a5f; color: #fff; font-size: 7.5pt; }
+        .threat-table tr:nth-child(even) { background: #f5f5f5; }
+        
+        .caption { text-align: center; font-size: 10pt; margin-top: 12px; font-style: italic; }
+    </style>
+</head>
+<body>
+    <div class="controls">
+        <button class="btn" onclick="downloadPNG()">⬇ Download PNG</button>
+        <button class="btn" onclick="window.print()">🖨 Print</button>
+    </div>
+
+    <div class="diagram-wrap" id="diagram">
+        <div class="diagram-title">SECURITY MODEL – ATTENDRO</div>
+
+        <!-- Security Layers -->
+        <div class="section-title">A. Eight-Layer Security Architecture</div>
+        <div class="layers">
+            <div class="layer"><div class="layer-num">1</div><div class="layer-name">Authentication</div><div class="layer-desc">Supabase Auth with JWT; email + password login</div></div>
+            <div class="layer"><div class="layer-num">2</div><div class="layer-name">Authorisation</div><div class="layer-desc">Role-based access: admin, faculty, student</div></div>
+            <div class="layer"><div class="layer-num">3</div><div class="layer-name">Row-Level Security</div><div class="layer-desc">PostgreSQL RLS policies per table per role</div></div>
+            <div class="layer"><div class="layer-num">4</div><div class="layer-name">Session Token</div><div class="layer-desc">HMAC-signed, time-bound device unlock token</div></div>
+            <div class="layer"><div class="layer-num">5</div><div class="layer-name">Batch Lock</div><div class="layer-desc">Roll-range validation; only enrolled students</div></div>
+            <div class="layer"><div class="layer-num">6</div><div class="layer-name">Biometric FAR</div><div class="layer-desc">R307 false-accept rate &lt; 0.001%</div></div>
+            <div class="layer"><div class="layer-num">7</div><div class="layer-name">Duplicate Guard</div><div class="layer-desc">UNIQUE constraint: (session_id, student_id)</div></div>
+            <div class="layer"><div class="layer-num">8</div><div class="layer-name">Time Gate</div><div class="layer-desc">±5 min window around scheduled slot</div></div>
+        </div>
+
+        <!-- Auth Flow -->
+        <div class="section-title">B. Authentication Flow</div>
+        <div class="auth-flow">
+            <div class="af-box">User Login</div>
+            <div class="af-arrow">→</div>
+            <div class="af-box">Supabase Auth</div>
+            <div class="af-arrow">→</div>
+            <div class="af-box">JWT Issued</div>
+            <div class="af-arrow">→</div>
+            <div class="af-box">API Request + JWT</div>
+            <div class="af-arrow">→</div>
+            <div class="af-box">RLS Check</div>
+            <div class="af-arrow">→</div>
+            <div class="af-box">Data Returned</div>
+        </div>
+
+        <!-- Token Structure -->
+        <div class="section-title">C. Session Token Payload (example)</div>
+        <div class="token">
+{<br/>
+&nbsp;&nbsp;"session_id": "abc123",<br/>
+&nbsp;&nbsp;"slot_id": "xyz789",<br/>
+&nbsp;&nbsp;"faculty_id": "fac001",<br/>
+&nbsp;&nbsp;"class_id": "cls01",<br/>
+&nbsp;&nbsp;"valid_from": "2026-01-12T09:00:00Z",<br/>
+&nbsp;&nbsp;"valid_until": "2026-01-12T10:05:00Z",<br/>
+&nbsp;&nbsp;"signature": "HMAC-SHA256(...)"<br/>
+}
+        </div>
+
+        <!-- Threat Matrix -->
+        <div class="section-title">D. Threat Mitigation Matrix</div>
+        <table class="threat-table">
+            <tr><th>Threat</th><th>Layer</th><th>Mitigation</th></tr>
+            <tr><td>Proxy attendance</td><td>6</td><td>Biometric verification</td></tr>
+            <tr><td>Token replay</td><td>4, 8</td><td>Time-bound + single-use token</td></tr>
+            <tr><td>Cross-class marking</td><td>5</td><td>Batch lock by roll range</td></tr>
+            <tr><td>Duplicate mark</td><td>7</td><td>DB unique constraint</td></tr>
+            <tr><td>Unauthorised access</td><td>1–3</td><td>JWT + RBAC + RLS</td></tr>
+        </table>
+
+        <div class="caption">Figure 5: Multi-layer security architecture and threat mitigation</div>
+    </div>
+
+    <script>
+        function downloadPNG() {
+            const el = document.getElementById('diagram');
+            html2canvas(el, { scale: 3, backgroundColor: '#ffffff' }).then(canvas => {
+                const link = document.createElement('a');
+                link.download = 'fig5-security-model.png';
+                link.href = canvas.toDataURL('image/png');
+                link.click();
+            });
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Chapter 3 - Scope of the Project</title>
+    <style>
+        @page {
+            size: A4;
+            margin-left: 3.5cm;
+            margin-top: 2.5cm;
+            margin-right: 1.25cm;
+            margin-bottom: 1.25cm;
+        }
+        body {
+            font-family: "Times New Roman", Times, serif;
+            font-size: 12pt;
+            line-height: 2;
+            text-align: justify;
+            margin: 0 auto;
+            max-width: 21cm;
+            padding: 2cm;
+            background-color: white;
+            color: black;
+        }
+        h1.chapter-name {
+            font-size: 14pt;
+            text-transform: uppercase;
+            font-weight: bold;
+            text-align: center;
+            margin-bottom: 24pt;
+        }
+        h2.section-heading {
+            font-size: 12pt;
+            text-transform: uppercase;
+            font-weight: bold;
+            margin-top: 24pt;
+            margin-bottom: 12pt;
+        }
+        h3.subsection-heading {
+            font-size: 12pt;
+            font-weight: bold;
+            margin-top: 18pt;
+            margin-bottom: 12pt;
+        }
+        p {
+            margin-bottom: 12pt;
+            text-indent: 1cm;
+        }
+        ul {
+            margin-bottom: 12pt;
+            margin-left: 1cm;
+        }
+        li {
+            margin-bottom: 6pt;
+        }
+    </style>
+</head>
+<body>
+
+    <h1 class="chapter-name">CHAPTER–3 SCOPE OF THE PROJECT</h1>
+
+    <h2 class="section-heading">3.1 INTRODUCTION</h2>
+    <p>
+        The "Scope" of a project tells us exactly what the project will do and what it will not do. It sets the boundaries for our work. For the Attendro project, we are focusing on solving the attendance problems of diploma and engineering colleges, specifically for practical batches and theory lectures.
+    </p>
+
+    <h2 class="section-heading">3.2 FUNCTIONAL SCOPE</h2>
+    <p>
+        The functional scope explains the features we are building. The system is divided into three main parts: the App for teachers, the Hardware for students, and the Database.
+    </p>
+
+    <h3 class="subsection-heading">3.2.1 Faculty Mobile App</h3>
+    <p>
+        The app is for teachers only. A student cannot log in here. The main functions are:
+    </p>
+    <ul>
+        <li><strong>Teacher Login:</strong> Secure login so that unauthorized people cannot control the system.</li>
+        <li><strong>Start Session:</strong> The teacher can select the Class, Subject, and specific Batch (like A1, A2, B1) and turn on the attendance mode.</li>
+        <li><strong>Live Count:</strong> The teacher can see on their screen how many students have marked present in real-time.</li>
+    </ul>
+
+    <h3 class="subsection-heading">3.2.2 The Hardware Device (ESP32)</h3>
+    <p>
+        This is the physical box that will be kept in the classroom. Its functions include:
+    </p>
+    <ul>
+        <li><strong>Fingerprint Matching:</strong> It matches the student's finger against stored templates. We are using roll numbers as IDs (Roll 1 to 120).</li>
+        <li><strong>Smart Checking:</strong> It doesn't just say "Match Found". It checks if that student is allowed in the current batch. If a Batch B student tries to mark attendance in a Batch A practical, the device will say "Wrong Batch" on the screen.</li>
+        <li><strong>Offline Memory:</strong> If the internet goes down, the device saves the attendance in its own memory and uploads it when the net comes back.</li>
+    </ul>
+
+    <h3 class="subsection-heading">3.2.3 Backend / Database</h3>
+    <p>
+        We are using Supabase as our cloud database. Its job includes:
+    </p>
+    <ul>
+        <li><strong>Data Storage:</strong> Safely storing student names, roll numbers, and dates.</li>
+        <li><strong>Reports:</strong> Generating simple reports that teachers can download to see who was absent.</li>
+    </ul>
+
+    <h2 class="section-heading">3.3 TECHNICAL SCOPE</h2>
+    <p>
+        Technically, we are working with the following tools and limits:
+    </p>
+    <ul>
+        <li><strong>Hardware:</strong> ESP32 Microcontroller with an R307 Fingerprint Sensor and an OLED display.</li>
+        <li><strong>Software:</strong> The app is built using React and runs on Android phones.</li>
+        <li><strong>Capacity:</strong> One device can store up to 120 fingerprints, which is enough for two standard divisions of students.</li>
+        <li><strong>Power:</strong> The device works on a standard 5V USB power supply, so it can run on a power bank.</li>
+    </ul>
+
+    <h2 class="section-heading">3.4 LIMITATIONS</h2>
+    <p>
+        Every project has some limits. For this version of Attendro, we have decided on the following:
+    </p>
+    <ul>
+        <li><strong>No Face Recognition:</strong> We are only using fingerprints because face cameras are expensive and need more processing power.</li>
+        <li><strong>Single College Use:</strong> This system is designed for one college campus, not for managing multiple colleges at once.</li>
+        <li><strong>No Parent SMS:</strong> Sending SMS costs money per message, so we are not including that feature right now to keep the project cost-free.</li>
+    </ul>
+
+    <h2 class="section-heading">3.5 FUTURE ENHANCEMENTS</h2>
+    <p>
+        In the future, if we have more time and budget, we plan to add more features. We could add Face Recognition to make it touch-less. We could also connect it to the college's main ERP software so that marks are updated automatically. Another idea is to use AI to predict which students are likely to have low attendance before it becomes a problem.
+    </p>
+
+    <h2 class="section-heading">3.6 CHAPTER SUMMARY</h2>
+    <p>
+        In this chapter, we defined what our project will deliver. We explained the role of the Teacher App and the ESP32 Device. We also clarified that while we are using advanced features like Offline Sync and Batch-checking, we are avoiding expensive features like SMS for now. This keeps our project realistic and achievable within our diploma timeline. The next chapter will explain the Design and Architecture of the system.
+    </p>
+
+</body>
+</html>

@@ -8,6 +8,7 @@ export interface TimetableSlot {
   subject_id: string;
   day_of_week: string;
   start_time: string;
+  end_time?: string | null;
   room_no: string | null;
   valid_from: string;
   valid_to: string;

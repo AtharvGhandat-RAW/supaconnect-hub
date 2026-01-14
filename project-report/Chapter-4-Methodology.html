@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Chapter 4 - Methodology</title>
+    <style>
+        @page {
+            size: A4;
+            margin-left: 3.5cm;
+            margin-top: 2.5cm;
+            margin-right: 1.25cm;
+            margin-bottom: 1.25cm;
+        }
+        body {
+            font-family: "Times New Roman", Times, serif;
+            font-size: 12pt;
+            line-height: 2;
+            text-align: justify;
+            margin: 0 auto;
+            max-width: 21cm;
+            padding: 2cm;
+            background-color: white;
+            color: black;
+        }
+        h1.chapter-name {
+            font-size: 14pt;
+            text-transform: uppercase;
+            font-weight: bold;
+            text-align: center;
+            margin-bottom: 24pt;
+        }
+        h2.section-heading {
+            font-size: 12pt;
+            text-transform: uppercase;
+            font-weight: bold;
+            margin-top: 24pt;
+            margin-bottom: 12pt;
+        }
+        h3.subsection-heading {
+            font-size: 12pt;
+            font-weight: bold;
+            margin-top: 18pt;
+            margin-bottom: 12pt;
+        }
+        p {
+            margin-bottom: 12pt;
+            text-indent: 1cm;
+        }
+        ul, ol {
+            margin-bottom: 12pt;
+            margin-left: 1cm;
+        }
+        li {
+            margin-bottom: 6pt;
+        }
+    </style>
+</head>
+<body>
+
+    <h1 class="chapter-name">CHAPTER–4 METHODOLOGY</h1>
+
+    <h2 class="section-heading">4.1 INTRODUCTION</h2>
+    <p>
+        Methodology describes the step-by-step approach we followed to build the Attendro system. Instead of trying to build everything at once, we divided the project into three smaller, manageable parts: the Hardware Module, the Software App, and the Cloud Integration. This modular approach helped us test each part separately before connecting them together. This chapter explains how we designed and implemented each of these components.
+    </p>
+
+    <h2 class="section-heading">4.2 SYSTEM ARCHITECTURE OVERVIEW</h2>
+    <p>
+        The system works on a "Client-Server" model but with a smart twist known as "Edge Computing".
+    </p>
+    <p>
+        In a traditional system, the device sends every fingerprint to the server to check if it's correct. This is slow and stops working if the internet fails. In our approach, we moved the decision-making logic to the "Edge" (the ESP32 device).
+    </p>
+    <p>
+        <strong>Our flow is simple:</strong>
+        <br>
+        1. The <strong>Cloud</strong> holds the main data (Student lists, Timetables).
+        <br>
+        2. The <strong>Faculty App</strong> triggers a session and tells the Cloud to "Open Attendance".
+        <br>
+        3. The <strong>ESP32 Device</strong> downloads the rules for the current session (e.g., "Only Batch A allowed").
+        <br>
+        4. The Device then works independently to scan and verify students.
+        <br>
+        5. Finally, the Device uploads the results back to the Cloud.
+    </p>
+
+    <h2 class="section-heading">4.3 HARDWARE IMPLEMENTATION</h2>
+    <p>
+        For the hardware, we chose the ESP32 microcontroller because it has built-in Wi-Fi and Bluetooth, and it is powerful enough to process logical conditions locally.
+    </p>
+
+    <h3 class="subsection-heading">4.3.1 Component Interfacing</h3>
+    <p>
+        We connected the R307 Optical Fingerprint Sensor to the ESP32 using serial communication (UART). The sensor stores the fingerprint templates internally. We assigned IDs to these fingerprints matching the student roll numbers (ID 1 = Roll 1).
+    </p>
+    <p>
+        We also added a 0.96-inch OLED display using the I2C protocol. This is crucial for user experience. It shows messages like "Connecting...", "Place Finger", or specific error messages like "Wrong Batch", so the student knows exactly what is happening.
+    </p>
+
+    <h2 class="section-heading">4.4 SOFTWARE DEVELOPMENT</h2>
+    <p>
+        The software side manages the sessions and stores the data.
+    </p>
+
+    <h3 class="subsection-heading">4.4.1 Faculty Web Application</h3>
+    <p>
+        We built a Progressive Web App (PWA) using React.js. We prioritized a "Mobile-First" design because teachers will use this on their smartphones in class. The interface allows the teacher to select the Subject, Theory/Practical mode, and specific Batches. Once they click "Start Session", the app generates a unique session token in the database.
+    </p>
+
+    <h3 class="subsection-heading">4.4.2 Database Design (Supabase)</h3>
+    <p>
+        We used Supabase (an open-source alternative to Firebase) for our backend. We created relational tables to link Students, Subjects, and Attendance logs. The key innovation here is the "Active Session" table, which acts as a bridge between the Teacher's app and the ESP32 device.
+    </p>
+
+    <h2 class="section-heading">4.5 THE ALGORITHM / WORKFLOW</h2>
+    <p>
+        The core logic of our system follows a specific algorithm to ensure security and accuracy:
+    </p>
+    <p>
+        <strong>Step 1: Session Check</strong><br>
+        The device wakes up and checks the server: "Is there an active session for this classroom?" If No, it shows "Idle". If Yes, it downloads the session rules (e.g., Subject: Physics, Batch: A).
+    </p>
+    <p>
+        <strong>Step 2: Biometric Input</strong><br>
+        A student places their finger. The sensor compares it and finds a match (e.g., ID #25).
+    </p>
+    <p>
+        <strong>Step 3: Edge Validation (The "Smart" Part)</strong><br>
+        The ESP32 checks three conditions locally:
+        <br>
+        - Is ID #25 part of the allowed Batch (Batch A)?
+        <br>
+        - Has ID #25 already marked attendance for this session?
+        <br>
+        - Is the session time still valid?
+    </p>
+    <p>
+        <strong>Step 4: Output & Storage</strong><br>
+        If all checks pass, it beeps and shows "Present: Roll 25". It saves this record in its internal memory.
+    </p>
+    <p>
+        <strong>Step 5: Synchronization</strong><br>
+        A background process constantly tries to upload the saved records to the Supabase cloud. If the internet is off, it keeps trying until successful.
+    </p>
+
+    <h2 class="section-heading">4.6 TOOLS AND TECHNOLOGIES USED</h2>
+    <p>
+        We used a mix of hardware and software tools to build this project:
+    </p>
+    <ul>
+        <li><strong>Microcontroller:</strong> ESP32 DevKit V1</li>
+        <li><strong>Sensor:</strong> R307 Optical Fingerprint Module</li>
+        <li><strong>Display:</strong> SSD1306 0.96" OLED</li>
+        <li><strong>Programming Language (Hardware):</strong> C++ (Arduino IDE)</li>
+        <li><strong>Frontend Framework:</strong> React.js with Tailwind CSS</li>
+        <li><strong>Backend/Database:</strong> Supabase (PostgreSQL)</li>
+    </ul>
+
+    <h2 class="section-heading">4.7 CHAPTER SUMMARY</h2>
+    <p>
+        In this chapter, we explained how we built Attendro using a modular approach. We detailed the interaction between the Cloud, the App, and the Device. We described the "Smart Validation Algorithm" that runs on the device to filter students by batch. This methodology ensures that our system is not just a simple recorder, but an intelligent tool that enforces academic rules. In the next chapter, we will present the results and screenshots of the working system.
+    </p>
+
+</body>
+</html>

@@ -95,10 +95,24 @@ const FacultyTodayPage: React.FC = () => {
           const sessionId = completedSlots.get(slot.start_time);
           const isCompleted = !!sessionId;
           const timeGate = checkTimeGate(slot.start_time);
-
+          
+          // Check for 15-minute expiration
+          const now = new Date();
+          const [hours, minutes] = slot.start_time.split(':').map(Number);
+          const lectureTime = new Date();
+          lectureTime.setHours(hours, minutes, 0, 0);
+          
+          // If start time was "yesterday" logic via Date object, we might need care, 
+          // but assuming today's view handles only today's timestamps.
+          const fifteenMinsAfter = new Date(lectureTime.getTime() + 15 * 60000);
+          
           let status: 'upcoming' | 'ongoing' | 'completed' | 'missed' = 'upcoming';
+          
           if (isCompleted) {
             status = 'completed';
+          } else if (now > fifteenMinsAfter) {
+            // If currentTime > startTime + 15mins and not completed
+            status = 'missed';
           } else if (timeGate.enabled) {
             status = 'ongoing';
           } else if (timeGate.reason === 'Attendance window closed') {
@@ -117,11 +131,15 @@ const FacultyTodayPage: React.FC = () => {
             room: slot.room_no || 'TBA',
             isSubstitution: false,
             status,
-            canTakeAttendance: !isCompleted && timeGate.enabled,
-            timeGateReason: timeGate.reason,
+            // Only allow taking attendance if not missed/completed and gate is open (or within 15 mins)
+            canTakeAttendance: !isCompleted && status !== 'missed' && timeGate.enabled,
+            timeGateReason: status === 'missed' ? 'Lecture time expired' : timeGate.reason,
             sessionId,
           };
-        });
+        })
+        // Filter out missed lectures from the view completely if desired, 
+        // or keep them but show as missed. User said "remove that", so filtering.
+        .filter((slot: LectureSlot) => slot.status !== 'missed'); 
 
         // Add substitution assignments
         const subData = substitutions.data || [];
@@ -131,14 +149,25 @@ const FacultyTodayPage: React.FC = () => {
           const timeGate = checkTimeGate(sub.start_time);
           const srcFaculty = sub.faculty as unknown as { profiles: { name: string } } | null;
 
+          // Check for 15-minute expiration
+          const now = new Date();
+          const [hours, minutes] = sub.start_time.split(':').map(Number);
+          const lectureTime = new Date();
+          lectureTime.setHours(hours, minutes, 0, 0);
+          const fifteenMinsAfter = new Date(lectureTime.getTime() + 15 * 60000);
+
           let status: 'upcoming' | 'ongoing' | 'completed' | 'missed' = 'upcoming';
           if (isCompleted) {
             status = 'completed';
+          } else if (now > fifteenMinsAfter) {
+             status = 'missed';
           } else if (timeGate.enabled) {
             status = 'ongoing';
           } else if (timeGate.reason === 'Attendance window closed') {
             status = 'missed';
           }
+          
+          if (status === 'missed') return; // Skip missed substitutions too
 
           formattedSlots.push({
             id: `sub-${sub.id}`,
@@ -153,8 +182,8 @@ const FacultyTodayPage: React.FC = () => {
             isSubstitution: true,
             substitutionFor: srcFaculty?.profiles?.name,
             status,
-            canTakeAttendance: !isCompleted && timeGate.enabled,
-            timeGateReason: timeGate.reason,
+            canTakeAttendance: !isCompleted && status !== 'missed' && timeGate.enabled,
+            timeGateReason: status === 'missed' ? 'Lecture time expired' : timeGate.reason,
             sessionId,
           });
         });

@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Chapter 7 - Conclusion and Future Scope</title>
+    <style>
+        @page {
+            size: A4;
+            margin-left: 3.5cm;
+            margin-top: 2.5cm;
+            margin-right: 1.25cm;
+            margin-bottom: 1.25cm;
+        }
+        body {
+            font-family: "Times New Roman", Times, serif;
+            font-size: 12pt;
+            line-height: 2;
+            text-align: justify;
+            margin: 0 auto;
+            max-width: 21cm;
+            padding: 2cm;
+            background-color: white;
+            color: black;
+        }
+        h1.chapter-name {
+            font-size: 14pt;
+            text-transform: uppercase;
+            font-weight: bold;
+            text-align: center;
+            margin-bottom: 24pt;
+        }
+        h2.section-heading {
+            font-size: 12pt;
+            text-transform: uppercase;
+            font-weight: bold;
+            margin-top: 24pt;
+            margin-bottom: 12pt;
+        }
+        h3.subsection-heading {
+            font-size: 12pt;
+            font-weight: bold;
+            margin-top: 18pt;
+            margin-bottom: 12pt;
+        }
+        p {
+            margin-bottom: 12pt;
+            text-indent: 1cm;
+        }
+    </style>
+</head>
+<body>
+
+    <h1 class="chapter-name">CHAPTER–7 CONCLUSION AND FUTURE SCOPE</h1>
+
+    <h2 class="section-heading">7.1 CONCLUSION</h2>
+    <p>
+        The "Attendro" project started with a simple question: "How can we stop proxy attendance and make the whole process easier for teachers?" After developing, building, and testing our system, we believe we have found a solid answer. We successfully built a system that combines the security of fingerprints with the smart logic of college timetables.
+    </p>
+    <p>
+        Throughout this project, we learned that technology is most useful when it solves a specific problem. By moving the "brain" of the system to the ESP32 device in the classroom, we solved the issue of unreliable internet. By adding the Faculty App, we gave teachers back the control they had lost with automatic systems. The system correctly identifies students, checks their batch, and rejects anyone who shouldn't be there.
+    </p>
+    <p>
+        In conclusion, Attendro is not just a fingerprint scanner; it is a context-aware tool that respects the academic rules of the institute. It saves time, saves paper, and most importantly, it ensures integrity in student records. We are confident that this system is ready for real-world use in our college.
+    </p>
+
+    <h2 class="section-heading">7.2 LIMITATIONS</h2>
+    <p>
+        While the system works well, we must be honest about its current limits. First, the fingerprint sensor (R307) sometimes struggles if a student's finger is wet or very dirty, requiring a second try. Second, the current device can only hold 120 students, which is fine for practical batches but might need an upgrade for very large seminar halls. Lastly, the initial enrollment process takes some time as every student needs to register their finger once.
+    </p>
+
+    <h2 class="section-heading">7.3 FUTURE SCOPE</h2>
+    <p>
+        This project is just the beginning. There are several exciting ways we can improve it in the future:
+    </p>
+    
+    <h3 class="subsection-heading">7.3.1 Centralized Cloud Management</h3>
+    <p>
+        Right now, we use a single dashboard. In the future, we can expand this to a "Multi-College" platform where a university can track attendance across all its affiliated colleges from one screen.
+    </p>
+
+    <h3 class="subsection-heading">7.3.2 AI-Based Predictions</h3>
+    <p>
+        We can add a machine learning layer to the data. The system could analyze patterns and predict which students are likely to drop out or fail based on their attendance trends, alerting teachers before it's too late.
+    </p>
+
+    <h3 class="subsection-heading">7.3.3 Integration with Smart Campus</h3>
+    <p>
+        This device could be connected to other smart campus features. For example, if a student is marked present in the lab, the canteen or library system could know they are busy and not allow transactions there, ensuring students stay in class.
+    </p>
+
+    <h2 class="section-heading">7.4 FINAL WORDS</h2>
+    <p>
+        Working on Attendro has been a great learning experience. It taught us how to integrate hardware with software and how to design for the end-user. We hope this project serves as a useful contribution to our department and helps modernize the way we look at attendance.
+    </p>
+
+</body>
+</html>

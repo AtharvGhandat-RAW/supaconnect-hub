@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Figure 2 - Database Schema (ER Diagram)</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Times New Roman', Times, serif; background: #f5f5f5; padding: 20px; }
+        .controls { text-align: center; margin-bottom: 15px; }
+        .btn { background: #1e3a5f; color: #fff; border: none; padding: 8px 20px; font-size: 11pt; cursor: pointer; border-radius: 3px; margin: 0 5px; }
+        .btn:hover { background: #2d4a6f; }
+        
+        .diagram-wrap { background: #fff; width: 620px; margin: 0 auto; padding: 18px 20px; border: 1px solid #ccc; }
+        .diagram-title { text-align: center; font-size: 11pt; font-weight: bold; margin-bottom: 12px; }
+        
+        /* ER Grid */
+        .er { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+        .entity { border: 1.5px solid #333; font-size: 7.5pt; background: #fff; }
+        .entity-hd { background: #1e3a5f; color: #fff; padding: 4px 6px; font-weight: bold; text-align: center; font-size: 8pt; border-bottom: 1.5px solid #333; }
+        .entity-bd { padding: 5px 6px; }
+        .attr { padding: 2px 0; border-bottom: 1px dashed #ddd; display: flex; justify-content: space-between; }
+        .attr:last-child { border-bottom: none; }
+        .pk { color: #b91c1c; font-weight: bold; }
+        .fk { color: #1d4ed8; }
+        .typ { color: #666; font-size: 6.5pt; }
+        
+        /* Relationships */
+        .rels { margin-top: 12px; font-size: 8pt; columns: 2; column-gap: 20px; }
+        .rel { padding: 2px 0; }
+        
+        .caption { text-align: center; font-size: 10pt; margin-top: 10px; font-style: italic; }
+    </style>
+</head>
+<body>
+    <div class="controls">
+        <button class="btn" onclick="downloadPNG()">⬇ Download PNG</button>
+        <button class="btn" onclick="window.print()">🖨 Print</button>
+    </div>
+
+    <div class="diagram-wrap" id="diagram">
+        <div class="diagram-title">DATABASE SCHEMA – ATTENDRO</div>
+
+        <div class="er">
+            <!-- profiles -->
+            <div class="entity">
+                <div class="entity-hd">profiles</div>
+                <div class="entity-bd">
+                    <div class="attr"><span class="pk">id</span><span class="typ">uuid</span></div>
+                    <div class="attr"><span>email</span><span class="typ">text</span></div>
+                    <div class="attr"><span>role</span><span class="typ">enum</span></div>
+                    <div class="attr"><span>full_name</span><span class="typ">text</span></div>
+                </div>
+            </div>
+            <!-- faculty -->
+            <div class="entity">
+                <div class="entity-hd">faculty</div>
+                <div class="entity-bd">
+                    <div class="attr"><span class="pk">id</span><span class="typ">uuid</span></div>
+                    <div class="attr"><span class="fk">profile_id</span><span class="typ">uuid</span></div>
+                    <div class="attr"><span>emp_code</span><span class="typ">text</span></div>
+                    <div class="attr"><span>department</span><span class="typ">text</span></div>
+                </div>
+            </div>
+            <!-- classes -->
+            <div class="entity">
+                <div class="entity-hd">classes</div>
+                <div class="entity-bd">
+                    <div class="attr"><span class="pk">id</span><span class="typ">uuid</span></div>
+                    <div class="attr"><span>name</span><span class="typ">text</span></div>
+                    <div class="attr"><span>year</span><span class="typ">int</span></div>
+                    <div class="attr"><span>division</span><span class="typ">text</span></div>
+                </div>
+            </div>
+            <!-- students -->
+            <div class="entity">
+                <div class="entity-hd">students</div>
+                <div class="entity-bd">
+                    <div class="attr"><span class="pk">id</span><span class="typ">uuid</span></div>
+                    <div class="attr"><span class="fk">class_id</span><span class="typ">uuid</span></div>
+                    <div class="attr"><span>roll_no</span><span class="typ">int</span></div>
+                    <div class="attr"><span>name</span><span class="typ">text</span></div>
+                </div>
+            </div>
+            <!-- subjects -->
+            <div class="entity">
+                <div class="entity-hd">subjects</div>
+                <div class="entity-bd">
+                    <div class="attr"><span class="pk">id</span><span class="typ">uuid</span></div>
+                    <div class="attr"><span>code</span><span class="typ">text</span></div>
+                    <div class="attr"><span>name</span><span class="typ">text</span></div>
+                    <div class="attr"><span>credits</span><span class="typ">int</span></div>
+                </div>
+            </div>
+            <!-- subject_allocations -->
+            <div class="entity">
+                <div class="entity-hd">allocations</div>
+                <div class="entity-bd">
+                    <div class="attr"><span class="pk">id</span><span class="typ">uuid</span></div>
+                    <div class="attr"><span class="fk">faculty_id</span><span class="typ">uuid</span></div>
+                    <div class="attr"><span class="fk">subject_id</span><span class="typ">uuid</span></div>
+                    <div class="attr"><span class="fk">class_id</span><span class="typ">uuid</span></div>
+                </div>
+            </div>
+            <!-- timetable_slots -->
+            <div class="entity">
+                <div class="entity-hd">timetable_slots</div>
+                <div class="entity-bd">
+                    <div class="attr"><span class="pk">id</span><span class="typ">uuid</span></div>
+                    <div class="attr"><span class="fk">allocation_id</span><span class="typ">uuid</span></div>
+                    <div class="attr"><span>day</span><span class="typ">enum</span></div>
+                    <div class="attr"><span>start / end</span><span class="typ">time</span></div>
+                </div>
+            </div>
+            <!-- attendance_sessions -->
+            <div class="entity">
+                <div class="entity-hd">att_sessions</div>
+                <div class="entity-bd">
+                    <div class="attr"><span class="pk">id</span><span class="typ">uuid</span></div>
+                    <div class="attr"><span class="fk">slot_id</span><span class="typ">uuid</span></div>
+                    <div class="attr"><span>date</span><span class="typ">date</span></div>
+                    <div class="attr"><span>status</span><span class="typ">enum</span></div>
+                </div>
+            </div>
+            <!-- attendance_records -->
+            <div class="entity">
+                <div class="entity-hd">att_records</div>
+                <div class="entity-bd">
+                    <div class="attr"><span class="pk">id</span><span class="typ">uuid</span></div>
+                    <div class="attr"><span class="fk">session_id</span><span class="typ">uuid</span></div>
+                    <div class="attr"><span class="fk">student_id</span><span class="typ">uuid</span></div>
+                    <div class="attr"><span>status</span><span class="typ">enum</span></div>
+                </div>
+            </div>
+            <!-- faculty_leaves -->
+            <div class="entity">
+                <div class="entity-hd">faculty_leaves</div>
+                <div class="entity-bd">
+                    <div class="attr"><span class="pk">id</span><span class="typ">uuid</span></div>
+                    <div class="attr"><span class="fk">faculty_id</span><span class="typ">uuid</span></div>
+                    <div class="attr"><span>start / end</span><span class="typ">date</span></div>
+                    <div class="attr"><span>status</span><span class="typ">enum</span></div>
+                </div>
+            </div>
+            <!-- substitutions -->
+            <div class="entity">
+                <div class="entity-hd">substitutions</div>
+                <div class="entity-bd">
+                    <div class="attr"><span class="pk">id</span><span class="typ">uuid</span></div>
+                    <div class="attr"><span class="fk">leave_id</span><span class="typ">uuid</span></div>
+                    <div class="attr"><span class="fk">substitute_id</span><span class="typ">uuid</span></div>
+                    <div class="attr"><span class="fk">slot_id</span><span class="typ">uuid</span></div>
+                </div>
+            </div>
+            <!-- activity_log -->
+            <div class="entity">
+                <div class="entity-hd">activity_log</div>
+                <div class="entity-bd">
+                    <div class="attr"><span class="pk">id</span><span class="typ">uuid</span></div>
+                    <div class="attr"><span class="fk">user_id</span><span class="typ">uuid</span></div>
+                    <div class="attr"><span>action</span><span class="typ">text</span></div>
+                    <div class="attr"><span>timestamp</span><span class="typ">timestamptz</span></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Relationships -->
+        <div class="rels">
+            <div class="rel">• faculty → profiles (1:1)</div>
+            <div class="rel">• students → classes (N:1)</div>
+            <div class="rel">• allocations → faculty, subject, class (N:1)</div>
+            <div class="rel">• timetable_slots → allocations (N:1)</div>
+            <div class="rel">• att_sessions → timetable_slots (N:1)</div>
+            <div class="rel">• att_records → att_sessions, students (N:1)</div>
+            <div class="rel">• faculty_leaves → faculty (N:1)</div>
+            <div class="rel">• substitutions → leave, faculty, slot (N:1)</div>
+        </div>
+
+        <div class="caption">Figure 2: Entity-relationship diagram of Attendro database</div>
+    </div>
+
+    <script>
+        function downloadPNG() {
+            const el = document.getElementById('diagram');
+            html2canvas(el, { scale: 3, backgroundColor: '#ffffff' }).then(canvas => {
+                const link = document.createElement('a');
+                link.download = 'fig2-database-schema.png';
+                link.href = canvas.toDataURL('image/png');
+                link.click();
+            });
+        }
+    </script>
+</body>
+</html>

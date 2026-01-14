@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Certificate</title>
+    <style>
+        @page {
+            size: A4;
+            margin-left: 3.5cm;
+            margin-top: 2.5cm;
+            margin-right: 1.25cm;
+            margin-bottom: 1.25cm;
+        }
+        body {
+            font-family: "Times New Roman", Times, serif;
+            font-size: 12pt;
+            line-height: 2;
+            text-align: justify;
+            margin: 0 auto;
+            max-width: 21cm;
+            padding: 2cm;
+            background-color: white;
+            color: black;
+        }
+        h1.chapter-name {
+            font-size: 14pt;
+            text-transform: uppercase;
+            font-weight: bold;
+            text-align: center;
+            margin-bottom: 36pt;
+            text-decoration: underline;
+        }
+        p {
+            margin-bottom: 12pt;
+            text-indent: 1cm;
+        }
+        .signature-grid {
+            margin-top: 60pt;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            grid-gap: 20pt;
+            text-align: center;
+            font-weight: bold;
+        }
+        .principal-sig {
+            grid-column: 1 / -1;
+            margin-top: 40pt;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+
+    <h1 class="chapter-name">CERTIFICATE</h1>
+
+    <p>
+        This is to certify that the project report entitled <strong>"ATTENDRO"</strong> is a bonafide work carried out by <strong>[Mr./Ms. YOUR NAME]</strong> (Roll No: [YOUR ROLL NO]) of the <strong>Department of Computer Engineering</strong>, in partial fulfillment of the requirements for the award of the Diploma in Computer Engineering during the academic year <strong>2025-2026</strong>.
+    </p>
+
+    <p>
+        The work contained in this report has not been submitted previously for any other degree or diploma to this or any other university/institute.
+    </p>
+
+    <!-- Signatures -->
+    <!-- Note: CSS Grid layout for signatures; WeasyPrint handles basic grid/flex well -->
+    <div style="margin-top: 3cm; width: 100%;">
+        <table style="width: 100%; border: none;">
+            <tr style="border: none;">
+                <td style="border: none; text-align: left; vertical-align: bottom; width: 50%;">
+                    <strong>[Name of Guide]</strong><br>
+                    Project Guide
+                </td>
+                <td style="border: none; text-align: right; vertical-align: bottom; width: 50%;">
+                    <strong>[Name of HOD]</strong><br>
+                    Head of Department
+                </td>
+            </tr>
+            <tr style="border: none;">
+                <td colspan="2" style="border: none; text-align: center; padding-top: 2cm;">
+                    <strong>[Name of Principal]</strong><br>
+                    Principal
+                </td>
+            </tr>
+        </table>
+    </div>
+    
+    <div style="text-align: center; margin-top: 2cm;">
+        <br>
+        <strong>EXTERNAL EXAMINER</strong>
+    </div>
+
+</body>
+</html>

@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Chapter 1 - Introduction</title>
+    <style>
+        @page {
+            size: A4;
+            margin-left: 3.5cm;
+            margin-top: 2.5cm;
+            margin-right: 1.25cm;
+            margin-bottom: 1.25cm;
+        }
+        body {
+            font-family: "Times New Roman", Times, serif;
+            font-size: 12pt;
+            line-height: 2;
+            text-align: justify;
+            margin: 0 auto;
+            max-width: 21cm;
+            padding: 2cm;
+            background-color: white;
+            color: black;
+        }
+        h1.chapter-name {
+            font-size: 14pt;
+            text-transform: uppercase;
+            font-weight: bold;
+            text-align: center;
+            margin-bottom: 24pt;
+        }
+        h2.section-heading {
+            font-size: 12pt;
+            text-transform: uppercase;
+            font-weight: bold;
+            margin-top: 24pt;
+            margin-bottom: 12pt;
+        }
+        h3.subsection-heading {
+            font-size: 12pt;
+            font-weight: bold;
+            margin-top: 18pt;
+            margin-bottom: 12pt;
+        }
+        p {
+            margin-bottom: 12pt;
+            text-indent: 1cm;
+        }
+    </style>
+</head>
+<body>
+
+    <h1 class="chapter-name">CHAPTER–1 INTRODUCTION</h1>
+
+    <h2 class="section-heading">1.1 OVERVIEW</h2>
+    <p>
+        In any educational institute, attendance is one of the most important activities. It is used to decide if a student is eligible for exams and to check their regularity. Currently, most colleges still use the old method where teachers call out roll numbers and mark them on a paper register. As the number of students increases and the academic schedule becomes more complex with practical batches and extra lectures, this manual method is becoming difficult to manage.
+    </p>
+    <p>
+        The main issue with current methods is that they do not guarantee that the student is actually attending the specific subject. A student might be present in the college premises but missing the lecture. To solve this, we are developing "Attendro", a smart attendance system. This project combines a hardware device and a mobile app to make sure that attendance is marked only when the teacher is present in the class and starts a session. It is designed to be simple, secure, and accurate for daily college use.
+    </p>
+
+    <h2 class="section-heading">1.2 PROBLEM STATEMENT</h2>
+    <p>
+        During our study of the current system, we observed several problems that teachers and the administration face daily.
+    </p>
+
+    <h3 class="subsection-heading">1.2.1 Time Consumption</h3>
+    <p>
+        Taking attendance manually takes a long time. In a lecture of 60 minutes, nearly 10 to 15 minutes are wasted just in calling out names. This reduces the actual teaching time. If there are multiple lectures in a day, a significant amount of time is lost just in administrative work.
+    </p>
+
+    <h3 class="subsection-heading">1.2.2 Proxy Attendance</h3>
+    <p>
+        This is the most common problem in colleges. When a teacher calls a roll number, another student often answers "Present" for their absent friend. It is difficult for a teacher to spot this in a large class of 60 or more students. Even with simple signature sheets, students can easily sign for others.
+    </p>
+
+    <h3 class="subsection-heading">1.2.3 Lack of Specificity</h3>
+    <p>
+        Existing biometric machines are usually kept at the college main gate. They only track when a student enters or leaves the building. They cannot track if the student attended the Chemistry lecture or the Physics practical. There is no link between the fingerprint scan and the subject time-table.
+    </p>
+
+    <h2 class="section-heading">1.3 PROPOSED SOLUTION</h2>
+    <p>
+        To solve these problems, we are building the Attendro system. The idea is to make attendance "session-based". This means attendance is not open all the time. It is only allowed when a teacher starts it.
+    </p>
+    <p>
+        The system works in three parts. First, the teacher uses the Faculty App on their phone to select the subject and batch (like Batch A or Batch B) and starts the session. Second, the student scans their finger on a portable device (ESP32) which is kept in the class. The device checks if the student belongs to that batch and if the session is active. Third, the data is saved locally and sent to the cloud server.
+    </p>
+    <p>
+        This approach ensures two things: only valid students can mark attendance, and they can only do it when the teacher is conducting the lecture. If the internet is down, the device saves the data and uploads it later, so no attendance is lost.
+    </p>
+
+    <h2 class="section-heading">1.4 OBJECTIVES</h2>
+    <p>
+        The main goals of our project are as follows:
+    </p>
+    <p>
+        1. <strong>To Eliminate Proxies:</strong> Using fingerprint sensors ensures that one student cannot mark attendance for another.
+    </p>
+    <p>
+        2. <strong>To Save Time:</strong> The automatic process is much faster than roll calls, allowing teachers to focus on teaching.
+    </p>
+    <p>
+        3. <strong>To Enforce Rules:</strong> The system should automatically reject students who try to enter the wrong batch (e.g., a Batch B student trying to attend a Batch A practical).
+    </p>
+    <p>
+        4. <strong>To Work Offline:</strong> The system must be reliable even if the college Wi-Fi is not working during the lecture.
+    </p>
+
+    <h2 class="section-heading">1.5 SIGNIFICANCE</h2>
+    <p>
+        This project is significant because it brings "smart features" to a basic daily task without being too expensive. By using the ESP32 microcontroller, we are keeping the cost low. The system's ability to make decisions locally (Edge Computing) means it is faster and more reliable than systems that always need the internet. It provides a practical solution to the real-world problem of managing student records in diploma and engineering colleges.
+    </p>
+
+    <h2 class="section-heading">1.6 REPORT STRUCTURE</h2>
+    <p>
+        This project report is organized into several chapters. Chapter 1 introduces the project and the problem. Chapter 2 discusses the Literature Survey and existing systems. Chapter 3 defines the Scope of the project. Subsequent chapters will explain the methodology, system design, and the final results of our work.
+    </p>
+
+</body>
+</html>

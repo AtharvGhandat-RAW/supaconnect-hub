@@ -55,6 +55,8 @@ const FacultyTransfersPage: React.FC = () => {
   const [selectedFaculty, setSelectedFaculty] = useState<string>('');
   const [transferDate, setTransferDate] = useState(new Date().toISOString().split('T')[0]);
   const [reason, setReason] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [allFaculty, setAllFaculty] = useState<AvailableFaculty[]>([]); // Store all faculty
 
   useEffect(() => {
     async function fetchFacultyId() {
@@ -76,6 +78,38 @@ const FacultyTransfersPage: React.FC = () => {
     }
     fetchFacultyId();
   }, [user]);
+
+  // Fetch all faculty initially
+  useEffect(() => {
+      async function loadAllFaculty() {
+          if(!facultyId) return;
+          const { data } = await supabase
+            .from('faculty')
+            .select(`id, profiles (name)`); // Removed inner join and status filter to be safe
+            
+          if(data) {
+              const others = data.filter((f: any) => f.id !== facultyId);
+              setAllFaculty(others);
+              setAvailableFaculty(others); // Initialize available with all
+          }
+      }
+      loadAllFaculty();
+  }, [facultyId]);
+
+  // Update available faculty logic to use search
+  useEffect(() => {
+     let filtered = allFaculty;
+
+     if (searchQuery) {
+         const lower = searchQuery.toLowerCase();
+         filtered = filtered.filter(f => {
+             const name = Array.isArray(f.profiles) ? f.profiles[0]?.name : f.profiles?.name;
+             return name?.toLowerCase().includes(lower);
+         });
+     }
+     
+     setAvailableFaculty(filtered);
+  }, [searchQuery, allFaculty]);
 
   const fetchTransfers = async () => {
     if (!facultyId) return;
@@ -118,6 +152,10 @@ const FacultyTransfersPage: React.FC = () => {
 
   const handleOpenCreateDialog = async () => {
     if (!facultyId) return;
+
+    // Ensure available faculty is reset to all faculty
+    setAvailableFaculty(allFaculty);
+    setSearchQuery('');
     
     try {
       // Fetch my today's slots
@@ -161,14 +199,15 @@ const FacultyTransfersPage: React.FC = () => {
 
   const handleSlotSelect = async (slot: TimetableSlot) => {
     setSelectedSlot(slot);
-    if (facultyId) {
-      try {
-        const available = await getAvailableFacultyForTransfer(slot.id, transferDate, facultyId);
-        setAvailableFaculty(available);
-      } catch (error) {
-        console.error('Error fetching available faculty:', error);
-      }
-    }
+    // Don't limit by availability anymore per request
+    // if (facultyId) {
+    //   try {
+    //     const available = await getAvailableFacultyForTransfer(slot.id, transferDate, facultyId);
+    //     setAvailableFaculty(available);
+    //   } catch (error) {
+    //     console.error('Error fetching available faculty:', error);
+    //   }
+    // }
   };
 
   const handleCreateTransfer = async () => {
@@ -219,7 +258,8 @@ const FacultyTransfersPage: React.FC = () => {
     setSelectedFaculty('');
     setTransferDate(new Date().toISOString().split('T')[0]);
     setReason('');
-    setAvailableFaculty([]);
+    setSearchQuery('');
+    setAvailableFaculty(allFaculty); // Reset to full list instead of empty
     setMySlots([]);
   };
 
@@ -512,26 +552,36 @@ const FacultyTransfersPage: React.FC = () => {
               </div>
 
               {selectedSlot && (
-                <div>
-                  <Label>Select Faculty to Transfer To</Label>
-                  {availableFaculty.length === 0 ? (
-                    <p className="text-sm text-muted-foreground mt-2">
-                      No faculty available at this time.
-                    </p>
-                  ) : (
-                    <Select value={selectedFaculty} onValueChange={setSelectedFaculty}>
-                      <SelectTrigger className="bg-white/5 border-border/50 mt-1">
-                        <SelectValue placeholder="Select faculty" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {availableFaculty.map(f => (
-                          <SelectItem key={f.id} value={f.id}>
-                            {Array.isArray(f.profiles) ? f.profiles[0]?.name : f.profiles?.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  )}
+                <div className="space-y-4">
+                    <Label>Select Faculty to Transfer To</Label>
+                    
+                    <div className="space-y-2">
+                        <Input
+                        type="search" 
+                        placeholder="Search faculty..." 
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        className="bg-white/5 border-border/50"
+                        />
+                        
+                        <Select value={selectedFaculty} onValueChange={setSelectedFaculty}>
+                        <SelectTrigger className="bg-white/5 border-border/50">
+                            <SelectValue placeholder={availableFaculty.length === 0 ? "No faculty found" : "Select from list"} />
+                        </SelectTrigger>
+                        <SelectContent className="max-h-[200px]">
+                            {availableFaculty.length === 0 ? (
+                                <div className="p-2 text-sm text-center text-muted-foreground">No matches found</div>
+                            ) : (
+                                availableFaculty.map(f => {
+                                    const name = Array.isArray(f.profiles) ? f.profiles[0]?.name : f.profiles?.name;
+                                    return (
+                                    <SelectItem key={f.id} value={f.id}>{name}</SelectItem>
+                                    );
+                                })
+                            )}
+                        </SelectContent>
+                        </Select>
+                    </div>
                 </div>
               )}
 

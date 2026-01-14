@@ -42,12 +42,15 @@ const AdminTimetablePage: React.FC = () => {
   const [dayFilter, setDayFilter] = useState('all');
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [batches, setBatches] = useState<Batch[]>([]);
+  const [selectedYear, setSelectedYear] = useState<string>('');
+  const [selectedSemester, setSelectedSemester] = useState<string>('');
   const [formData, setFormData] = useState({
     faculty_id: '',
     class_id: '',
     subject_id: '',
     day_of_week: 'Monday',
     start_time: '09:00',
+    end_time: '10:00',
     room_no: '',
     valid_from: new Date().toISOString().split('T')[0],
     valid_to: new Date(Date.now() + 180 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
@@ -132,11 +135,14 @@ const AdminTimetablePage: React.FC = () => {
         subject_id: '',
         day_of_week: 'Monday',
         start_time: '09:00',
+        end_time: '10:00',
         room_no: '',
         valid_from: new Date().toISOString().split('T')[0],
         valid_to: new Date(Date.now() + 180 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
         batch_id: '',
       });
+      setSelectedYear('');
+      setSelectedSemester('');
       fetchData();
     } catch (error) {
       toast({ title: 'Error', description: 'Failed to create slot', variant: 'destructive' });
@@ -168,6 +174,7 @@ const AdminTimetablePage: React.FC = () => {
 
       const dayIdx = headers.indexOf('day_of_week');
       const timeIdx = headers.indexOf('start_time');
+      const endTimeIdx = headers.indexOf('end_time');
       const classIdx = headers.indexOf('class_name');
       const divIdx = headers.indexOf('division');
       const subjectIdx = headers.indexOf('subject_code');
@@ -295,6 +302,7 @@ const AdminTimetablePage: React.FC = () => {
           await createTimetableSlot({
             day_of_week: values[dayIdx],
             start_time: values[timeIdx],
+            end_time: endTimeIdx !== -1 ? values[endTimeIdx] : null,
             class_id: classObj.id,
             subject_id: subjectObj.id,
             faculty_id: facultyObj.id,
@@ -316,7 +324,7 @@ const AdminTimetablePage: React.FC = () => {
     if (fileInputRef.current) fileInputRef.current.value = '';
   }; const columns = [
     { key: 'day_of_week', header: 'Day' },
-    { key: 'start_time', header: 'Time' },
+    { key: 'start_time', header: 'Time', render: (slot: TimetableSlotWithDetails) => `${slot.start_time?.substring(0,5)} - ${slot.end_time?.substring(0,5) || '?'}` },
     {
       key: 'class',
       header: 'Class',
@@ -388,11 +396,60 @@ const AdminTimetablePage: React.FC = () => {
                   Add Slot
                 </Button>
               </DialogTrigger>
-              <DialogContent className="glass-card border-border/50 max-w-lg">
+              <DialogContent className="glass-card border-border/50 max-w-lg max-h-[85vh] overflow-y-auto">
                 <DialogHeader>
                   <DialogTitle>Add Timetable Slot</DialogTitle>
                 </DialogHeader>
                 <div className="space-y-4 mt-4">
+                  
+                  {/* Year and Semester Selection Filters */}
+                  <div className="grid grid-cols-2 gap-4 border-b border-border/50 pb-4 mb-4">
+                    <div>
+                        <Label>Select Year</Label>
+                        <Select value={selectedYear} onValueChange={(v) => {
+                            setSelectedYear(v);
+                            setSelectedSemester(''); // Reset semester when year changes
+                        }}>
+                            <SelectTrigger className="bg-white/5 border-border/50">
+                                <SelectValue placeholder="Year" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="1">First Year (FY)</SelectItem>
+                                <SelectItem value="2">Second Year (SY)</SelectItem>
+                                <SelectItem value="3">Third Year (TY)</SelectItem>
+                            </SelectContent>
+                        </Select>
+                    </div>
+                    <div>
+                        <Label>Select Semester</Label>
+                        <Select value={selectedSemester} onValueChange={setSelectedSemester} disabled={!selectedYear}>
+                            <SelectTrigger className="bg-white/5 border-border/50">
+                                <SelectValue placeholder="Semester" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                {selectedYear === '1' && (
+                                    <>
+                                        <SelectItem value="1">Semester 1</SelectItem>
+                                        <SelectItem value="2">Semester 2</SelectItem>
+                                    </>
+                                )}
+                                {selectedYear === '2' && (
+                                    <>
+                                        <SelectItem value="3">Semester 3</SelectItem>
+                                        <SelectItem value="4">Semester 4</SelectItem>
+                                    </>
+                                )}
+                                {selectedYear === '3' && (
+                                    <>
+                                        <SelectItem value="5">Semester 5</SelectItem>
+                                        <SelectItem value="6">Semester 6</SelectItem>
+                                    </>
+                                )}
+                            </SelectContent>
+                        </Select>
+                    </div>
+                  </div>
+
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <Label>Day</Label>
@@ -412,22 +469,49 @@ const AdminTimetablePage: React.FC = () => {
                         className="bg-white/5 border-border/50"
                       />
                     </div>
+                    <div>
+                      <Label>End Time</Label>
+                      <Input
+                        type="time"
+                        value={formData.end_time || ''}
+                        onChange={(e) => setFormData({ ...formData, end_time: e.target.value })}
+                        className="bg-white/5 border-border/50"
+                      />
+                    </div>
                   </div>
                   <div>
                     <Label>Class</Label>
-                    <Select value={formData.class_id} onValueChange={(v) => setFormData({ ...formData, class_id: v })}>
-                      <SelectTrigger className="bg-white/5 border-border/50"><SelectValue placeholder="Select class" /></SelectTrigger>
+                    <Select
+                      value={formData.class_id}
+                      onValueChange={(v) => setFormData({ ...formData, class_id: v })}
+                      disabled={!selectedYear || !selectedSemester}
+                    >
+                      <SelectTrigger className="bg-white/5 border-border/50"><SelectValue placeholder={!selectedYear || !selectedSemester ? "Select Year & Semester first" : "Select class"} /></SelectTrigger>
                       <SelectContent>
-                        {classes.map(c => <SelectItem key={c.id} value={c.id}>{c.name} {c.division}</SelectItem>)}
+                        {classes
+                            .filter(c => {
+                                if (!selectedYear || !selectedSemester) return true;
+                                return c.year === parseInt(selectedYear) && c.semester === parseInt(selectedSemester);
+                            })
+                            .map(c => <SelectItem key={c.id} value={c.id}>{c.name} {c.division}</SelectItem>)}
                       </SelectContent>
                     </Select>
                   </div>
                   <div>
                     <Label>Subject</Label>
-                    <Select value={formData.subject_id} onValueChange={(v) => setFormData({ ...formData, subject_id: v })}>
-                      <SelectTrigger className="bg-white/5 border-border/50"><SelectValue placeholder="Select subject" /></SelectTrigger>
+                    <Select 
+                      value={formData.subject_id} 
+                      onValueChange={(v) => setFormData({ ...formData, subject_id: v })}
+                      disabled={!selectedYear || !selectedSemester}
+                    >
+                      <SelectTrigger className="bg-white/5 border-border/50"><SelectValue placeholder={!selectedYear || !selectedSemester ? "Select Year & Semester first" : "Select subject"} /></SelectTrigger>
                       <SelectContent>
-                        {subjects.map(s => <SelectItem key={s.id} value={s.id}>{s.name} ({s.subject_code})</SelectItem>)}
+                        {subjects
+                            .filter(s => {
+                                if (!selectedYear || !selectedSemester) return true;
+                                return s.year === parseInt(selectedYear) && s.semester === parseInt(selectedSemester);
+                            })
+                            .map(s => <SelectItem key={s.id} value={s.id}>{s.name} ({s.subject_code})</SelectItem>)}
                       </SelectContent>
                     </Select>
                   </div>

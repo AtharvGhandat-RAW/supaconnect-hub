@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Chapter 5 - Details of Design</title>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+    <script>
+        mermaid.initialize({
+            startOnLoad: true,
+            theme: 'default',
+            securityLevel: 'loose',
+            fontFamily: '"Times New Roman", Times, serif'
+        });
+    </script>
+    <style>
+        @page {
+            size: A4;
+            margin-left: 3.5cm;
+            margin-top: 2.5cm;
+            margin-right: 1.25cm;
+            margin-bottom: 1.25cm;
+        }
+        body {
+            font-family: "Times New Roman", Times, serif;
+            font-size: 12pt;
+            line-height: 2;
+            text-align: justify;
+            margin: 0 auto;
+            max-width: 21cm;
+            padding: 2cm;
+            background-color: white;
+            color: black;
+        }
+        h1.chapter-name {
+            font-size: 14pt;
+            text-transform: uppercase;
+            font-weight: bold;
+            text-align: center;
+            margin-bottom: 24pt;
+        }
+        h2.section-heading {
+            font-size: 12pt;
+            text-transform: uppercase;
+            font-weight: bold;
+            margin-top: 24pt;
+            margin-bottom: 12pt;
+        }
+        h3.subsection-heading {
+            font-size: 12pt;
+            font-weight: bold;
+            margin-top: 18pt;
+            margin-bottom: 12pt;
+        }
+        p {
+            margin-bottom: 12pt;
+            text-indent: 1cm;
+        }
+        ul {
+            margin-bottom: 12pt;
+            margin-left: 1cm;
+        }
+        /* Diagram Container Styling */
+        .diagram-container {
+            border: 1px solid #ddd;
+            background-color: #fff;
+            padding: 12pt;
+            text-align: center;
+            margin: 24pt 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        .diagram-caption {
+            font-weight: bold;
+            margin-top: 12pt;
+            font-style: italic;
+        }
+        /* Center mermaid diagrams */
+        .mermaid {
+            display: flex;
+            justify-content: center;
+            width: 100%;
+        }
+    </style>
+</head>
+<body>
+
+    <h1 class="chapter-name">CHAPTER–5 DETAILS OF DESIGN, WORKING AND PROCESSES</h1>
+
+    <h2 class="section-heading">5.1 INTRODUCTION</h2>
+    <p>
+        Design is the blueprint of any engineering project. Before writing a single line of code or soldering a wire, we created detailed diagrams to visualize how the different parts of Attendro would talk to each other. This chapter explains the internal structure of our system, the database tables we designed, and the step-by-step process of how a daily attendance session flows from start to finish.
+    </p>
+
+    <h2 class="section-heading">5.2 SYSTEM ARCHITECTURE</h2>
+    <p>
+        The Overall System Architecture diagram shows the high-level view of our project. It illustrates the three main "actors" in our system: The Teacher (using the App), The Student (using the Device), and The Cloud (storing the data).
+    </p>
+    
+    <div class="diagram-container">
+        <div class="mermaid">
+            graph TD
+            subgraph "Teacher Side"
+                Teacher[Faculty App] -->|1. Starts Session| Cloud(Supabase Cloud)
+            end
+            
+            subgraph "Cloud Backend"
+                Cloud -->|2. Returns Active Session| ESP32[ESP32 Device]
+                ESP32 -->|5. Syncs Data| Cloud
+            end
+            
+            subgraph "Classroom / Edge"
+                Student((Student)) -->|3. Scans Finger| Sensor[R307 Sensor]
+                Sensor -->|Raw Data| ESP32
+                ESP32 -->|4. Validates Locally| Decision{Valid Batch?}
+                Decision -- Yes --> OLED[Show 'Present']
+                Decision -- No --> OLED_Err[Show 'Error']
+            end
+            
+            style Cloud fill:#e1f5fe,stroke:#01579b
+            style ESP32 fill:#fff3e0,stroke:#e65100
+            style Teacher fill:#e8f5e9,stroke:#2e7d32
+        </div>
+        <div class="diagram-caption">Figure 5.1: Block Diagram of System Architecture</div>
+    </div>
+
+    <p>
+        As seen in Figure 5.1, the central component is the "Supabase Cloud". The Teacher App sends commands like "Start Session" to this cloud. The ESP32 device then fetches these commands via Wi-Fi. This separation ensures that the teacher doesn't need to be physically connected to the fingerprint scanner; they can control it wirelessly from their desk.
+    </p>
+
+    <h2 class="section-heading">5.3 DATABASE DESIGN</h2>
+    <p>
+        A good database is crucial for an organized system. We designed our database using relational tables to keep data consistent. The main tables are:
+    </p>
+
+    <h3 class="subsection-heading">5.3.1 Users Table</h3>
+    <p>
+        This is the master list of everyone in the college. It stores columns for:
+        <br> - <strong>User ID:</strong> Unique computer ID.
+        <br> - <strong>Role:</strong> Teacher or Student.
+        <br> - <strong>Roll Number:</strong> For students (e.g., 45).
+        <br> - <strong>Fingerprint ID:</strong> The ID number stored inside the sensor (e.g., ID 45).
+    </p>
+
+    <h3 class="subsection-heading">5.3.2 Sessions Table</h3>
+    <p>
+        This table records every lecture that happens. It is the "History" book of the college.
+        <br> - <strong>Session ID:</strong> Unique ID for the lecture.
+        <br> - <strong>Subject:</strong> E.g., Java Programming.
+        <br> - <strong>Batch:</strong> E.g., Batch A, Batch B, or All.
+        <br> - <strong>Status:</strong> Active or Completed.
+    </p>
+
+    <h3 class="subsection-heading">5.3.3 Attendance Logs Table</h3>
+    <p>
+        This is where the actual attendance is marked.
+        <br> - <strong>Session ID:</strong> Links to the lecture.
+        <br> - <strong>Student ID:</strong> Who was present.
+        <br> - <strong>Timestamp:</strong> Exact time of the scan.
+        <br> - <strong>Status:</strong> Present or Late.
+    </p>
+
+    <div class="diagram-container">
+        <div class="mermaid">
+            erDiagram
+                USERS {
+                    string userID PK
+                    string name
+                    string role
+                    int rollNumber
+                }
+                SESSIONS {
+                    string sessionID PK
+                    string subject
+                    string batch
+                    timestamp startTime
+                }
+                ATTENDANCE_LOGS {
+                    string logID PK
+                    timestamp markedAt
+                    string status
+                }
+                
+                USERS ||--o{ SESSIONS : "teacher_starts"
+                SESSIONS ||--o{ ATTENDANCE_LOGS : "logs_for"
+                USERS ||--o{ ATTENDANCE_LOGS : "student_marks"
+        </div>
+        <div class="diagram-caption">Figure 5.2: Database ER Diagram</div>
+    </div>
+
+    <h2 class="section-heading">5.4 WORKING PROCESS</h2>
+    <p>
+        The working of the system can be best understood by following a "User Journey" or a flowchart.
+    </p>
+
+    <h3 class="subsection-heading">5.4.1 The Fingerprint Enrollment Process</h3>
+    <p>
+        Before the system can be used, students must register their fingerprints. This is a one-time process efficiently handled by the admin.
+        <br>1. Admin enters "Enroll Mode" on the device.
+        <br>2. Student enters their Roll Number (e.g., 25).
+        <br>3. Reviewer asks student to place finger twice for confirmation.
+        <br>4. Device saves the template at ID #25.
+        <br>Now, whenever ID #25 is scanned, the system knows it is that specific student.
+    </p>
+
+    <h3 class="subsection-heading">5.4.2 The Daily Attendance Workflow</h3>
+    <p>
+        This is what happens during a regular college lecture:
+    </p>
+    <p>
+        <strong>Step 1: Initiation</strong><br>
+        The teacher walks into the class and opens the app. They select "Data Structures Lab - Batch B" and tap "Start". A green signal is sent to the cloud.
+    </p>
+    <p>
+        <strong>Step 2: Device Activation</strong><br>
+        The class ESP32 device, which was showing "Idle", detects the new session. It displays "Session Active: Batch B".
+    </p>
+    <p>
+        <strong>Step 3: Verification Logic</strong><br>
+        A student places their finger. The sensor identifies it as Roll Number 10.
+        <br>The device checks its internal logic: "Is Roll 10 in Batch B?"
+        <br><em>If Yes:</em> Screen shows "Present".
+        <br><em>If No:</em> Screen shows "Wrong Batch".
+    </p>
+    <p>
+        <strong>Step 4: Data Sync</strong><br>
+        The "Present" mark is instantly uploaded to the teacher's phone screen. The dashboard count updates from 14 to 15.
+    </p>
+
+    <h2 class="section-heading">5.5 HARDWARE INTERFACING DETAILS</h2>
+    <p>
+        Connecting the hardware components correctly was critical. We used the following pin configurations:
+    </p>
+    <ul>
+        <li><strong>R307 Sensor:</strong> TX/RX pins connected to ESP32 Serial2 (GPIO 16/17) for data transfer. 5V VCC ensures it has enough power to scan quickly.</li>
+        <li><strong>OLED Display:</strong> SDA/SCL pins connected to ESP32 I2C pins (GPIO 21/22). This allows us to send text and simple graphics to the screen.</li>
+    </ul>
+
+    <h2 class="section-heading">5.6 CHAPTER SUMMARY</h2>
+    <p>
+        This chapter detailed the internal "brain" of the Attendro system. We looked at the database structure that keeps data organized and the workflow logic that ensures only the right students are marked present. We also explained the hardware connections. These designs ensure that the system is robust, logical, and easy to use for both teachers and students. The next chapter will discuss the actual results achieved from implementing this design.
+    </p>
+
+</body>
+</html>

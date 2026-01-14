@@ -31,6 +31,7 @@ const AdminBatches: React.FC<BatchesPageProps> = ({ role = 'admin' }) => {
     const [selectedStudentIds, setSelectedStudentIds] = useState<Set<string>>(new Set());
     const [rangeStart, setRangeStart] = useState('');
     const [rangeEnd, setRangeEnd] = useState('');
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
     useEffect(() => {
         getClasses().then(setClasses).catch(console.error);
@@ -72,6 +73,13 @@ const AdminBatches: React.FC<BatchesPageProps> = ({ role = 'admin' }) => {
             return;
         }
 
+        // Check for duplicate name locally
+        if (batches.some(b => b.name.toLowerCase() === newBatchName.trim().toLowerCase())) {
+            toast({ title: 'Error', description: 'Batch with this name already exists', variant: 'destructive' });
+            return;
+        }
+
+        setIsSubmitting(true);
         try {
             await createBatch(newBatchName, selectedClass, Array.from(selectedStudentIds));
             toast({ title: 'Success', description: 'Batch created successfully' });
@@ -89,6 +97,8 @@ const AdminBatches: React.FC<BatchesPageProps> = ({ role = 'admin' }) => {
                 description: message,
                 variant: 'destructive'
             });
+        } finally {
+            setIsSubmitting(false);
         }
     };
 
@@ -229,8 +239,10 @@ const AdminBatches: React.FC<BatchesPageProps> = ({ role = 'admin' }) => {
                                     </div>
                                 </div>
                                 <DialogFooter>
-                                    <Button variant="outline" onClick={() => setIsCreateDialogOpen(false)}>Cancel</Button>
-                                    <Button onClick={handleCreateBatch}>Create Batch</Button>
+                                    <Button variant="outline" onClick={() => setIsCreateDialogOpen(false)} disabled={isSubmitting}>Cancel</Button>
+                                    <Button onClick={handleCreateBatch} disabled={isSubmitting}>
+                                        {isSubmitting ? 'Creating...' : 'Create Batch'}
+                                    </Button>
                                 </DialogFooter>
                             </DialogContent>
                         </Dialog>

@@ -246,9 +246,9 @@ export async function downloadTemplate(templateName: string) {
       ],
     },
     timetable: {
-      headers: ['faculty_email', 'day_of_week', 'start_time', 'class_name', 'division', 'subject_code', 'room_no', 'valid_from', 'valid_to', 'batch_name'],
+      headers: ['faculty_email', 'day_of_week', 'start_time', 'end_time', 'class_name', 'division', 'subject_code', 'room_no', 'valid_from', 'valid_to', 'batch_name', 'year', 'semester'],
       sample: [
-        ['faculty@rit.edu', 'Monday', '09:00', 'TY AIML', 'A', 'CS101', '101', '2025-01-01', '2025-06-30', 'Batch A'],
+        ['faculty@rit.edu', 'Monday', '09:00', '10:00', 'TY AIML', 'A', 'CS101', '101', '2025-01-01', '2025-06-30', 'Batch A', '3', '5'],
       ],
     },
   };

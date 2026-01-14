@@ -19,7 +19,6 @@ import {
   getRecentAbsencePatterns,
   getMonthlySubjectAbsences
 } from '@/services/attendance';
-import { getSyllabusTopics, getCoverageForSession, markTopicsCovered, type SyllabusTopic } from '@/services/syllabus';
 import { createActivityLog } from '@/services/activity';
 import { shareToWhatsApp } from '@/utils/whatsapp';
 import { checkTimeGate } from '@/utils/timeGate';
@@ -37,8 +36,7 @@ const FacultyAttendancePage: React.FC = () => {
   const [facultyId, setFacultyId] = useState<string | null>(null);
   const [facultyName, setFacultyName] = useState('');
   const [students, setStudents] = useState<StudentAttendance[]>([]);
-  const [topics, setTopics] = useState<SyllabusTopic[]>([]);
-  const [selectedTopics, setSelectedTopics] = useState<Set<string>>(new Set());
+  // Topics related state removed
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
@@ -59,9 +57,15 @@ const FacultyAttendancePage: React.FC = () => {
     isSubstitution?: boolean;
   } | undefined;
 
+  const dataFetchedRef = React.useRef(false);
+
   useEffect(() => {
     async function fetchData() {
-      if (!user) return;
+      if (!user || !state) return;
+      
+      // Prevent double fetching or re-fetching on spurious re-renders
+      if (dataFetchedRef.current) return;
+      dataFetchedRef.current = true;
 
       try {
         // Get faculty info
@@ -82,75 +86,122 @@ const FacultyAttendancePage: React.FC = () => {
           return;
         }
 
+        if (!state.classId) {
+            console.error('Missing classId in state:', state);
+            toast({ title: 'Error', description: 'Class information is missing.', variant: 'destructive' });
+            setLoading(false);
+            return;
+        }
+
         // Check time gate
         const timeGate = checkTimeGate(state.startTime);
         if (!timeGate.enabled) {
           setTimeGateError(timeGate.reason || 'Attendance window not available');
         }
 
-        // Fetch students, class teacher info, patterns in parallel
-        const [studentData, patterns, monthlyStats, classInfo, lastSession] = await Promise.all([
-          getStudents({ class_id: state.classId, status: 'ACTIVE' }),
-          getRecentAbsencePatterns(state.classId, state.subjectId, 5),
-          getMonthlySubjectAbsences(state.classId, state.subjectId),
-          getClassWithTeacher(state.classId),
-          getLastAttendanceSession(state.classId, state.subjectId),
-        ]);
+        console.log('Fetching data for Class:', state.classId, 'Subject:', state.subjectId);
 
-        setAbsencePatterns(patterns);
-        setMonthlyAbsences(monthlyStats);
+        // Fetch data with individual error handling for better debugging
+        try {
+            const [studentDataResult, patternsResult, monthlyStatsResult, classInfoResult, lastSessionResult] = await Promise.allSettled([
+                getStudents({ class_id: state.classId, status: 'ACTIVE' }),
+                getRecentAbsencePatterns(state.classId, state.subjectId, 5),
+                getMonthlySubjectAbsences(state.classId, state.subjectId),
+                getClassWithTeacher(state.classId),
+                getLastAttendanceSession(state.classId, state.subjectId),
+            ]);
 
-        // Set class teacher info
-        if (classInfo && classInfo.faculty && classInfo.faculty.profiles) {
-           setClassTeacher({
-             name: classInfo.faculty.profiles.name,
-             phone: classInfo.faculty.profiles.phone
-           });
+            // Process Students
+            let studentData: Student[] = [];
+            if (studentDataResult.status === 'fulfilled') {
+                studentData = studentDataResult.value;
+                if (!studentData || studentData.length === 0) {
+                    console.warn(`No active students found for class ${state.classId}`);
+                    toast({ 
+                        title: 'No Students Found', 
+                        description: 'Could not find any active students for this class. Please contact admin.',
+                        variant: 'destructive'
+                    });
+                }
+            } else {
+                console.error('Failed to fetch students:', studentDataResult.reason);
+                throw new Error('Failed to fetch students: ' + (studentDataResult.reason.message || 'Unknown error'));
+            }
+
+            // Process Patterns
+            const patterns = patternsResult.status === 'fulfilled' ? patternsResult.value : new Map();
+            if (patternsResult.status === 'rejected') console.error('Failed to fetch patterns:', patternsResult.reason);
+
+            // Process Monthly Stats
+            const monthlyStats = monthlyStatsResult.status === 'fulfilled' ? monthlyStatsResult.value : new Map();
+            if (monthlyStatsResult.status === 'rejected') console.error('Failed to fetch monthly stats:', monthlyStatsResult.reason);
+
+            // Process Class Info
+            let classInfo = null;
+            if (classInfoResult.status === 'fulfilled') {
+                classInfo = classInfoResult.value;
+            } else {
+                console.error('Failed to fetch class info:', classInfoResult.reason);
+                // Non-critical?
+            }
+
+            // Process Last Session
+            const lastSession = lastSessionResult.status === 'fulfilled' ? lastSessionResult.value : null;
+            if (lastSessionResult.status === 'rejected') console.error('Failed to fetch last session:', lastSessionResult.reason);
+
+            setAbsencePatterns(patterns);
+            setMonthlyAbsences(monthlyStats);
+
+            // Set class teacher info
+            if (classInfo && classInfo.faculty && classInfo.faculty.profiles) {
+                setClassTeacher({
+                    name: classInfo.faculty.profiles.name,
+                    phone: classInfo.faculty.profiles.phone
+                });
+            }
+            
+            // Critical: Check if attendance for this session already exists
+            if (lastSession && sessionId === 'new') {
+                const today = new Date().toISOString().split('T')[0];
+                // Simple loose equality for time (e.g. 09:00:00 vs 09:00)
+                if (lastSession.date === today && lastSession.start_time.startsWith(state.startTime)) {
+                    toast({ 
+                        title: "Attendance Already Taken", 
+                        description: "Attendance for this lecture has already been submitted.", 
+                        variant: "destructive" 
+                    });
+                    navigate('/faculty/today');
+                    return;
+                }
+            }
+
+            // Check if there's a previous session to copy from
+            if (lastSession) {
+                setHasLastSession(true);
+                setLastSessionDate(lastSession.date);
+            }
+
+            // Set students with absence patterns
+            setStudents(studentData.map(s => ({ 
+                ...s, 
+                isPresent: true,
+                recentAbsences: patterns.get(s.id) || 0
+            })));
+
+        } catch (error: any) {
+             console.error('Error processing data:', error);
+             throw error; // Re-throw to be caught by outer catch
+        } finally {
+            setLoading(false);
         }
-        
-        // Critical: Check if attendance for this session already exists
-        if (lastSession && sessionId === 'new') {
-           const today = new Date().toISOString().split('T')[0];
-           // Simple loose equality for time (e.g. 09:00:00 vs 09:00)
-           if (lastSession.date === today && lastSession.start_time.startsWith(state.startTime)) {
-              toast({ 
-                title: "Attendance Already Taken", 
-                description: "Attendance for this lecture has already been submitted.", 
-                variant: "destructive" 
-              });
-              navigate('/faculty/today');
-              return;
-           }
-        }
 
-        // Check if there's a previous session to copy from
-        if (lastSession) {
-          setHasLastSession(true);
-          setLastSessionDate(lastSession.date);
-        }
-
-        // Set students with absence patterns
-        setStudents(studentData.map(s => ({ 
-          ...s, 
-          isPresent: true,
-          recentAbsences: patterns.get(s.id) || 0
-        })));
-
-        // Fetch syllabus topics for the subject
-        const topicData = await getSyllabusTopics(state.subjectId);
-        setTopics(topicData);
-
-        // If reopening an existing session, load previously covered topics
-        if (sessionId && sessionId !== 'new') {
-          const existingCoverage = await getCoverageForSession(sessionId);
-          if (existingCoverage.length > 0) {
-            setSelectedTopics(new Set(existingCoverage.map(c => c.topic_id)));
-          }
-        }
-      } catch (error) {
+      } catch (error: any) {
         console.error('Error fetching data:', error);
-        toast({ title: 'Error', description: 'Failed to load data', variant: 'destructive' });
-      } finally {
+        toast({ 
+            title: 'Error Loading Data', 
+            description: error.message || 'Failed to load data. Please check console.', 
+            variant: 'destructive' 
+        });
         setLoading(false);
       }
     }
@@ -213,15 +264,12 @@ const FacultyAttendancePage: React.FC = () => {
     });
   };
 
-  const handleToggleTopic = (topicId: string) => {
-    setSelectedTopics(prev => {
-      const newSet = new Set(prev);
-      if (newSet.has(topicId)) {
-        newSet.delete(topicId);
-      } else {
-        newSet.add(topicId);
-      }
-      return newSet;
+  // Copy to clipboard utility function
+  const copyToClipboard = (text: string) => {
+    navigator.clipboard.writeText(text).then(() => {
+      toast({ title: 'Copied', description: 'Message copied to clipboard' });
+    }).catch(() => {
+      toast({ title: 'Error', description: 'Failed to copy to clipboard', variant: 'destructive' });
     });
   };
 
@@ -296,12 +344,15 @@ ${studentDetails}
       const today = new Date().toISOString().split('T')[0];
 
       // Create attendance session
+      // Ensure time format is HH:MM (remove seconds if present)
+      const cleanStartTime = state.startTime.length > 5 ? state.startTime.substring(0, 5) : state.startTime;
+      
       const session = await createAttendanceSession({
         class_id: state.classId,
         subject_id: state.subjectId,
         faculty_id: facultyId,
         date: today,
-        start_time: state.startTime,
+        start_time: cleanStartTime,
         is_substitution: state.isSubstitution || false,
       });
 
@@ -313,41 +364,26 @@ ${studentDetails}
       }));
       await createAttendanceRecords(records);
 
-      // Mark syllabus topics covered
-      if (selectedTopics.size > 0) {
-        await markTopicsCovered(session.id, Array.from(selectedTopics));
-      }
-
-      // Log activity with topic count
-      const topicInfo = selectedTopics.size > 0 ? ` and covered ${selectedTopics.size} topic(s)` : '';
+      // Log activity
       await createActivityLog(
-        `Prof. ${facultyName} marked attendance for ${state.subjectName} (${state.className})${topicInfo}`
+        `Prof. ${facultyName} marked attendance for ${state.subjectName} (${state.className})`
       );
-
-      // Set absent students for message generation
-      const absent = students.filter(s => !s.isPresent);
-      setAbsentStudents(absent);
+      
       setSubmitted(true);
+      setAbsentStudents(students.filter(s => !s.isPresent));
+      toast({ title: 'Success', description: 'Attendance marked successfully' });
 
-      toast({ title: 'Success', description: 'Attendance submitted successfully' });
-    } catch (error) {
-      console.error('Error submitting attendance:', error);
-      toast({ title: 'Error', description: 'Failed to submit attendance', variant: 'destructive' });
+    } catch (error: any) {
+        console.error('Error submitting attendance:', error);
+        toast({ 
+            title: 'Submission Failed', 
+            description: error.message || 'Failed to submit attendance', 
+            variant: 'destructive' 
+        });
     } finally {
       setSubmitting(false);
     }
   };
-
-  const copyToClipboard = (text: string) => {
-    navigator.clipboard.writeText(text);
-    toast({ title: 'Copied', description: 'Message copied to clipboard' });
-  };
-
-  const topicsByUnit = topics.reduce((acc, topic) => {
-    if (!acc[topic.unit_no]) acc[topic.unit_no] = [];
-    acc[topic.unit_no].push(topic);
-    return acc;
-  }, {} as Record<number, SyllabusTopic[]>);
 
   if (!state && sessionId !== 'new') {
     return (
@@ -431,10 +467,12 @@ ${studentDetails}
             </div>
 
             {/* Students List */}
-            <div className="glass-card rounded-xl p-6">
-              <h2 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
-                <Users className="w-5 h-5" />
-                Students ({students.filter(s => s.isPresent).length}/{students.length} Present)
+            <div className="glass-card rounded-xl p-3 sm:p-6 pb-20 sm:pb-6">
+              <h2 className="text-lg font-semibold text-foreground mb-4 flex items-center justify-between gap-2">
+                <span className="flex items-center gap-2"><Users className="w-5 h-5" /> Students</span>
+                <span className="text-sm bg-background/20 px-2 py-1 rounded">
+                   {students.filter(s => s.isPresent).length}/{students.length} Present
+                </span>
               </h2>
               {loading ? (
                 <div className="animate-pulse space-y-2">
@@ -443,48 +481,51 @@ ${studentDetails}
                   ))}
                 </div>
               ) : (
-                <div className="grid gap-2 max-h-[400px] overflow-y-auto">
+                <div className="flex flex-col gap-2 pb-16">
                   {students.map(student => (
                     <div
                       key={student.id}
                       onClick={() => handleTogglePresent(student.id)}
-                      className={`flex items-center justify-between p-3 rounded-lg border transition-colors cursor-pointer ${student.isPresent
+                      className={`flex flex-col sm:flex-row sm:items-center justify-between p-3 rounded-lg border transition-colors cursor-pointer select-none ${student.isPresent
                         ? 'bg-success/10 border-success/30 hover:bg-success/20'
                         : 'bg-danger/10 border-danger/30 hover:bg-danger/20'
                         }`}
                     >
-                      <div className="flex items-center gap-3">
-                        <span className="text-sm font-mono text-muted-foreground w-8">
+                      <div className="flex items-center gap-3 mb-2 sm:mb-0">
+                        <span className="text-sm font-mono text-muted-foreground w-8 shrink-0">
                           {student.roll_no?.toString().padStart(2, '0')}
                         </span>
-                        <span className="font-medium text-foreground">{student.name}</span>
-                        {/* Frequent absentee indicator */}
-                        {(student.recentAbsences || 0) >= 3 && (
-                          <span 
-                            className="flex items-center gap-1 text-xs bg-warning/20 text-warning px-1.5 py-0.5 rounded" 
-                            title={`Absent ${student.recentAbsences} times in last 5 lectures`}
-                          >
-                            <AlertTriangle className="w-3 h-3" />
-                            {student.recentAbsences}x absent
-                          </span>
-                        )}
+                        <div className="flex flex-col">
+                            <span className="font-medium text-foreground text-sm sm:text-base line-clamp-1">{student.name}</span>
+                            {/* Frequent absentee indicator */}
+                            {(student.recentAbsences || 0) >= 3 && (
+                            <span 
+                                className="flex items-center gap-1 text-[10px] sm:text-xs text-warning mt-0.5" 
+                                title={`Absent ${student.recentAbsences} times in last 5 lectures`}
+                            >
+                                <AlertTriangle className="w-3 h-3" />
+                                Frequent Absentee ({student.recentAbsences}x)
+                            </span>
+                            )}
+                        </div>
                       </div>
-                      <div className="flex gap-2" onClick={(e) => e.stopPropagation()}>
+                      
+                      <div className="flex gap-2 w-full sm:w-auto" onClick={(e) => e.stopPropagation()}>
                         <Button
                           size="sm"
                           variant={student.isPresent ? 'default' : 'outline'}
                           onClick={() => handleTogglePresent(student.id)}
-                          className={student.isPresent ? 'bg-success hover:bg-success/80' : ''}
+                          className={`flex-1 sm:flex-none ${student.isPresent ? 'bg-success hover:bg-success/80' : ''}`}
                         >
-                          P
+                          Present
                         </Button>
                         <Button
                           size="sm"
                           variant={!student.isPresent ? 'default' : 'outline'}
                           onClick={() => handleTogglePresent(student.id)}
-                          className={!student.isPresent ? 'bg-danger hover:bg-danger/80' : ''}
+                          className={`flex-1 sm:flex-none ${!student.isPresent ? 'bg-danger hover:bg-danger/80' : ''}`}
                         >
-                          A
+                          Absent
                         </Button>
                       </div>
                     </div>
@@ -493,70 +534,23 @@ ${studentDetails}
               )}
             </div>
 
-            {/* Syllabus Coverage */}
-            <div className="glass-card rounded-xl p-6">
-              <h2 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
-                <BookOpen className="w-5 h-5" />
-                Topics Covered Today
-                {selectedTopics.size > 0 && (
-                  <span className="text-xs bg-accent/20 text-accent px-2 py-0.5 rounded-full">
-                    {selectedTopics.size} selected
-                  </span>
-                )}
-              </h2>
-              {topics.length > 0 ? (
-                <div className="space-y-4">
-                  {Object.entries(topicsByUnit).map(([unit, unitTopics]) => (
-                    <div key={unit}>
-                      <h3 className="text-sm font-medium text-muted-foreground mb-2">
-                        Unit {unit}
-                        <span className="text-xs ml-2">({unitTopics.filter(t => selectedTopics.has(t.id)).length}/{unitTopics.length})</span>
-                      </h3>
-                      <div className="space-y-2">
-                        {unitTopics.map(topic => (
-                          <label
-                            key={topic.id}
-                            className={`flex items-center gap-3 p-2 rounded-lg cursor-pointer transition-colors ${selectedTopics.has(topic.id)
-                                ? 'bg-accent/10 border border-accent/30'
-                                : 'hover:bg-white/5 border border-transparent'
-                              }`}
-                          >
-                            <Checkbox
-                              checked={selectedTopics.has(topic.id)}
-                              onCheckedChange={() => handleToggleTopic(topic.id)}
-                            />
-                            <span className="text-sm text-foreground">{topic.topic_text}</span>
-                          </label>
-                        ))}
-                      </div>
+            {/* Submit Bar - Sticky on Mobile */}
+            <div className="fixed bottom-0 left-0 right-0 p-4 border-t border-border/50 bg-background/95 backdrop-blur z-50 sm:static sm:bg-transparent sm:border-0 sm:p-0">
+                <div className="glass-card sm:rounded-xl p-0 sm:p-4 border-0 sm:border bg-transparent shadow-none">
+                    <div className="flex gap-2 md:justify-end">
+                        <Button variant="outline" onClick={() => navigate('/faculty/today')} className="flex-1 sm:flex-none">
+                        Cancel
+                        </Button>
+                        <Button onClick={handleSubmit} disabled={submitting} className="btn-gradient flex-1 sm:flex-none">
+                        {submitting ? 'Submitting...' : 'Submit Attendance'}
+                        </Button>
                     </div>
-                  ))}
                 </div>
-              ) : (
-                <div className="text-center py-6">
-                  <BookOpen className="w-10 h-10 text-muted-foreground mx-auto mb-3 opacity-50" />
-                  <p className="text-muted-foreground mb-3">No topics defined for this subject yet</p>
-                  <Link
-                    to="/faculty/subjects"
-                    className="text-accent hover:underline text-sm font-medium"
-                  >
-                    → Add topics from My Subjects
-                  </Link>
-                </div>
-              )}
             </div>
+            
+            {/* Spacer for sticky footer on mobile */}
+            <div className="h-20 sm:hidden"></div>
 
-            {/* Submit */}
-            <div className="glass-card rounded-xl p-4">
-              <div className="flex gap-2">
-                <Button variant="outline" onClick={() => navigate('/faculty/today')}>
-                  Cancel
-                </Button>
-                <Button onClick={handleSubmit} disabled={submitting} className="btn-gradient">
-                  {submitting ? 'Submitting...' : 'Submit Attendance'}
-                </Button>
-              </div>
-            </div>
           </>
         ) : (
           /* Simplified Post-Submission View */

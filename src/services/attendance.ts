@@ -1,4 +1,5 @@
 import { supabase } from '@/integrations/supabase/client';
+import { SecurityValidator, SecureLogger } from '@/utils/security';
 
 export interface AttendanceSession {
   id: string;
@@ -76,14 +77,54 @@ export async function createAttendanceSession(session: {
   start_time: string;
   is_substitution?: boolean;
 }) {
-  const { data, error } = await supabase
-    .from('attendance_sessions')
-    .insert(session)
-    .select()
-    .single();
+  try {
+    // Validate required fields
+    if (!SecurityValidator.isValidUUID(session.class_id)) {
+      throw new Error('Invalid class ID');
+    }
+    if (!SecurityValidator.isValidUUID(session.subject_id)) {
+      throw new Error('Invalid subject ID');
+    }
+    if (!SecurityValidator.isValidUUID(session.faculty_id)) {
+      throw new Error('Invalid faculty ID');
+    }
+    if (!SecurityValidator.isValidDate(session.date)) {
+      throw new Error('Invalid date format');
+    }
+    if (!SecurityValidator.isValidTime(session.start_time)) {
+      throw new Error('Invalid time format');
+    }
+    
+    // Check if session already exists for this combination
+    const { data: existing } = await supabase
+      .from('attendance_sessions')
+      .select('id')
+      .eq('class_id', session.class_id)
+      .eq('subject_id', session.subject_id)
+      .eq('date', session.date)
+      .eq('start_time', session.start_time)
+      .maybeSingle();
+      
+    if (existing) {
+      throw new Error('Attendance session already exists for this time slot');
+    }
 
-  if (error) throw error;
-  return data;
+    const { data, error } = await supabase
+      .from('attendance_sessions')
+      .insert(session)
+      .select()
+      .single();
+
+    if (error) {
+      SecureLogger.logError(error, 'createAttendanceSession');
+      throw new Error('Failed to create attendance session');
+    }
+    
+    return data;
+  } catch (error) {
+    SecureLogger.logError(error, 'createAttendanceSession');
+    throw error;
+  }
 }
 
 export async function createAttendanceRecords(records: {

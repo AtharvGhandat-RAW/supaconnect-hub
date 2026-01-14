@@ -1,4 +1,5 @@
 import { supabase } from '@/integrations/supabase/client';
+import { SecurityValidator, SecureLogger } from '@/utils/security';
 
 export interface Student {
   id: string;
@@ -23,19 +24,36 @@ export async function getStudents(filters?: {
   semester?: number;
   status?: string;
 }) {
-  let query = supabase
-    .from('students')
-    .select('*')
-    .order('roll_no', { ascending: true });
+  try {
+    let query = supabase
+      .from('students')
+      .select('*')
+      .order('roll_no', { ascending: true });
 
-  if (filters?.class_id) query = query.eq('class_id', filters.class_id);
-  if (filters?.year) query = query.eq('year', filters.year);
-  if (filters?.semester) query = query.eq('semester', filters.semester);
-  if (filters?.status) query = query.eq('status', filters.status);
+    // Validate and apply filters securely
+    if (filters?.class_id && SecurityValidator.isValidUUID(filters.class_id)) {
+      query = query.eq('class_id', filters.class_id);
+    }
+    if (filters?.year && SecurityValidator.isValidAcademicData(filters.year, filters.semester || 1)) {
+      query = query.eq('year', filters.year);
+    }
+    if (filters?.semester && SecurityValidator.isValidAcademicData(filters.year || 1, filters.semester)) {
+      query = query.eq('semester', filters.semester);
+    }
+    if (filters?.status && ['ACTIVE', 'YD', 'PASSOUT'].includes(filters.status)) {
+      query = query.eq('status', filters.status);
+    }
 
-  const { data, error } = await query;
-  if (error) throw error;
-  return data as Student[];
+    const { data, error } = await query;
+    if (error) {
+      SecureLogger.logError(error, 'getStudents');
+      throw new Error('Failed to fetch students');
+    }
+    return data as Student[];
+  } catch (error) {
+    SecureLogger.logError(error, 'getStudents');
+    throw error;
+  }
 }
 
 export async function getStudentById(id: string) {
@@ -50,25 +68,56 @@ export async function getStudentById(id: string) {
 }
 
 export async function createStudent(student: Omit<Student, 'id' | 'created_at' | 'updated_at'>) {
-  // Check for duplicate enrollment number
-  const { data: existingByEnrollment } = await supabase
-    .from('students')
-    .select('id')
-    .ilike('enrollment_no', student.enrollment_no)
-    .maybeSingle();
+  try {
+    // Validate required fields
+    if (!student.name || student.name.length < 2 || student.name.length > 100) {
+      throw new Error('Invalid student name');
+    }
+    
+    // Sanitize inputs
+    const sanitizedStudent = {
+      ...student,
+      name: SecurityValidator.sanitizeString(student.name),
+      enrollment_no: student.enrollment_no ? SecurityValidator.sanitizeString(student.enrollment_no) : null,
+      division: student.division ? SecurityValidator.sanitizeString(student.division) : null,
+      department: student.department ? SecurityValidator.sanitizeString(student.department) : null,
+      mobile: student.mobile && SecurityValidator.isValidPhone(student.mobile) ? student.mobile : null,
+      email: student.email && SecurityValidator.isValidEmail(student.email) ? student.email : null
+    };
 
-  if (existingByEnrollment) {
-    throw new Error(`Student with enrollment number "${student.enrollment_no}" already exists`);
+    // Validate academic data
+    if (!SecurityValidator.isValidAcademicData(sanitizedStudent.year, sanitizedStudent.semester)) {
+      throw new Error('Invalid academic year/semester');
+    }
+
+    // Check for duplicate enrollment number
+    if (sanitizedStudent.enrollment_no) {
+      const { data: existingByEnrollment } = await supabase
+        .from('students')
+        .select('id')
+        .ilike('enrollment_no', sanitizedStudent.enrollment_no)
+        .maybeSingle();
+
+      if (existingByEnrollment) {
+        throw new Error(`Student with enrollment number "${sanitizedStudent.enrollment_no}" already exists`);
+      }
+    }
+
+    const { data, error } = await supabase
+      .from('students')
+      .insert(sanitizedStudent)
+      .select()
+      .single();
+
+    if (error) {
+      SecureLogger.logError(error, 'createStudent');
+      throw new Error('Failed to create student');
+    }
+    return data;
+  } catch (error) {
+    SecureLogger.logError(error, 'createStudent');
+    throw error;
   }
-
-  const { data, error } = await supabase
-    .from('students')
-    .insert(student)
-    .select()
-    .single();
-
-  if (error) throw error;
-  return data;
 }
 
 export async function updateStudent(id: string, updates: Partial<Student>) {

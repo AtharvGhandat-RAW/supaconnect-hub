@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Figure 3 - Attendance Workflow</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Times New Roman', Times, serif; background: #f5f5f5; padding: 20px; }
+        .controls { text-align: center; margin-bottom: 15px; }
+        .btn { background: #1e3a5f; color: #fff; border: none; padding: 8px 20px; font-size: 11pt; cursor: pointer; border-radius: 3px; margin: 0 5px; }
+        .btn:hover { background: #2d4a6f; }
+        
+        .diagram-wrap { background: #fff; width: 560px; margin: 0 auto; padding: 18px 20px; border: 1px solid #ccc; }
+        .diagram-title { text-align: center; font-size: 11pt; font-weight: bold; margin-bottom: 14px; }
+        
+        /* Flowchart */
+        .flow { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+        .node { padding: 6px 14px; font-size: 8pt; text-align: center; border: 1.5px solid #333; min-width: 120px; }
+        .start, .end { border-radius: 20px; background: #d1fae5; }
+        .process { background: #fff; }
+        .decision { transform: rotate(0deg); background: #fef3c7; clip-path: polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%); padding: 18px 10px; min-width: 100px; }
+        .io { background: #dbeafe; transform: skewX(-10deg); }
+        .io span { display: inline-block; transform: skewX(10deg); }
+        .arrow { font-size: 12pt; color: #555; }
+        .branch { display: flex; gap: 40px; align-items: flex-start; }
+        .branch-col { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+        .label { font-size: 7pt; color: #666; }
+        
+        .caption { text-align: center; font-size: 10pt; margin-top: 14px; font-style: italic; }
+    </style>
+</head>
+<body>
+    <div class="controls">
+        <button class="btn" onclick="downloadPNG()">⬇ Download PNG</button>
+        <button class="btn" onclick="window.print()">🖨 Print</button>
+    </div>
+
+    <div class="diagram-wrap" id="diagram">
+        <div class="diagram-title">ATTENDANCE MARKING WORKFLOW</div>
+
+        <div class="flow">
+            <div class="node start">Start</div>
+            <div class="arrow">↓</div>
+            <div class="node io"><span>Faculty selects slot</span></div>
+            <div class="arrow">↓</div>
+            <div class="node process">System generates session token</div>
+            <div class="arrow">↓</div>
+            <div class="node io"><span>Token sent to ESP32</span></div>
+            <div class="arrow">↓</div>
+            <div class="node process">Device displays "Ready"</div>
+            <div class="arrow">↓</div>
+            <div class="node io"><span>Student scans fingerprint</span></div>
+            <div class="arrow">↓</div>
+            <div class="node decision">Match?</div>
+
+            <div class="branch">
+                <div class="branch-col">
+                    <div class="label">Yes</div>
+                    <div class="arrow">↓</div>
+                    <div class="node process">Validate batch lock</div>
+                    <div class="arrow">↓</div>
+                    <div class="node process">Check duplicate</div>
+                    <div class="arrow">↓</div>
+                    <div class="node io"><span>Record attendance</span></div>
+                    <div class="arrow">↓</div>
+                    <div class="node process">Display ✓ + name</div>
+                </div>
+                <div class="branch-col">
+                    <div class="label">No</div>
+                    <div class="arrow">↓</div>
+                    <div class="node process">Display ✗ retry</div>
+                </div>
+            </div>
+
+            <div class="arrow" style="margin-top:10px;">↓</div>
+            <div class="node decision">More?</div>
+            <div class="arrow">↓ <span class="label">No</span></div>
+            <div class="node process">Faculty closes session</div>
+            <div class="arrow">↓</div>
+            <div class="node process">Sync records to DB</div>
+            <div class="arrow">↓</div>
+            <div class="node end">End</div>
+        </div>
+
+        <div class="caption">Figure 3: Flowchart for biometric attendance marking process</div>
+    </div>
+
+    <script>
+        function downloadPNG() {
+            const el = document.getElementById('diagram');
+            html2canvas(el, { scale: 3, backgroundColor: '#ffffff' }).then(canvas => {
+                const link = document.createElement('a');
+                link.download = 'fig3-attendance-workflow.png';
+                link.href = canvas.toDataURL('image/png');
+                link.click();
+            });
+        }
+    </script>
+</body>
+</html>
