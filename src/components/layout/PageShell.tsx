@@ -20,7 +20,6 @@ import {
   Link2,
   CalendarDays,
   RefreshCw,
-  ArrowRightLeft,
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
@@ -55,7 +54,6 @@ const facultyNavItems: NavItem[] = [
   { label: 'Dashboard', path: '/faculty/dashboard', icon: <LayoutDashboard className="w-5 h-5" /> },
   { label: "Today's Lectures", path: '/faculty/today', icon: <Calendar className="w-5 h-5" /> },
   { label: 'Leave', path: '/faculty/leave', icon: <CalendarOff className="w-5 h-5" /> },
-  { label: 'Transfers', path: '/faculty/transfers', icon: <ArrowRightLeft className="w-5 h-5" /> },
   { label: 'Reports', path: '/faculty/reports', icon: <FileBarChart className="w-5 h-5" /> },
   { label: 'My Subjects', path: '/faculty/subjects', icon: <BookOpen className="w-5 h-5" /> },
   { label: 'Batches', path: '/faculty/batches', icon: <Users className="w-5 h-5" /> },

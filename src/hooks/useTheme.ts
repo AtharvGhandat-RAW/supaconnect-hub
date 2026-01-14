@@ -20,8 +20,10 @@ export function useTheme() {
         const html = document.documentElement;
         if (theme === 'dark') {
             html.classList.add('dark');
+            html.classList.remove('light');
         } else {
             html.classList.remove('dark');
+            html.classList.add('light'); // App uses .light class for light mode overrides
         }
         localStorage.setItem('app-theme', theme);
     }, [theme]);

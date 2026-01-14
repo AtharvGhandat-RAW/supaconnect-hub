@@ -43,6 +43,7 @@ const AdminDashboardPage: React.FC = () => {
   const [selectedClass, setSelectedClass] = useState<string>('all');
   const [selectedSubject, setSelectedSubject] = useState<string>('all');
   const [defaultersLoading, setDefaultersLoading] = useState(false);
+  const [realtimeTrigger, setRealtimeTrigger] = useState(0);
 
   const fetchData = async () => {
     try {
@@ -111,25 +112,30 @@ const AdminDashboardPage: React.FC = () => {
     fetchData();
 
     // Set up realtime subscriptions
-    const attendanceChannel = supabase
-      .channel('admin-attendance')
+    const channel = supabase
+      .channel('admin-dashboard-realtime')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'attendance_sessions' }, () => {
-        fetchData();
+        setRealtimeTrigger(p => p + 1);
       })
-      .subscribe();
-
-    const activityChannel = supabase
-      .channel('admin-activity')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'attendance_records' }, () => {
+        setRealtimeTrigger(p => p + 1);
+      })
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'activity_log' }, () => {
-        fetchData();
+        setRealtimeTrigger(p => p + 1);
       })
       .subscribe();
 
     return () => {
-      supabase.removeChannel(attendanceChannel);
-      supabase.removeChannel(activityChannel);
+      supabase.removeChannel(channel);
     };
   }, []);
+
+  // Re-fetch main data when trigger changes
+  useEffect(() => {
+      if (realtimeTrigger > 0) {
+          fetchData();
+      }
+  }, [realtimeTrigger]);
 
   useEffect(() => {
     const fetchDefaulters = async () => {
@@ -148,7 +154,7 @@ const AdminDashboardPage: React.FC = () => {
       }
     };
     fetchDefaulters();
-  }, [selectedClass, selectedSubject]);
+  }, [selectedClass, selectedSubject, realtimeTrigger]);
 
   const sessionColumns = [
     { key: 'className', header: 'Class' },

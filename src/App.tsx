@@ -37,7 +37,6 @@ import FacultyLeave from "./pages/faculty/Leave";
 import FacultyReports from "./pages/faculty/Reports";
 import FacultySubjects from "./pages/faculty/Subjects";
 import FacultySettings from "./pages/faculty/Settings";
-import FacultyTransfers from "./pages/faculty/Transfers";
 import { useEffect } from "react";
 import { App as CapacitorApp } from "@capacitor/app";
 
@@ -93,7 +92,6 @@ const App = () => {
           <Route path="/faculty/reports" element={<RouteGuard allowedRole="FACULTY"><FacultyReports /></RouteGuard>} />
           <Route path="/faculty/subjects" element={<RouteGuard allowedRole="FACULTY"><FacultySubjects /></RouteGuard>} />
           <Route path="/faculty/batches" element={<RouteGuard allowedRole="FACULTY"><AdminBatches role="faculty" /></RouteGuard>} />
-          <Route path="/faculty/transfers" element={<RouteGuard allowedRole="FACULTY"><FacultyTransfers /></RouteGuard>} />
           <Route path="/faculty/settings" element={<RouteGuard allowedRole="FACULTY"><FacultySettings /></RouteGuard>} />
 
           {/* 404 */}

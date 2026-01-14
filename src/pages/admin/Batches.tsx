@@ -10,6 +10,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, Dialog
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import { toast } from '@/hooks/use-toast';
+import { useAuth } from '@/hooks/useAuth';
+import { supabase } from '@/integrations/supabase/client';
 import { getClasses, type Class } from '@/services/classes';
 import { getStudents, type Student } from '@/services/students';
 import { getBatches, createBatch, deleteBatch, type Batch, getBatchStudents } from '@/services/batches';
@@ -19,6 +21,7 @@ interface BatchesPageProps {
 }
 
 const AdminBatches: React.FC<BatchesPageProps> = ({ role = 'admin' }) => {
+    const { user } = useAuth();
     const [classes, setClasses] = useState<Class[]>([]);
     const [selectedClass, setSelectedClass] = useState<string>('');
     const [batches, setBatches] = useState<Batch[]>([]);
@@ -34,8 +37,42 @@ const AdminBatches: React.FC<BatchesPageProps> = ({ role = 'admin' }) => {
     const [isSubmitting, setIsSubmitting] = useState(false);
 
     useEffect(() => {
-        getClasses().then(setClasses).catch(console.error);
-    }, []);
+        const fetchClasses = async () => {
+             if (role === 'faculty' && user) {
+                // Fetch only assigned classes for faculty
+                try {
+                    const { data: facultyParams } = await supabase
+                        .from('faculty')
+                        .select('id')
+                        .eq('profile_id', user.id)
+                        .single();
+                    
+                    if (facultyParams) {
+                        const { data: allocations } = await supabase
+                            .from('subject_allocations')
+                            .select('class_id')
+                            .eq('faculty_id', facultyParams.id);
+                        
+                        if (allocations && allocations.length > 0) {
+                            const classIds = Array.from(new Set(allocations.map(a => a.class_id)));
+                            const allClasses = await getClasses(); 
+                            // filtering client side since getClasses returns all and we want to reuse the type logic
+                            // or better, fetch specifically if we want to optimize, but let's filter for safety
+                            const allowed = allClasses.filter(c => classIds.includes(c.id));
+                            setClasses(allowed);
+                        } else {
+                            setClasses([]);
+                        }
+                    }
+                } catch (e) {
+                    console.error('Error fetching faculty classes', e);
+                }
+            } else {
+                getClasses().then(setClasses).catch(console.error);
+            }
+        };
+        fetchClasses();
+    }, [role, user]);
 
     const fetchBatchesAndStudents = useCallback(async () => {
         setLoading(true);
