@@ -56,7 +56,7 @@ const FacultyTransfersPage: React.FC = () => {
   const [transferDate, setTransferDate] = useState(new Date().toISOString().split('T')[0]);
   const [reason, setReason] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
-  const [allFaculty, setAllFaculty] = useState<AvailableFaculty[]>([]); // Store all faculty
+  const [rawFaculty, setRawFaculty] = useState<AvailableFaculty[]>([]); // Store raw faculty list from DB
 
   useEffect(() => {
     async function fetchFacultyId() {
@@ -79,37 +79,48 @@ const FacultyTransfersPage: React.FC = () => {
     fetchFacultyId();
   }, [user]);
 
-  // Fetch all faculty initially
+  // Fetch all faculty initially - Independent of current user status
   useEffect(() => {
-      async function loadAllFaculty() {
-          if(!facultyId) return;
-          const { data } = await supabase
-            .from('faculty')
-            .select(`id, profiles (name)`); // Removed inner join and status filter to be safe
-            
-          if(data) {
-              const others = data.filter((f: any) => f.id !== facultyId);
-              setAllFaculty(others);
-              setAvailableFaculty(others); // Initialize available with all
-          }
-      }
-      loadAllFaculty();
-  }, [facultyId]);
+    async function loadRawFaculty() {
+        const { data, error } = await supabase
+          .from('faculty')
+          .select(`id, profiles (name)`);
+          
+        if (error) {
+            console.error("Error loading faculty list:", error);
+            // Fallback or retry logic could go here
+            return;
+        }
 
-  // Update available faculty logic to use search
+        if(data) {
+            setRawFaculty(data);
+        }
+    }
+    loadRawFaculty();
+  }, []); // Run on mount
+
+  // Filter faculty based on ID and Search Query
   useEffect(() => {
-     let filtered = allFaculty;
+     let filtered = rawFaculty;
 
+     // 1. Filter out self
+     if (facultyId) {
+         filtered = filtered.filter(f => f.id !== facultyId);
+     }
+
+     // 2. Filter by Search Query
      if (searchQuery) {
          const lower = searchQuery.toLowerCase();
          filtered = filtered.filter(f => {
-             const name = Array.isArray(f.profiles) ? f.profiles[0]?.name : f.profiles?.name;
-             return name?.toLowerCase().includes(lower);
+             const p = f.profiles;
+             // Handle potential array or object structure for profiles
+             const name = Array.isArray(p) ? p[0]?.name : p?.name;
+             return name ? name.toLowerCase().includes(lower) : false;
          });
      }
      
      setAvailableFaculty(filtered);
-  }, [searchQuery, allFaculty]);
+  }, [searchQuery, rawFaculty, facultyId]);
 
   const fetchTransfers = async () => {
     if (!facultyId) return;
@@ -153,8 +164,7 @@ const FacultyTransfersPage: React.FC = () => {
   const handleOpenCreateDialog = async () => {
     if (!facultyId) return;
 
-    // Ensure available faculty is reset to all faculty
-    setAvailableFaculty(allFaculty);
+    // Reset search query which will trigger the effect to reset available faculty
     setSearchQuery('');
     
     try {
