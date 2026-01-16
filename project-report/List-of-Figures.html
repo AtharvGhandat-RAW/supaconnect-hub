@@ -1,0 +1,365 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+/* Reset */
+body { font-family: 'Times New Roman', serif; line-height: 1.5; text-align: justify; }
+h1, h2, h3 { text-align: center; }
+p { margin-bottom: 1em; }
+table { width: 100%; border-collapse: collapse; margin: 1em 0; }
+th, td { border: 1px solid #000; padding: 5px; }
+.diagram-wrap { border: none !important; margin: 20px auto !important; width: 100% !important; }
+</style>
+</head>
+<body>
+<h2>List of Figures (vi)</h2>
+<ol>
+<li>System Architecture Diagram – Figure 1</li>
+<li>Database Schema (ER Diagram) – Figure 2</li>
+<li>User Workflow &amp; Experience – Figure 3</li>
+<li>Device Interface &amp; Wiring – Figure 4</li>
+<li>Security Model &amp; Session Token Flow – Figure 5</li>
+<li>Use Case Diagram – Figure 6</li>
+<li>Context-Level DFD – Figure 7</li>
+</ol>
+
+<br><hr><br>
+<style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Times New Roman', Times, serif; background: #f5f5f5; padding: 20px; }
+        .controls { text-align: center; margin-bottom: 15px; }
+        .btn { background: #1e3a5f; color: #fff; border: none; padding: 8px 20px; font-size: 11pt; cursor: pointer; border-radius: 3px; margin: 0 5px; }
+        .btn:hover { background: #2d4a6f; }
+        
+        /* Diagram Canvas - A4 half-page width ~160mm ≈ 560px */
+        .diagram-wrap { background: #fff; width: 560px; margin: 0 auto; padding: 20px 25px; border: 1px solid #ccc; }
+        .diagram-title { text-align: center; font-size: 11pt; font-weight: bold; margin-bottom: 15px; }
+        
+        /* Layers */
+        .arch { display: flex; flex-direction: column; gap: 8px; }
+        .layer { border: 1.5px solid #333; border-radius: 4px; padding: 10px 12px; background: #fafafa; position: relative; }
+        .layer-label { position: absolute; top: -9px; left: 12px; background: #fff; padding: 0 6px; font-weight: bold; font-size: 9pt; }
+        .layer-row { display: flex; justify-content: center; gap: 10px; flex-wrap: wrap; padding-top: 6px; }
+        .box { border: 1px solid #333; border-radius: 3px; padding: 5px 10px; font-size: 8pt; text-align: center; min-width: 70px; background: #fff; }
+        .box.blue { background: #2563eb; color: #fff; border-color: #1d4ed8; }
+        .box.green { background: #059669; color: #fff; border-color: #047857; }
+        .box.red { background: #dc2626; color: #fff; border-color: #b91c1c; }
+        .box.orange { background: #ea580c; color: #fff; border-color: #c2410c; }
+        
+        /* Arrows */
+        .arrow { text-align: center; font-size: 14pt; color: #555; line-height: 1; }
+        
+        /* Legend */
+        .legend { display: flex; justify-content: center; gap: 15px; margin-top: 12px; flex-wrap: wrap; }
+        .leg-item { display: flex; align-items: center; gap: 4px; font-size: 8pt; }
+        .leg-box { width: 14px; height: 10px; border: 1px solid #333; border-radius: 2px; }
+        
+        /* Caption */
+        .caption { text-align: center; font-size: 10pt; margin-top: 12px; font-style: italic; }
+    </style>
+<div style='page-break-inside: avoid;'><div class="diagram-wrap" id="diagram">
+        <div class="diagram-title">SYSTEM ARCHITECTURE – ATTENDRO</div>
+
+        <div class="arch">
+            <!-- Presentation Layer -->
+            <div class="layer">
+                <span class="layer-label">Presentation Layer</span>
+                <div class="layer-row">
+                    <div class="box blue">Admin Web</div>
+                    <div class="box blue">Faculty Web</div>
+                    <div class="box blue">Mobile App</div>
+                    <div class="box red">ESP32 Device</div>
+                </div></div>
+<br><hr><br>
+<style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Times New Roman', Times, serif; background: #f5f5f5; padding: 20px; }
+        .controls { text-align: center; margin-bottom: 15px; }
+        .btn { background: #1e3a5f; color: #fff; border: none; padding: 8px 20px; font-size: 11pt; cursor: pointer; border-radius: 3px; margin: 0 5px; }
+        .btn:hover { background: #2d4a6f; }
+        
+        .diagram-wrap { background: #fff; width: 620px; margin: 0 auto; padding: 18px 20px; border: 1px solid #ccc; }
+        .diagram-title { text-align: center; font-size: 11pt; font-weight: bold; margin-bottom: 12px; }
+        
+        /* ER Grid */
+        .er { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+        .entity { border: 1.5px solid #333; font-size: 7.5pt; background: #fff; }
+        .entity-hd { background: #1e3a5f; color: #fff; padding: 4px 6px; font-weight: bold; text-align: center; font-size: 8pt; border-bottom: 1.5px solid #333; }
+        .entity-bd { padding: 5px 6px; }
+        .attr { padding: 2px 0; border-bottom: 1px dashed #ddd; display: flex; justify-content: space-between; }
+        .attr:last-child { border-bottom: none; }
+        .pk { color: #b91c1c; font-weight: bold; }
+        .fk { color: #1d4ed8; }
+        .typ { color: #666; font-size: 6.5pt; }
+        
+        /* Relationships */
+        .rels { margin-top: 12px; font-size: 8pt; columns: 2; column-gap: 20px; }
+        .rel { padding: 2px 0; }
+        
+        .caption { text-align: center; font-size: 10pt; margin-top: 10px; font-style: italic; }
+    </style>
+<div style='page-break-inside: avoid;'><div class="diagram-wrap" id="diagram">
+        <div class="diagram-title">DATABASE SCHEMA – ATTENDRO</div>
+
+        <div class="er">
+            <!-- profiles -->
+            <div class="entity">
+                <div class="entity-hd">profiles</div>
+                <div class="entity-bd">
+                    <div class="attr"><span class="pk">id</span><span class="typ">uuid</span></div>
+                    <div class="attr"><span>email</span><span class="typ">text</span></div>
+                    <div class="attr"><span>role</span><span class="typ">enum</span></div>
+                    <div class="attr"><span>full_name</span><span class="typ">text</span></div>
+                </div></div>
+<br><hr><br>
+<style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Times New Roman', Times, serif; background: #f5f5f5; padding: 20px; }
+        .controls { text-align: center; margin-bottom: 15px; }
+        .btn { background: #1e3a5f; color: #fff; border: none; padding: 8px 20px; font-size: 11pt; cursor: pointer; border-radius: 3px; margin: 0 5px; }
+        .btn:hover { background: #2d4a6f; }
+        
+        .diagram-wrap { background: #fff; width: 560px; margin: 0 auto; padding: 18px 20px; border: 1px solid #ccc; }
+        .diagram-title { text-align: center; font-size: 11pt; font-weight: bold; margin-bottom: 14px; }
+        
+        /* Flowchart */
+        .flow { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+        .node { padding: 6px 14px; font-size: 8pt; text-align: center; border: 1.5px solid #333; min-width: 120px; }
+        .start, .end { border-radius: 20px; background: #d1fae5; }
+        .process { background: #fff; }
+        .decision { transform: rotate(0deg); background: #fef3c7; clip-path: polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%); padding: 18px 10px; min-width: 100px; }
+        .io { background: #dbeafe; transform: skewX(-10deg); }
+        .io span { display: inline-block; transform: skewX(10deg); }
+        .arrow { font-size: 12pt; color: #555; }
+        .branch { display: flex; gap: 40px; align-items: flex-start; }
+        .branch-col { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+        .label { font-size: 7pt; color: #666; }
+        
+        .caption { text-align: center; font-size: 10pt; margin-top: 14px; font-style: italic; }
+    </style>
+<div style='page-break-inside: avoid;'><div class="diagram-wrap" id="diagram">
+        <div class="diagram-title">ATTENDANCE MARKING WORKFLOW</div>
+
+        <div class="flow">
+            <div class="node start">Start</div>
+            <div class="arrow">↓</div>
+            <div class="node io"><span>Faculty selects slot</span></div>
+            <div class="arrow">↓</div>
+            <div class="node process">System generates session token</div>
+            <div class="arrow">↓</div>
+            <div class="node io"><span>Token sent to ESP32</span></div>
+            <div class="arrow">↓</div>
+            <div class="node process">Device displays "Ready"</div>
+            <div class="arrow">↓</div>
+            <div class="node io"><span>Student scans fingerprint</span></div>
+            <div class="arrow">↓</div>
+            <div class="node decision">Match?</div>
+
+            <div class="branch">
+                <div class="branch-col">
+                    <div class="label">Yes</div>
+                    <div class="arrow">↓</div>
+                    <div class="node process">Validate batch lock</div>
+                    <div class="arrow">↓</div>
+                    <div class="node process">Check duplicate</div>
+                    <div class="arrow">↓</div>
+                    <div class="node io"><span>Record attendance</span></div>
+                    <div class="arrow">↓</div>
+                    <div class="node process">Display ✓ + name</div>
+                </div></div>
+<br><hr><br>
+<style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Times New Roman', Times, serif; background: #f5f5f5; padding: 20px; }
+        .controls { text-align: center; margin-bottom: 15px; }
+        .btn { background: #1e3a5f; color: #fff; border: none; padding: 8px 20px; font-size: 11pt; cursor: pointer; border-radius: 3px; margin: 0 5px; }
+        .btn:hover { background: #2d4a6f; }
+        
+        .diagram-wrap { background: #fff; width: 560px; margin: 0 auto; padding: 18px 20px; border: 1px solid #ccc; }
+        .diagram-title { text-align: center; font-size: 11pt; font-weight: bold; margin-bottom: 12px; }
+        .section-title { font-size: 9pt; font-weight: bold; margin: 12px 0 8px 0; border-bottom: 1px solid #ccc; padding-bottom: 3px; }
+        
+        /* Wiring diagram */
+        .wiring { display: flex; justify-content: center; gap: 30px; align-items: center; }
+        .device { border: 1.5px solid #333; padding: 8px 12px; text-align: center; font-size: 8pt; background: #f9f9f9; border-radius: 4px; min-width: 80px; }
+        .device-name { font-weight: bold; margin-bottom: 4px; }
+        .pins { font-size: 7pt; color: #555; }
+        .conn { display: flex; flex-direction: column; align-items: center; font-size: 7pt; color: #666; }
+        .conn-line { width: 50px; height: 2px; background: #333; margin: 3px 0; }
+        .conn-label { font-size: 6.5pt; }
+        
+        /* Pin table */
+        .pin-table { width: 100%; border-collapse: collapse; font-size: 7.5pt; margin-top: 8px; }
+        .pin-table th, .pin-table td { border: 1px solid #333; padding: 4px 6px; text-align: left; }
+        .pin-table th { background: #1e3a5f; color: #fff; font-size: 8pt; }
+        .pin-table tr:nth-child(even) { background: #f5f5f5; }
+        
+        /* OLED states */
+        .oled-states { display: flex; justify-content: center; gap: 12px; flex-wrap: wrap; margin-top: 8px; }
+        .oled { width: 90px; height: 45px; background: #000; border: 2px solid #333; border-radius: 4px; display: flex; flex-direction: column; justify-content: center; align-items: center; color: #0f0; font-family: monospace; font-size: 6pt; line-height: 1.3; }
+        .oled-label { font-size: 7pt; text-align: center; margin-top: 4px; color: #333; }
+        
+        .caption { text-align: center; font-size: 10pt; margin-top: 14px; font-style: italic; }
+    </style>
+<div style='page-break-inside: avoid;'><div class="diagram-wrap" id="diagram">
+        <div class="diagram-title">DEVICE INTERFACE – ESP32 BIOMETRIC TERMINAL</div>
+
+        <!-- Wiring Block Diagram -->
+        <div class="section-title">A. Component Wiring</div>
+        <div class="wiring">
+            <div class="device">
+                <div class="device-name">R307</div>
+                <div class="pins">Fingerprint<br/>Sensor</div>
+            </div></div>
+<br><hr><br>
+<style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Times New Roman', Times, serif; background: #f5f5f5; padding: 20px; }
+        .controls { text-align: center; margin-bottom: 15px; }
+        .btn { background: #1e3a5f; color: #fff; border: none; padding: 8px 20px; font-size: 11pt; cursor: pointer; border-radius: 3px; margin: 0 5px; }
+        .btn:hover { background: #2d4a6f; }
+        
+        .diagram-wrap { background: #fff; width: 560px; margin: 0 auto; padding: 18px 20px; border: 1px solid #ccc; }
+        .diagram-title { text-align: center; font-size: 11pt; font-weight: bold; margin-bottom: 12px; }
+        .section-title { font-size: 9pt; font-weight: bold; margin: 10px 0 6px 0; border-bottom: 1px solid #ccc; padding-bottom: 3px; }
+        
+        /* Security Layers */
+        .layers { display: flex; flex-direction: column; gap: 4px; }
+        .layer { display: flex; align-items: center; border: 1px solid #333; background: #fff; }
+        .layer-num { width: 22px; background: #1e3a5f; color: #fff; font-size: 8pt; font-weight: bold; text-align: center; padding: 5px 0; }
+        .layer-name { flex: 1; padding: 5px 10px; font-size: 8pt; border-right: 1px solid #ddd; font-weight: bold; }
+        .layer-desc { flex: 2; padding: 5px 10px; font-size: 7.5pt; color: #444; }
+        
+        /* Auth Flow */
+        .auth-flow { display: flex; align-items: center; justify-content: center; gap: 8px; flex-wrap: wrap; margin-top: 6px; }
+        .af-box { border: 1px solid #333; padding: 4px 8px; font-size: 7pt; text-align: center; background: #f9f9f9; border-radius: 3px; }
+        .af-arrow { font-size: 10pt; color: #555; }
+        
+        /* Token structure */
+        .token { background: #1e1e1e; color: #0f0; font-family: monospace; font-size: 7pt; padding: 8px 10px; border-radius: 4px; margin-top: 6px; line-height: 1.4; overflow-x: auto; }
+        
+        /* Threat matrix */
+        .threat-table { width: 100%; border-collapse: collapse; font-size: 7pt; margin-top: 6px; }
+        .threat-table th, .threat-table td { border: 1px solid #333; padding: 3px 5px; }
+        .threat-table th { background: #1e3a5f; color: #fff; font-size: 7.5pt; }
+        .threat-table tr:nth-child(even) { background: #f5f5f5; }
+        
+        .caption { text-align: center; font-size: 10pt; margin-top: 12px; font-style: italic; }
+    </style>
+<div style='page-break-inside: avoid;'><div class="diagram-wrap" id="diagram">
+        <div class="diagram-title">SECURITY MODEL – ATTENDRO</div>
+
+        <!-- Security Layers -->
+        <div class="section-title">A. Eight-Layer Security Architecture</div>
+        <div class="layers">
+            <div class="layer"><div class="layer-num">1</div><div class="layer-name">Authentication</div><div class="layer-desc">Supabase Auth with JWT; email + password login</div></div></div>
+<br><hr><br>
+<style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Times New Roman', Times, serif; background: #f5f5f5; padding: 20px; }
+        .controls { text-align: center; margin-bottom: 15px; }
+        .btn { background: #1e3a5f; color: #fff; border: none; padding: 8px 20px; font-size: 11pt; cursor: pointer; border-radius: 3px; margin: 0 5px; }
+        .btn:hover { background: #2d4a6f; }
+        
+        .diagram-wrap { background: #fff; width: 580px; margin: 0 auto; padding: 18px 20px; border: 1px solid #ccc; }
+        .diagram-title { text-align: center; font-size: 11pt; font-weight: bold; margin-bottom: 12px; }
+        .section-title { font-size: 9pt; font-weight: bold; margin: 10px 0 6px 0; border-bottom: 1px solid #ccc; padding-bottom: 3px; }
+        
+        /* Use Case Layout */
+        .uc-wrap { display: flex; gap: 15px; }
+        .actors { display: flex; flex-direction: column; gap: 20px; align-items: center; width: 60px; }
+        .actor { text-align: center; font-size: 7pt; }
+        .stick { font-size: 20pt; line-height: 1; }
+        
+        .system-box { flex: 1; border: 2px solid #333; border-radius: 6px; padding: 10px; position: relative; }
+        .system-label { position: absolute; top: -10px; left: 15px; background: #fff; padding: 0 6px; font-weight: bold; font-size: 8pt; }
+        .usecases { display: flex; flex-direction: column; gap: 6px; }
+        .uc { border: 1px solid #333; border-radius: 20px; padding: 5px 12px; font-size: 7.5pt; text-align: center; background: #f0f9ff; }
+        
+        .actors-right { display: flex; flex-direction: column; gap: 20px; align-items: center; width: 60px; }
+        
+        /* Connections (simplified labels) */
+        .conn-note { font-size: 6.5pt; color: #555; text-align: center; margin-top: 8px; }
+        
+        /* Module Breakdown */
+        .modules { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 8px; }
+        .mod { border: 1.5px solid #333; padding: 6px 8px; font-size: 7.5pt; background: #fff; }
+        .mod-name { font-weight: bold; margin-bottom: 3px; }
+        .mod-items { font-size: 7pt; color: #444; }
+        
+        /* DFD */
+        .dfd { display: flex; align-items: center; justify-content: center; gap: 10px; margin-top: 8px; }
+        .ext { border: 1px solid #333; padding: 5px 10px; font-size: 7.5pt; }
+        .proc { border: 1.5px solid #333; border-radius: 50%; width: 70px; height: 70px; display: flex; align-items: center; justify-content: center; font-size: 7.5pt; text-align: center; background: #fef3c7; }
+        .store { border-top: 1px solid #333; border-bottom: 1px solid #333; padding: 4px 10px; font-size: 7.5pt; background: #e0f2fe; }
+        .dfd-arrow { font-size: 10pt; color: #555; }
+        
+        .caption { text-align: center; font-size: 10pt; margin-top: 12px; font-style: italic; }
+    </style>
+<div style='page-break-inside: avoid;'><div class="diagram-wrap" id="diagram">
+        <div class="diagram-title">USE CASE & MODULE BREAKDOWN</div>
+
+        <!-- Use Case Diagram -->
+        <div class="section-title">A. Use Case Diagram</div>
+        <div class="uc-wrap">
+            <div class="actors">
+                <div class="actor"><div class="stick">🧑‍💼</div>Admin</div>
+                <div class="actor"><div class="stick">🧑‍🏫</div>Faculty</div>
+            </div></div>
+<br><hr><br>
+<style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Times New Roman', Times, serif; background: #f5f5f5; padding: 20px; }
+        .controls { text-align: center; margin-bottom: 15px; }
+        .btn { background: #1e3a5f; color: #fff; border: none; padding: 8px 20px; font-size: 11pt; cursor: pointer; border-radius: 3px; margin: 0 5px; }
+        .btn:hover { background: #2d4a6f; }
+        
+        .diagram-wrap { background: #fff; width: 580px; margin: 0 auto; padding: 18px 20px; border: 1px solid #ccc; }
+        .diagram-title { text-align: center; font-size: 11pt; font-weight: bold; margin-bottom: 12px; }
+        .section-title { font-size: 9pt; font-weight: bold; margin: 10px 0 6px 0; border-bottom: 1px solid #ccc; padding-bottom: 3px; }
+        
+        /* Use Case Layout */
+        .uc-wrap { display: flex; gap: 15px; }
+        .actors { display: flex; flex-direction: column; gap: 20px; align-items: center; width: 60px; }
+        .actor { text-align: center; font-size: 7pt; }
+        .stick { font-size: 20pt; line-height: 1; }
+        
+        .system-box { flex: 1; border: 2px solid #333; border-radius: 6px; padding: 10px; position: relative; }
+        .system-label { position: absolute; top: -10px; left: 15px; background: #fff; padding: 0 6px; font-weight: bold; font-size: 8pt; }
+        .usecases { display: flex; flex-direction: column; gap: 6px; }
+        .uc { border: 1px solid #333; border-radius: 20px; padding: 5px 12px; font-size: 7.5pt; text-align: center; background: #f0f9ff; }
+        
+        .actors-right { display: flex; flex-direction: column; gap: 20px; align-items: center; width: 60px; }
+        
+        /* Connections (simplified labels) */
+        .conn-note { font-size: 6.5pt; color: #555; text-align: center; margin-top: 8px; }
+        
+        /* Module Breakdown */
+        .modules { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 8px; }
+        .mod { border: 1.5px solid #333; padding: 6px 8px; font-size: 7.5pt; background: #fff; }
+        .mod-name { font-weight: bold; margin-bottom: 3px; }
+        .mod-items { font-size: 7pt; color: #444; }
+        
+        /* DFD */
+        .dfd { display: flex; align-items: center; justify-content: center; gap: 10px; margin-top: 8px; }
+        .ext { border: 1px solid #333; padding: 5px 10px; font-size: 7.5pt; }
+        .proc { border: 1.5px solid #333; border-radius: 50%; width: 70px; height: 70px; display: flex; align-items: center; justify-content: center; font-size: 7.5pt; text-align: center; background: #fef3c7; }
+        .store { border-top: 1px solid #333; border-bottom: 1px solid #333; padding: 4px 10px; font-size: 7.5pt; background: #e0f2fe; }
+        .dfd-arrow { font-size: 10pt; color: #555; }
+        
+        .caption { text-align: center; font-size: 10pt; margin-top: 12px; font-style: italic; }
+    </style>
+<div style='page-break-inside: avoid;'><div class="diagram-wrap" id="diagram">
+        <div class="diagram-title">USE CASE & MODULE BREAKDOWN</div>
+
+        <!-- Use Case Diagram -->
+        <div class="section-title">A. Use Case Diagram</div>
+        <div class="uc-wrap">
+            <div class="actors">
+                <div class="actor"><div class="stick">🧑‍💼</div>Admin</div>
+                <div class="actor"><div class="stick">🧑‍🏫</div>Faculty</div>
+            </div></div>
+</body>
+</html>

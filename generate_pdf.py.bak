@@ -14,11 +14,7 @@ files = [
     "Acknowledgment.html",
     # 4. Table of Contents
     "Table-of-Contents.html",
-    # 5. Front Matter
-    "Abstract.html",
-    "List-of-Figures.html",
-    "List-of-Tables.html",
-    # 6. Chapters
+    # 5. Chapters
     "Chapter-1-Introduction.html",
     "Chapter-2-Literature-Survey.html",
     "Chapter-3-Scope-of-Project.html",

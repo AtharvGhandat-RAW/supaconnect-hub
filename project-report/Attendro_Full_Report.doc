@@ -1,0 +1,880 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+/* Reset */
+body { font-family: 'Times New Roman', serif; line-height: 1.5; text-align: justify; }
+h1, h2, h3 { text-align: center; }
+p { margin-bottom: 1em; }
+table { width: 100%; border-collapse: collapse; margin: 1em 0; }
+th, td { border: 1px solid #000; padding: 5px; }
+.diagram-wrap { border: none !important; margin: 20px auto !important; width: 100% !important; }
+</style>
+</head>
+<body>
+<h2>Title Page (i)</h2>
+<p><strong>Title:</strong> ATTENDRO: Smart Biometric + App-Based Attendance Management System using AI &amp; IoT<br />
+<strong>Candidate:</strong> ______________________<br />
+<strong>Diploma (Department):</strong> Applied AI &amp; ML<br />
+<strong>Institute:</strong> Rajarambapu Institute of Technology, Islampur<br />
+<strong>Academic Year:</strong> 2025–2026<br />
+<strong>Guide:</strong> ______________________<br />
+<strong>Date of Submission:</strong> ______________________</p>
+
+</body>
+</html>
+
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+/* Reset */
+body { font-family: 'Times New Roman', serif; line-height: 1.5; text-align: justify; }
+h1, h2, h3 { text-align: center; }
+p { margin-bottom: 1em; }
+table { width: 100%; border-collapse: collapse; margin: 1em 0; }
+th, td { border: 1px solid #000; padding: 5px; }
+.diagram-wrap { border: none !important; margin: 20px auto !important; width: 100% !important; }
+</style>
+</head>
+<body>
+<h2>Certificate of the Guide (ii)</h2>
+<p>This is to certify that the project titled <strong>“ATTENDRO: Smart Biometric + App-Based Attendance Management System using AI &amp; IoT”</strong> has been carried out by <strong>[Student Name]</strong> under my guidance and supervision in partial fulfillment of the requirements for the award of the Diploma in <strong>Applied AI &amp; ML</strong> at <strong>Rajarambapu Institute of Technology, Islampur</strong>, during the academic year <strong>2025–2026</strong>.</p>
+<p>Guide Signature: __________   Date: __________<br />
+HOD Signature: __________   Principal Signature: __________</p>
+
+</body>
+</html>
+
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+/* Reset */
+body { font-family: 'Times New Roman', serif; line-height: 1.5; text-align: justify; }
+h1, h2, h3 { text-align: center; }
+p { margin-bottom: 1em; }
+table { width: 100%; border-collapse: collapse; margin: 1em 0; }
+th, td { border: 1px solid #000; padding: 5px; }
+.diagram-wrap { border: none !important; margin: 20px auto !important; width: 100% !important; }
+</style>
+</head>
+<body>
+<h2>Acknowledgement (iii)</h2>
+<p>I express sincere gratitude to <strong>[Guide Name]</strong> for guidance and feedback, to the <strong>Department of Applied AI &amp; ML</strong> for providing laboratory resources, to my group members for their dedicated collaboration, and to my parents for their unwavering support throughout this project.</p>
+
+</body>
+</html>
+
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+/* Reset */
+body { font-family: 'Times New Roman', serif; line-height: 1.5; text-align: justify; }
+h1, h2, h3 { text-align: center; }
+p { margin-bottom: 1em; }
+table { width: 100%; border-collapse: collapse; margin: 1em 0; }
+th, td { border: 1px solid #000; padding: 5px; }
+.diagram-wrap { border: none !important; margin: 20px auto !important; width: 100% !important; }
+</style>
+</head>
+<body>
+<h2>Index / Table of Contents (iv)</h2>
+<ul>
+<li>Title Page ............................................................... i</li>
+<li>Certificate of the Guide ................................................ ii</li>
+<li>Acknowledgement ......................................................... iii</li>
+<li>Index / Contents ........................................................ iv</li>
+<li>Abstract ............................................................... v</li>
+<li>List of Figures ........................................................ vi</li>
+<li>List of Tables ......................................................... vii</li>
+<li>Chapter–1 Introduction ................................................. 1</li>
+<li>Chapter–2 Literature Survey ............................................. 5</li>
+<li>Chapter–3 Scope of the Project .......................................... 9</li>
+<li>Chapter–4 Methodology / Approach ........................................ 13</li>
+<li>Chapter–5 Designs, Working and Processes ............................... 18</li>
+<li>Chapter–6 Results and Applications ...................................... 27</li>
+<li>Chapter–7 Conclusion ................................................... 32</li>
+<li>References ............................................................. 34</li>
+</ul>
+
+</body>
+</html>
+
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+/* Reset */
+body { font-family: 'Times New Roman', serif; line-height: 1.5; text-align: justify; }
+h1, h2, h3 { text-align: center; }
+p { margin-bottom: 1em; }
+table { width: 100%; border-collapse: collapse; margin: 1em 0; }
+th, td { border: 1px solid #000; padding: 5px; }
+.diagram-wrap { border: none !important; margin: 20px auto !important; width: 100% !important; }
+</style>
+</head>
+<body>
+<h2>Abstract (v)</h2>
+<p>This project presents <strong>Attendro</strong>, an intelligent, portable, and offline-first biometric attendance system designed for educational institutes. Addressing the limitations of fixed biometric terminals and proxy-prone manual registers, Attendro introduces a <strong>session-controlled</strong> architecture where attendance can only be marked during active, authorized lecture sessions. The system integrates an <strong>ESP32-based portable device</strong> with a fingerprint sensor, a <strong>Supabase (Cloud)</strong> backend for real-time synchronization, and a <strong>Faculty Web App</strong> for session management.</p>
+<p>Key innovations include <strong>Time-Variant Batch Locking</strong> (ensuring students only mark attendance for their specific batch), <strong>Offline-First Synchronization</strong> (queueing scans when Wi-Fi is unavailable), and <strong>Context-Aware AI Rules</strong> that validate scans against subject, class, and schedule constraints locally. This system satisfies AIML diploma requirements by leveraging biometric pattern recognition and rule-based decision intelligence to ensure data integrity and operational efficiency.</p>
+
+</body>
+</html>
+
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+/* Reset */
+body { font-family: 'Times New Roman', serif; line-height: 1.5; text-align: justify; }
+h1, h2, h3 { text-align: center; }
+p { margin-bottom: 1em; }
+table { width: 100%; border-collapse: collapse; margin: 1em 0; }
+th, td { border: 1px solid #000; padding: 5px; }
+.diagram-wrap { border: none !important; margin: 20px auto !important; width: 100% !important; }
+</style>
+</head>
+<body>
+<h2>List of Figures (vi)</h2>
+<ol>
+<li>System Architecture Diagram – Figure 1</li>
+<li>Database Schema (ER Diagram) – Figure 2</li>
+<li>User Workflow &amp; Experience – Figure 3</li>
+<li>Device Interface &amp; Wiring – Figure 4</li>
+<li>Security Model &amp; Session Token Flow – Figure 5</li>
+<li>Use Case Diagram – Figure 6</li>
+<li>Context-Level DFD – Figure 7</li>
+</ol>
+
+<br><hr><br>
+<style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Times New Roman', Times, serif; background: #f5f5f5; padding: 20px; }
+        .controls { text-align: center; margin-bottom: 15px; }
+        .btn { background: #1e3a5f; color: #fff; border: none; padding: 8px 20px; font-size: 11pt; cursor: pointer; border-radius: 3px; margin: 0 5px; }
+        .btn:hover { background: #2d4a6f; }
+        
+        /* Diagram Canvas - A4 half-page width ~160mm ≈ 560px */
+        .diagram-wrap { background: #fff; width: 560px; margin: 0 auto; padding: 20px 25px; border: 1px solid #ccc; }
+        .diagram-title { text-align: center; font-size: 11pt; font-weight: bold; margin-bottom: 15px; }
+        
+        /* Layers */
+        .arch { display: flex; flex-direction: column; gap: 8px; }
+        .layer { border: 1.5px solid #333; border-radius: 4px; padding: 10px 12px; background: #fafafa; position: relative; }
+        .layer-label { position: absolute; top: -9px; left: 12px; background: #fff; padding: 0 6px; font-weight: bold; font-size: 9pt; }
+        .layer-row { display: flex; justify-content: center; gap: 10px; flex-wrap: wrap; padding-top: 6px; }
+        .box { border: 1px solid #333; border-radius: 3px; padding: 5px 10px; font-size: 8pt; text-align: center; min-width: 70px; background: #fff; }
+        .box.blue { background: #2563eb; color: #fff; border-color: #1d4ed8; }
+        .box.green { background: #059669; color: #fff; border-color: #047857; }
+        .box.red { background: #dc2626; color: #fff; border-color: #b91c1c; }
+        .box.orange { background: #ea580c; color: #fff; border-color: #c2410c; }
+        
+        /* Arrows */
+        .arrow { text-align: center; font-size: 14pt; color: #555; line-height: 1; }
+        
+        /* Legend */
+        .legend { display: flex; justify-content: center; gap: 15px; margin-top: 12px; flex-wrap: wrap; }
+        .leg-item { display: flex; align-items: center; gap: 4px; font-size: 8pt; }
+        .leg-box { width: 14px; height: 10px; border: 1px solid #333; border-radius: 2px; }
+        
+        /* Caption */
+        .caption { text-align: center; font-size: 10pt; margin-top: 12px; font-style: italic; }
+    </style>
+<div style='page-break-inside: avoid;'><div class="diagram-wrap" id="diagram">
+        <div class="diagram-title">SYSTEM ARCHITECTURE – ATTENDRO</div>
+
+        <div class="arch">
+            <!-- Presentation Layer -->
+            <div class="layer">
+                <span class="layer-label">Presentation Layer</span>
+                <div class="layer-row">
+                    <div class="box blue">Admin Web</div>
+                    <div class="box blue">Faculty Web</div>
+                    <div class="box blue">Mobile App</div>
+                    <div class="box red">ESP32 Device</div>
+                </div></div>
+<br><hr><br>
+<style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Times New Roman', Times, serif; background: #f5f5f5; padding: 20px; }
+        .controls { text-align: center; margin-bottom: 15px; }
+        .btn { background: #1e3a5f; color: #fff; border: none; padding: 8px 20px; font-size: 11pt; cursor: pointer; border-radius: 3px; margin: 0 5px; }
+        .btn:hover { background: #2d4a6f; }
+        
+        .diagram-wrap { background: #fff; width: 620px; margin: 0 auto; padding: 18px 20px; border: 1px solid #ccc; }
+        .diagram-title { text-align: center; font-size: 11pt; font-weight: bold; margin-bottom: 12px; }
+        
+        /* ER Grid */
+        .er { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+        .entity { border: 1.5px solid #333; font-size: 7.5pt; background: #fff; }
+        .entity-hd { background: #1e3a5f; color: #fff; padding: 4px 6px; font-weight: bold; text-align: center; font-size: 8pt; border-bottom: 1.5px solid #333; }
+        .entity-bd { padding: 5px 6px; }
+        .attr { padding: 2px 0; border-bottom: 1px dashed #ddd; display: flex; justify-content: space-between; }
+        .attr:last-child { border-bottom: none; }
+        .pk { color: #b91c1c; font-weight: bold; }
+        .fk { color: #1d4ed8; }
+        .typ { color: #666; font-size: 6.5pt; }
+        
+        /* Relationships */
+        .rels { margin-top: 12px; font-size: 8pt; columns: 2; column-gap: 20px; }
+        .rel { padding: 2px 0; }
+        
+        .caption { text-align: center; font-size: 10pt; margin-top: 10px; font-style: italic; }
+    </style>
+<div style='page-break-inside: avoid;'><div class="diagram-wrap" id="diagram">
+        <div class="diagram-title">DATABASE SCHEMA – ATTENDRO</div>
+
+        <div class="er">
+            <!-- profiles -->
+            <div class="entity">
+                <div class="entity-hd">profiles</div>
+                <div class="entity-bd">
+                    <div class="attr"><span class="pk">id</span><span class="typ">uuid</span></div>
+                    <div class="attr"><span>email</span><span class="typ">text</span></div>
+                    <div class="attr"><span>role</span><span class="typ">enum</span></div>
+                    <div class="attr"><span>full_name</span><span class="typ">text</span></div>
+                </div></div>
+<br><hr><br>
+<style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Times New Roman', Times, serif; background: #f5f5f5; padding: 20px; }
+        .controls { text-align: center; margin-bottom: 15px; }
+        .btn { background: #1e3a5f; color: #fff; border: none; padding: 8px 20px; font-size: 11pt; cursor: pointer; border-radius: 3px; margin: 0 5px; }
+        .btn:hover { background: #2d4a6f; }
+        
+        .diagram-wrap { background: #fff; width: 560px; margin: 0 auto; padding: 18px 20px; border: 1px solid #ccc; }
+        .diagram-title { text-align: center; font-size: 11pt; font-weight: bold; margin-bottom: 14px; }
+        
+        /* Flowchart */
+        .flow { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+        .node { padding: 6px 14px; font-size: 8pt; text-align: center; border: 1.5px solid #333; min-width: 120px; }
+        .start, .end { border-radius: 20px; background: #d1fae5; }
+        .process { background: #fff; }
+        .decision { transform: rotate(0deg); background: #fef3c7; clip-path: polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%); padding: 18px 10px; min-width: 100px; }
+        .io { background: #dbeafe; transform: skewX(-10deg); }
+        .io span { display: inline-block; transform: skewX(10deg); }
+        .arrow { font-size: 12pt; color: #555; }
+        .branch { display: flex; gap: 40px; align-items: flex-start; }
+        .branch-col { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+        .label { font-size: 7pt; color: #666; }
+        
+        .caption { text-align: center; font-size: 10pt; margin-top: 14px; font-style: italic; }
+    </style>
+<div style='page-break-inside: avoid;'><div class="diagram-wrap" id="diagram">
+        <div class="diagram-title">ATTENDANCE MARKING WORKFLOW</div>
+
+        <div class="flow">
+            <div class="node start">Start</div>
+            <div class="arrow">↓</div>
+            <div class="node io"><span>Faculty selects slot</span></div>
+            <div class="arrow">↓</div>
+            <div class="node process">System generates session token</div>
+            <div class="arrow">↓</div>
+            <div class="node io"><span>Token sent to ESP32</span></div>
+            <div class="arrow">↓</div>
+            <div class="node process">Device displays "Ready"</div>
+            <div class="arrow">↓</div>
+            <div class="node io"><span>Student scans fingerprint</span></div>
+            <div class="arrow">↓</div>
+            <div class="node decision">Match?</div>
+
+            <div class="branch">
+                <div class="branch-col">
+                    <div class="label">Yes</div>
+                    <div class="arrow">↓</div>
+                    <div class="node process">Validate batch lock</div>
+                    <div class="arrow">↓</div>
+                    <div class="node process">Check duplicate</div>
+                    <div class="arrow">↓</div>
+                    <div class="node io"><span>Record attendance</span></div>
+                    <div class="arrow">↓</div>
+                    <div class="node process">Display ✓ + name</div>
+                </div></div>
+<br><hr><br>
+<style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Times New Roman', Times, serif; background: #f5f5f5; padding: 20px; }
+        .controls { text-align: center; margin-bottom: 15px; }
+        .btn { background: #1e3a5f; color: #fff; border: none; padding: 8px 20px; font-size: 11pt; cursor: pointer; border-radius: 3px; margin: 0 5px; }
+        .btn:hover { background: #2d4a6f; }
+        
+        .diagram-wrap { background: #fff; width: 560px; margin: 0 auto; padding: 18px 20px; border: 1px solid #ccc; }
+        .diagram-title { text-align: center; font-size: 11pt; font-weight: bold; margin-bottom: 12px; }
+        .section-title { font-size: 9pt; font-weight: bold; margin: 12px 0 8px 0; border-bottom: 1px solid #ccc; padding-bottom: 3px; }
+        
+        /* Wiring diagram */
+        .wiring { display: flex; justify-content: center; gap: 30px; align-items: center; }
+        .device { border: 1.5px solid #333; padding: 8px 12px; text-align: center; font-size: 8pt; background: #f9f9f9; border-radius: 4px; min-width: 80px; }
+        .device-name { font-weight: bold; margin-bottom: 4px; }
+        .pins { font-size: 7pt; color: #555; }
+        .conn { display: flex; flex-direction: column; align-items: center; font-size: 7pt; color: #666; }
+        .conn-line { width: 50px; height: 2px; background: #333; margin: 3px 0; }
+        .conn-label { font-size: 6.5pt; }
+        
+        /* Pin table */
+        .pin-table { width: 100%; border-collapse: collapse; font-size: 7.5pt; margin-top: 8px; }
+        .pin-table th, .pin-table td { border: 1px solid #333; padding: 4px 6px; text-align: left; }
+        .pin-table th { background: #1e3a5f; color: #fff; font-size: 8pt; }
+        .pin-table tr:nth-child(even) { background: #f5f5f5; }
+        
+        /* OLED states */
+        .oled-states { display: flex; justify-content: center; gap: 12px; flex-wrap: wrap; margin-top: 8px; }
+        .oled { width: 90px; height: 45px; background: #000; border: 2px solid #333; border-radius: 4px; display: flex; flex-direction: column; justify-content: center; align-items: center; color: #0f0; font-family: monospace; font-size: 6pt; line-height: 1.3; }
+        .oled-label { font-size: 7pt; text-align: center; margin-top: 4px; color: #333; }
+        
+        .caption { text-align: center; font-size: 10pt; margin-top: 14px; font-style: italic; }
+    </style>
+<div style='page-break-inside: avoid;'><div class="diagram-wrap" id="diagram">
+        <div class="diagram-title">DEVICE INTERFACE – ESP32 BIOMETRIC TERMINAL</div>
+
+        <!-- Wiring Block Diagram -->
+        <div class="section-title">A. Component Wiring</div>
+        <div class="wiring">
+            <div class="device">
+                <div class="device-name">R307</div>
+                <div class="pins">Fingerprint<br/>Sensor</div>
+            </div></div>
+<br><hr><br>
+<style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Times New Roman', Times, serif; background: #f5f5f5; padding: 20px; }
+        .controls { text-align: center; margin-bottom: 15px; }
+        .btn { background: #1e3a5f; color: #fff; border: none; padding: 8px 20px; font-size: 11pt; cursor: pointer; border-radius: 3px; margin: 0 5px; }
+        .btn:hover { background: #2d4a6f; }
+        
+        .diagram-wrap { background: #fff; width: 560px; margin: 0 auto; padding: 18px 20px; border: 1px solid #ccc; }
+        .diagram-title { text-align: center; font-size: 11pt; font-weight: bold; margin-bottom: 12px; }
+        .section-title { font-size: 9pt; font-weight: bold; margin: 10px 0 6px 0; border-bottom: 1px solid #ccc; padding-bottom: 3px; }
+        
+        /* Security Layers */
+        .layers { display: flex; flex-direction: column; gap: 4px; }
+        .layer { display: flex; align-items: center; border: 1px solid #333; background: #fff; }
+        .layer-num { width: 22px; background: #1e3a5f; color: #fff; font-size: 8pt; font-weight: bold; text-align: center; padding: 5px 0; }
+        .layer-name { flex: 1; padding: 5px 10px; font-size: 8pt; border-right: 1px solid #ddd; font-weight: bold; }
+        .layer-desc { flex: 2; padding: 5px 10px; font-size: 7.5pt; color: #444; }
+        
+        /* Auth Flow */
+        .auth-flow { display: flex; align-items: center; justify-content: center; gap: 8px; flex-wrap: wrap; margin-top: 6px; }
+        .af-box { border: 1px solid #333; padding: 4px 8px; font-size: 7pt; text-align: center; background: #f9f9f9; border-radius: 3px; }
+        .af-arrow { font-size: 10pt; color: #555; }
+        
+        /* Token structure */
+        .token { background: #1e1e1e; color: #0f0; font-family: monospace; font-size: 7pt; padding: 8px 10px; border-radius: 4px; margin-top: 6px; line-height: 1.4; overflow-x: auto; }
+        
+        /* Threat matrix */
+        .threat-table { width: 100%; border-collapse: collapse; font-size: 7pt; margin-top: 6px; }
+        .threat-table th, .threat-table td { border: 1px solid #333; padding: 3px 5px; }
+        .threat-table th { background: #1e3a5f; color: #fff; font-size: 7.5pt; }
+        .threat-table tr:nth-child(even) { background: #f5f5f5; }
+        
+        .caption { text-align: center; font-size: 10pt; margin-top: 12px; font-style: italic; }
+    </style>
+<div style='page-break-inside: avoid;'><div class="diagram-wrap" id="diagram">
+        <div class="diagram-title">SECURITY MODEL – ATTENDRO</div>
+
+        <!-- Security Layers -->
+        <div class="section-title">A. Eight-Layer Security Architecture</div>
+        <div class="layers">
+            <div class="layer"><div class="layer-num">1</div><div class="layer-name">Authentication</div><div class="layer-desc">Supabase Auth with JWT; email + password login</div></div></div>
+<br><hr><br>
+<style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Times New Roman', Times, serif; background: #f5f5f5; padding: 20px; }
+        .controls { text-align: center; margin-bottom: 15px; }
+        .btn { background: #1e3a5f; color: #fff; border: none; padding: 8px 20px; font-size: 11pt; cursor: pointer; border-radius: 3px; margin: 0 5px; }
+        .btn:hover { background: #2d4a6f; }
+        
+        .diagram-wrap { background: #fff; width: 580px; margin: 0 auto; padding: 18px 20px; border: 1px solid #ccc; }
+        .diagram-title { text-align: center; font-size: 11pt; font-weight: bold; margin-bottom: 12px; }
+        .section-title { font-size: 9pt; font-weight: bold; margin: 10px 0 6px 0; border-bottom: 1px solid #ccc; padding-bottom: 3px; }
+        
+        /* Use Case Layout */
+        .uc-wrap { display: flex; gap: 15px; }
+        .actors { display: flex; flex-direction: column; gap: 20px; align-items: center; width: 60px; }
+        .actor { text-align: center; font-size: 7pt; }
+        .stick { font-size: 20pt; line-height: 1; }
+        
+        .system-box { flex: 1; border: 2px solid #333; border-radius: 6px; padding: 10px; position: relative; }
+        .system-label { position: absolute; top: -10px; left: 15px; background: #fff; padding: 0 6px; font-weight: bold; font-size: 8pt; }
+        .usecases { display: flex; flex-direction: column; gap: 6px; }
+        .uc { border: 1px solid #333; border-radius: 20px; padding: 5px 12px; font-size: 7.5pt; text-align: center; background: #f0f9ff; }
+        
+        .actors-right { display: flex; flex-direction: column; gap: 20px; align-items: center; width: 60px; }
+        
+        /* Connections (simplified labels) */
+        .conn-note { font-size: 6.5pt; color: #555; text-align: center; margin-top: 8px; }
+        
+        /* Module Breakdown */
+        .modules { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 8px; }
+        .mod { border: 1.5px solid #333; padding: 6px 8px; font-size: 7.5pt; background: #fff; }
+        .mod-name { font-weight: bold; margin-bottom: 3px; }
+        .mod-items { font-size: 7pt; color: #444; }
+        
+        /* DFD */
+        .dfd { display: flex; align-items: center; justify-content: center; gap: 10px; margin-top: 8px; }
+        .ext { border: 1px solid #333; padding: 5px 10px; font-size: 7.5pt; }
+        .proc { border: 1.5px solid #333; border-radius: 50%; width: 70px; height: 70px; display: flex; align-items: center; justify-content: center; font-size: 7.5pt; text-align: center; background: #fef3c7; }
+        .store { border-top: 1px solid #333; border-bottom: 1px solid #333; padding: 4px 10px; font-size: 7.5pt; background: #e0f2fe; }
+        .dfd-arrow { font-size: 10pt; color: #555; }
+        
+        .caption { text-align: center; font-size: 10pt; margin-top: 12px; font-style: italic; }
+    </style>
+<div style='page-break-inside: avoid;'><div class="diagram-wrap" id="diagram">
+        <div class="diagram-title">USE CASE & MODULE BREAKDOWN</div>
+
+        <!-- Use Case Diagram -->
+        <div class="section-title">A. Use Case Diagram</div>
+        <div class="uc-wrap">
+            <div class="actors">
+                <div class="actor"><div class="stick">🧑‍💼</div>Admin</div>
+                <div class="actor"><div class="stick">🧑‍🏫</div>Faculty</div>
+            </div></div>
+<br><hr><br>
+<style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Times New Roman', Times, serif; background: #f5f5f5; padding: 20px; }
+        .controls { text-align: center; margin-bottom: 15px; }
+        .btn { background: #1e3a5f; color: #fff; border: none; padding: 8px 20px; font-size: 11pt; cursor: pointer; border-radius: 3px; margin: 0 5px; }
+        .btn:hover { background: #2d4a6f; }
+        
+        .diagram-wrap { background: #fff; width: 580px; margin: 0 auto; padding: 18px 20px; border: 1px solid #ccc; }
+        .diagram-title { text-align: center; font-size: 11pt; font-weight: bold; margin-bottom: 12px; }
+        .section-title { font-size: 9pt; font-weight: bold; margin: 10px 0 6px 0; border-bottom: 1px solid #ccc; padding-bottom: 3px; }
+        
+        /* Use Case Layout */
+        .uc-wrap { display: flex; gap: 15px; }
+        .actors { display: flex; flex-direction: column; gap: 20px; align-items: center; width: 60px; }
+        .actor { text-align: center; font-size: 7pt; }
+        .stick { font-size: 20pt; line-height: 1; }
+        
+        .system-box { flex: 1; border: 2px solid #333; border-radius: 6px; padding: 10px; position: relative; }
+        .system-label { position: absolute; top: -10px; left: 15px; background: #fff; padding: 0 6px; font-weight: bold; font-size: 8pt; }
+        .usecases { display: flex; flex-direction: column; gap: 6px; }
+        .uc { border: 1px solid #333; border-radius: 20px; padding: 5px 12px; font-size: 7.5pt; text-align: center; background: #f0f9ff; }
+        
+        .actors-right { display: flex; flex-direction: column; gap: 20px; align-items: center; width: 60px; }
+        
+        /* Connections (simplified labels) */
+        .conn-note { font-size: 6.5pt; color: #555; text-align: center; margin-top: 8px; }
+        
+        /* Module Breakdown */
+        .modules { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 8px; }
+        .mod { border: 1.5px solid #333; padding: 6px 8px; font-size: 7.5pt; background: #fff; }
+        .mod-name { font-weight: bold; margin-bottom: 3px; }
+        .mod-items { font-size: 7pt; color: #444; }
+        
+        /* DFD */
+        .dfd { display: flex; align-items: center; justify-content: center; gap: 10px; margin-top: 8px; }
+        .ext { border: 1px solid #333; padding: 5px 10px; font-size: 7.5pt; }
+        .proc { border: 1.5px solid #333; border-radius: 50%; width: 70px; height: 70px; display: flex; align-items: center; justify-content: center; font-size: 7.5pt; text-align: center; background: #fef3c7; }
+        .store { border-top: 1px solid #333; border-bottom: 1px solid #333; padding: 4px 10px; font-size: 7.5pt; background: #e0f2fe; }
+        .dfd-arrow { font-size: 10pt; color: #555; }
+        
+        .caption { text-align: center; font-size: 10pt; margin-top: 12px; font-style: italic; }
+    </style>
+<div style='page-break-inside: avoid;'><div class="diagram-wrap" id="diagram">
+        <div class="diagram-title">USE CASE & MODULE BREAKDOWN</div>
+
+        <!-- Use Case Diagram -->
+        <div class="section-title">A. Use Case Diagram</div>
+        <div class="uc-wrap">
+            <div class="actors">
+                <div class="actor"><div class="stick">🧑‍💼</div>Admin</div>
+                <div class="actor"><div class="stick">🧑‍🏫</div>Faculty</div>
+            </div></div>
+</body>
+</html>
+
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+/* Reset */
+body { font-family: 'Times New Roman', serif; line-height: 1.5; text-align: justify; }
+h1, h2, h3 { text-align: center; }
+p { margin-bottom: 1em; }
+table { width: 100%; border-collapse: collapse; margin: 1em 0; }
+th, td { border: 1px solid #000; padding: 5px; }
+.diagram-wrap { border: none !important; margin: 20px auto !important; width: 100% !important; }
+</style>
+</head>
+<body>
+<h2>List of Tables (vii)</h2>
+<ol>
+<li>Pin Configuration (ESP32 to R307/OLED) – Table 1</li>
+<li>Security Threat Matrix – Table 2</li>
+<li>Database Entities Description – Table 3</li>
+</ol>
+<hr />
+
+</body>
+</html>
+
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+/* Reset */
+body { font-family: 'Times New Roman', serif; line-height: 1.5; text-align: justify; }
+h1, h2, h3 { text-align: center; }
+p { margin-bottom: 1em; }
+table { width: 100%; border-collapse: collapse; margin: 1em 0; }
+th, td { border: 1px solid #000; padding: 5px; }
+.diagram-wrap { border: none !important; margin: 20px auto !important; width: 100% !important; }
+</style>
+</head>
+<body>
+<h1>Chapter–1 Introduction</h1>
+<h3>1.1 Problem Statement</h3>
+<p>Polytechnic institutes and colleges today face significant challenges in attendance management:</p>
+<ol>
+<li><strong>Proxy Attendance:</strong> Manual rolls are easily manipulated, and QR-code systems can be shared remotely.</li>
+<li><strong>Lack of Context:</strong> Standard biometric machines allow &quot;punching in&quot; at any time, even if the student skips the actual lecture.</li>
+<li><strong>Data Fragmentation:</strong> Attendance data is often siloed in physical registers, delaying the generation of defaulter lists and compliance reports.</li>
+<li><strong>Fixed Infrastructure:</strong> Wall-mounted biometric devices are expensive to install in every classroom and laboratory.</li>
+</ol>
+<h3>1.2 Objectives</h3>
+<p>The primary objective is to design and build a <strong>Portable, Session-Controlled Biometric Attendance System</strong> that ensures attendance is taken only during an active lecture session for the correct subject, class, and batch.
+Specific sub-objectives include:</p>
+<ul>
+<li><strong>Portable Hardware:</strong> Develop an ESP32-based battery-powered device that moves with the faculty.</li>
+<li><strong>Session Control:</strong> Implement &quot;Session Tokens&quot; to lock attendance to specific time windows.</li>
+<li><strong>Offline Resilience:</strong> Ensure the system works without active Internet, syncing data when connectivity returns.</li>
+<li><strong>AI Integration:</strong> Incorporate biometric pattern recognition and rule-based AI for context verification.</li>
+<li><strong>Real-Time Analytics:</strong> Provide instant access to attendance stats via a web dashboard.</li>
+</ul>
+<h3>1.3 Constraints and Assumptions</h3>
+<ul>
+<li>The device relies on periodic Wi-Fi connectivity for synchronization.</li>
+<li>Fingerprint templates are stored securely and matched either on-device or on-server depending on mode.</li>
+<li>Faculty are responsible for charging the portable devices and initiating sessions via their smartphones.</li>
+</ul>
+<hr />
+
+</body>
+</html>
+
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+/* Reset */
+body { font-family: 'Times New Roman', serif; line-height: 1.5; text-align: justify; }
+h1, h2, h3 { text-align: center; }
+p { margin-bottom: 1em; }
+table { width: 100%; border-collapse: collapse; margin: 1em 0; }
+th, td { border: 1px solid #000; padding: 5px; }
+.diagram-wrap { border: none !important; margin: 20px auto !important; width: 100% !important; }
+</style>
+</head>
+<body>
+<h1>Chapter–2 Literature Survey</h1>
+<ul>
+<li><strong>Biometric Systems:</strong> Traditional fixed systems provide high accuracy but lack schedule awareness (Ross &amp; Jain, 2021). Students can mark attendance and leave class.</li>
+<li><strong>IoT Attendance:</strong> Recent IEEE papers discuss IoT-enabled attendance, but many lack offline queuing mechanisms, leading to data loss in unstable networks.</li>
+<li><strong>Session-Based Tokenization:</strong> Secure systems in banking use time-limited tokens; we adapt this for attendance, generating a unique token for every lecture slot.</li>
+<li><strong>Gap Analysis:</strong> Existing solutions are either purely software (easy to spoof) or purely hardware (dumb terminals). Attendro bridges this by making the hardware &quot;context-aware&quot; via a cloud connection.</li>
+</ul>
+<hr />
+
+</body>
+</html>
+
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+/* Reset */
+body { font-family: 'Times New Roman', serif; line-height: 1.5; text-align: justify; }
+h1, h2, h3 { text-align: center; }
+p { margin-bottom: 1em; }
+table { width: 100%; border-collapse: collapse; margin: 1em 0; }
+th, td { border: 1px solid #000; padding: 5px; }
+.diagram-wrap { border: none !important; margin: 20px auto !important; width: 100% !important; }
+</style>
+</head>
+<body>
+<h1>Chapter–3 Scope of the Project</h1>
+<h3>3.1 Overview</h3>
+<p>The project scope covers the end-to-end development of hardware, firmware, cloud infrastructure, and a web application.</p>
+<h3>3.2 In-Scope Deliverables</h3>
+<ol>
+<li><strong>Portable Device Firmware (ESP32):</strong>
+<ul>
+<li>Wi-Fi connectivity and Session Polling.</li>
+<li>Fingerprint acquisition and Template generation.</li>
+<li>Local Rule Engine (Context checks).</li>
+<li>Offline Queue Management and Synchronization logic.</li>
+</ul>
+</li>
+<li><strong>Central Cloud (Supabase):</strong>
+<ul>
+<li>SQL Schema for Users, Classes, and Attendance.</li>
+<li>Edge Functions for <code>start_session</code>, <code>mark_attendance</code>, and <code>sync_offline</code>.</li>
+<li>Row-Level Security (RLS) to protect flexible data.</li>
+</ul>
+</li>
+<li><strong>Faculty/Admin Web Interface:</strong>
+<ul>
+<li>Dashboard for Timetable and Analytics.</li>
+<li>Session Control (Start/End).</li>
+<li>Reporting Module (Defaulters, PDF Export).</li>
+</ul>
+</li>
+</ol>
+<h3>3.3 Out-of-Scope</h3>
+<ul>
+<li>Advanced face recognition or iris scanning.</li>
+<li>Payroll processing integration.</li>
+<li>Hardware enclosure manufacturing (prototype uses acrylic/3D print case).</li>
+</ul>
+<hr />
+
+</body>
+</html>
+
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+/* Reset */
+body { font-family: 'Times New Roman', serif; line-height: 1.5; text-align: justify; }
+h1, h2, h3 { text-align: center; }
+p { margin-bottom: 1em; }
+table { width: 100%; border-collapse: collapse; margin: 1em 0; }
+th, td { border: 1px solid #000; padding: 5px; }
+.diagram-wrap { border: none !important; margin: 20px auto !important; width: 100% !important; }
+</style>
+</head>
+<body>
+<h1>Chapter–4 Methodology / Approach</h1>
+<h3>4.1 System Overview</h3>
+<p>The system comprises three main interconnected components:</p>
+<ol>
+<li><strong>Portable Device:</strong> Handheld unit carried by faculty to class. It serves as the capture point.
+<ul>
+<li><em>Hardware:</em> ESP32 Controller, R307 Fingerprint Sensor, 0.96&quot; OLED Display, Rechargeable Battery.</li>
+<li><em>Identity:</em> Each device has a burned-in, unique <code>device_code</code>.</li>
+</ul>
+</li>
+<li><strong>Central Cloud (Supabase):</strong> The brain of the system.
+<ul>
+<li>Stores all Master Data (Students, Subjects) and Transaction Data (Sessions, Logs).</li>
+<li>Runs &quot;Edge Functions&quot; (Serverless API) to handle complex logic securely.</li>
+</ul>
+</li>
+<li><strong>Faculty App (Web):</strong> The control center.
+<ul>
+<li>Allows faculty to log in, select their current class/subject, and &quot;Start Session&quot; on a specific device code.</li>
+</ul>
+</li>
+</ol>
+<h3>4.2 Device Logic &amp; Workflow</h3>
+<p>The device operates in a continuous state machine loop:</p>
+<ol>
+<li><strong>Boot:</strong> Connects to Wi-Fi and displays its <code>device_code</code>.</li>
+<li><strong>Poll:</strong> Periodically checks the Cloud for an &quot;Active Session&quot; linked to its ID.</li>
+<li><strong>Session Active:</strong> Once a session starts, it locks to that Class/Subject. The OLED displays &quot;Marketing: [Subject]&quot;.</li>
+<li><strong>Scan &amp; Capture:</strong>
+<ul>
+<li>Student places finger.</li>
+<li>Device captures image -&gt; extracts Template.</li>
+<li>Device verifies <strong>Context Rules</strong> locally (Is this batch allowed? Duplicate scan?).</li>
+</ul>
+</li>
+<li><strong>Sync:</strong>
+<ul>
+<li><strong>Online:</strong> Pushes data immediately to Cloud Edge Function.</li>
+<li><strong>Offline:</strong> Saves scan to onboard memory (Queue) with timestamp. Pushes when Wi-Fi returns.</li>
+</ul>
+</li>
+</ol>
+<h3>4.3 Offline-First &amp; Sync Strategy</h3>
+<p>To ensure robustness in campus environments with spotty Wi-Fi:</p>
+<ul>
+<li><strong>Local Queue:</strong> The ESP32 maintains a circular buffer of attendance records.</li>
+<li><strong>Deferred Matching:</strong> If the server cannot be reached, the scan is stored. Upon reconnection, the queue is flushed in batches.</li>
+<li><strong>Integrity Check:</strong> Records are only deleted from the device queue after receiving a positive <code>200 OK</code> acknowledgement from the server. This guarantees zero data loss.</li>
+</ul>
+<h3>4.4 AI &amp; AIML Justification</h3>
+<p>This project meets AIML diploma requirements through:</p>
+<ol>
+<li><strong>Biometric Pattern Recognition:</strong> The core sensor performs feature extraction (minutiae points) and template matching, a fundamental pattern recognition task.</li>
+<li><strong>Context-Aware Rule-Based Intelligence:</strong> The device implements a &quot;Classical AI&quot; rule engine (If-Then logic) to make autonomous decisions:
+<ul>
+<li><em>If</em> Current Time &gt; End Time → Reject.</li>
+<li><em>If</em> Roll No is not in Batch A → Reject.</li>
+<li><em>If</em> Student already marked → Reject.</li>
+</ul>
+</li>
+<li><strong>Behavioral Analysis (Future/Server-side):</strong> collected timestamp data can be analyzed to detect anomalies, such as &quot;Rapid Fire Scans&quot; indicating a potential bypass attempt.</li>
+</ol>
+<hr />
+
+</body>
+</html>
+
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+/* Reset */
+body { font-family: 'Times New Roman', serif; line-height: 1.5; text-align: justify; }
+h1, h2, h3 { text-align: center; }
+p { margin-bottom: 1em; }
+table { width: 100%; border-collapse: collapse; margin: 1em 0; }
+th, td { border: 1px solid #000; padding: 5px; }
+.diagram-wrap { border: none !important; margin: 20px auto !important; width: 100% !important; }
+</style>
+</head>
+<body>
+<h1>Chapter–5 Designs, Working and Processes</h1>
+<h3>5.1 Hardware Design</h3>
+<ul>
+<li><strong>Controller:</strong> ESP32 DevKit V1 (Dual-core, Wi-Fi/BLE).</li>
+<li><strong>Biometric Sensor:</strong> R307 / Waveshare Optical Sensor (UART interface).</li>
+<li><strong>Display:</strong> SSD1306 I2C OLED (Visual feedback for students).</li>
+<li><strong>Power:</strong> Li-Ion Battery with TP4056 charging module.</li>
+</ul>
+<h3>5.2 Database Description (Supabase)</h3>
+<p>The database is normalized to ensure consistency:</p>
+<ul>
+<li><code>devices</code>: Stores <code>device_code</code>, <code>status</code>, and <code>last_seen_at</code>.</li>
+<li><code>lecture_sessions</code>: The core entity connecting <code>faculty_id</code>, <code>device_code</code>, <code>subject_id</code>, <code>class_id</code>, <code>batch_id</code>, and <code>session_token</code>.</li>
+<li><code>students</code>: Contains <code>roll_no</code>, <code>fingerprint_template</code> (optional), and mapping to multiple classes.</li>
+<li><code>attendance_records</code>: Use <code>session_id</code> and <code>roll_no</code> as unique composite keys to prevent duplicates.</li>
+<li><code>finger_templates</code>: Central repository for &quot;Enroll Once, Use Anywhere&quot;.</li>
+</ul>
+<h3>5.3 Session &amp; Context Rules (The Verification Logic)</h3>
+<p>A scan is only accepted if it passes the following <strong>Context Rules</strong>:</p>
+<ol>
+<li><strong>Time Window:</strong> <code>Current Time</code> must be between <code>session.start</code> and <code>session.end</code>.</li>
+<li><strong>Device Match:</strong> The provided <code>session_token</code> matches the device's current active session.</li>
+<li><strong>Batch Lock:</strong> If the session is for &quot;Batch A&quot; (e.g., Roll 1-20), a student with Roll 25 is rejected.</li>
+<li><strong>De-Duplication:</strong> Checks if <code>attendance_records</code> already contains this <code>roll_no</code> for this <code>session_id</code>.</li>
+</ol>
+<h3>5.4 Use Case Scenarios</h3>
+<p><strong>Scenario A: Normal Lecture</strong></p>
+<ol>
+<li>Faculty enters class, opens Web App.</li>
+<li>Selects &quot;Third Year&quot;, &quot;Data Structures&quot;, &quot;Theory&quot;.</li>
+<li>Clicks &quot;Start Session&quot;.</li>
+<li>Device beeps and shows &quot;Data Structures Active&quot;.</li>
+<li>Device is passed around; students scan.</li>
+<li>Faculty clicks &quot;End Session&quot;. Report is generated instantly.</li>
+</ol>
+<p><strong>Scenario B: No Internet</strong></p>
+<ol>
+<li>Session starts (while online or cached).</li>
+<li>Internet cuts out.</li>
+<li>Students continue scanning; device shows &quot;Saved Offline&quot;.</li>
+<li>Faculty returns to staff room (Wi-Fi restored).</li>
+<li>Device automatically flushes queue; server processes records.</li>
+</ol>
+<hr />
+
+</body>
+</html>
+
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+/* Reset */
+body { font-family: 'Times New Roman', serif; line-height: 1.5; text-align: justify; }
+h1, h2, h3 { text-align: center; }
+p { margin-bottom: 1em; }
+table { width: 100%; border-collapse: collapse; margin: 1em 0; }
+th, td { border: 1px solid #000; padding: 5px; }
+.diagram-wrap { border: none !important; margin: 20px auto !important; width: 100% !important; }
+</style>
+</head>
+<body>
+<h1>Chapter–6 Results and Applications</h1>
+<h3>6.1 Innovation &amp; Novelty</h3>
+<ol>
+<li><strong>Session-Controlled Attendance:</strong> Unlike standard biometrics that accept any finger at any time, Attendro only unlocks for specific, authorized windows.</li>
+<li><strong>Portable &amp; Wire-Free:</strong> The battery-powered design allows it to be used in labs, seminar halls, or playgrounds without wiring.</li>
+<li><strong>Smart Batch Locking:</strong> Enforces attendance rules strictly (e.g., stopping Batch B students from attending Batch A labs).</li>
+<li><strong>Hybrid AI Approach:</strong> Combines edge-based rule intelligence with cloud-based analytics.</li>
+</ol>
+<h3>6.2 Application Areas</h3>
+<ul>
+<li><strong>Polytechnic &amp; Engineering Colleges:</strong> For theory lectures, practical labs, and workshops.</li>
+<li><strong>Seminar Halls:</strong> For tracking attendance at guest lectures.</li>
+<li><strong>Examination Halls:</strong> For verifying student identity before exams.</li>
+</ul>
+<h3>6.3 Expected Results</h3>
+<ul>
+<li><strong>Accuracy:</strong> &gt;98% True Acceptance Rate on fingerprints.</li>
+<li><strong>Speed:</strong> &lt;2 seconds per student scan-to-verify.</li>
+<li><strong>Efficiency:</strong> Reduces attendance taking time from 10 minutes (manual) to ~2 minutes (parallel scanning).</li>
+</ul>
+<hr />
+
+</body>
+</html>
+
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+/* Reset */
+body { font-family: 'Times New Roman', serif; line-height: 1.5; text-align: justify; }
+h1, h2, h3 { text-align: center; }
+p { margin-bottom: 1em; }
+table { width: 100%; border-collapse: collapse; margin: 1em 0; }
+th, td { border: 1px solid #000; padding: 5px; }
+.diagram-wrap { border: none !important; margin: 20px auto !important; width: 100% !important; }
+</style>
+</head>
+<body>
+<h1>Chapter–7 Conclusion</h1>
+<p>Attendro successfully demonstrates how IoT and AI can modernize a legacy process. By decoupling the biometric sensor from the wall and connecting it to a session-aware cloud brain, we eliminate proxy attendance and automate the tedious task of compliance reporting. The system is offline-tolerant, secure, and user-friendly, making it a viable product for educational institutions.</p>
+<hr />
+
+</body>
+</html>
+
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+/* Reset */
+body { font-family: 'Times New Roman', serif; line-height: 1.5; text-align: justify; }
+h1, h2, h3 { text-align: center; }
+p { margin-bottom: 1em; }
+table { width: 100%; border-collapse: collapse; margin: 1em 0; }
+th, td { border: 1px solid #000; padding: 5px; }
+.diagram-wrap { border: none !important; margin: 20px auto !important; width: 100% !important; }
+</style>
+</head>
+<body>
+<h1>References</h1>
+<p>[1] Ross, A., &amp; Jain, A. (2021). &quot;Biometric sensor interoperability&quot;. <em>IEEE Trans. on PAMI</em>.<br />
+[2] Espressif Systems. (2023). &quot;ESP32 Technical Reference Manual&quot;.<br />
+[3] Supabase. (2024). &quot;Realtime &amp; Edge Functions Documentation&quot;.<br />
+[4] &quot;R307 Optical Fingerprint Sensor Datasheet&quot;, Hangzhou Grow Technology.</p>
+<hr />
+<p><em>Diagrams referenced in List of Figures are available in the project documentation folder.</em></p>
+
+</body>
+</html>

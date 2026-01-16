@@ -1,164 +1,27 @@
+
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <title>Chapter 2 - Literature Survey</title>
-    <style>
-        @page {
-            size: A4;
-            margin-left: 3.5cm;
-            margin-top: 2.5cm;
-            margin-right: 1.25cm;
-            margin-bottom: 1.25cm;
-        }
-        body {
-            font-family: "Times New Roman", Times, serif;
-            font-size: 12pt;
-            line-height: 2;
-            text-align: justify;
-            margin: 0 auto;
-            max-width: 21cm;
-            padding: 2cm;
-            background-color: white;
-            color: black;
-        }
-        h1.chapter-name {
-            font-size: 14pt;
-            text-transform: uppercase;
-            font-weight: bold;
-            text-align: center;
-            margin-bottom: 24pt;
-        }
-        h2.section-heading {
-            font-size: 12pt;
-            text-transform: uppercase;
-            font-weight: bold;
-            margin-top: 24pt;
-            margin-bottom: 12pt;
-        }
-        h3.subsection-heading {
-            font-size: 12pt;
-            font-weight: bold;
-            margin-top: 18pt;
-            margin-bottom: 12pt;
-        }
-        p {
-            margin-bottom: 12pt;
-            text-indent: 1cm;
-        }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-bottom: 12pt;
-            font-size: 12pt;
-        }
-        th, td {
-            border: 1px solid black;
-            padding: 8pt;
-            text-align: left;
-            vertical-align: top;
-            line-height: 1.2;
-        }
-        th {
-            font-weight: bold;
-            background-color: #f0f0f0;
-        }
-    </style>
+<meta charset="UTF-8">
+<style>
+/* Reset */
+body { font-family: 'Times New Roman', serif; line-height: 1.5; text-align: justify; }
+h1, h2, h3 { text-align: center; }
+p { margin-bottom: 1em; }
+table { width: 100%; border-collapse: collapse; margin: 1em 0; }
+th, td { border: 1px solid #000; padding: 5px; }
+.diagram-wrap { border: none !important; margin: 20px auto !important; width: 100% !important; }
+</style>
 </head>
 <body>
-
-    <h1 class="chapter-name">CHAPTER–2 LITERATURE SURVEY</h1>
-
-    <h2 class="section-heading">2.1 INTRODUCTION</h2>
-    <p>
-        Before starting our project, we studied various methods used for attendance in schools and colleges. A literature survey helps us understand what solutions already exist and what problems are still unsolved. We looked at traditional manual methods as well as modern digital systems like RFID and biometric scanners. This helped us identify the gaps that our project needs to fill.
-    </p>
-
-    <h2 class="section-heading">2.2 EXISTING SYSTEMS</h2>
-
-    <h3 class="subsection-heading">2.2.1 Manual Paper Registers</h3>
-    <p>
-        The most common method is the manual roll call. Teachers carry a physical register and mark "P" or "A" against the student's name. While this is simple and costs nothing, it has many disadvantages. Paper records can get damaged or lost. Calculating monthly attendance percentage from these papers is a tedious job for teachers. Most importantly, it is very easy for students to cheat by answering for their absent friends.
-    </p>
-
-    <h3 class="subsection-heading">2.2.2 RFID Card Systems</h3>
-    <p>
-        Some colleges use Radio Frequency Identification (RFID) cards. Students are given ID cards that they tap on a reader to mark attendance. Ideally, this is faster than manual roll calls. However, our study found a major flaw: the card marks the attendance, not the student. A student can easily give their ID card to a friend who can tap it for them. So, while it is digital, it does not stop proxy attendance.
-    </p>
-
-    <h3 class="subsection-heading">2.2.3 Static Fingerprint Scanners</h3>
-    <p>
-        Biometric fingerprint scanners are very secure because fingerprints cannot be shared like ID cards. Many offices use these. However, in colleges, these machines are usually "static", meaning they are fixed at the door. They only record the time a student enters the college. They do not tell us if the student attended the Computer Network lecture or the Java practical. They lack "context" about the daily timetable and batches.
-    </p>
-
-    <h3 class="subsection-heading">2.2.4 Mobile App Systems</h3>
-    <p>
-        There are apps that let students mark attendance on their own phones using GPS. The problem with this is that GPS is not always accurate inside big buildings. Also, students use "fake location" apps to fool the system into thinking they are in class while they are at home. Also, not every student may have a charged smartphone with an active internet pack every day.
-    </p>
-
-    <h2 class="section-heading">2.3 COMPARISON OF TECHNIQUES</h2>
-    <p>
-        We compared these different methods to see where our project stands. The table below shows a simple comparison:
-    </p>
-    <table>
-        <thead>
-            <tr>
-                <th>Method</th>
-                <th>Prevents Proxy?</th>
-                <th>Batch Wise?</th>
-                <th>Offline Mode?</th>
-                <th>Teacher Control?</th>
-            </tr>
-        </thead>
-        <tbody>
-            <tr>
-                <td>Manual Call</td>
-                <td>No</td>
-                <td>Yes</td>
-                <td>Yes</td>
-                <td>Yes</td>
-            </tr>
-            <tr>
-                <td>RFID Card</td>
-                <td>No</td>
-                <td>No</td>
-                <td>Sometimes</td>
-                <td>No</td>
-            </tr>
-            <tr>
-                <td>Static Biometric</td>
-                <td>Yes</td>
-                <td>No</td>
-                <td>Sometimes</td>
-                <td>No</td>
-            </tr>
-            <tr>
-                <td><strong>Attendro (Ours)</strong></td>
-                <td><strong>Yes</strong></td>
-                <td><strong>Yes</strong></td>
-                <td><strong>Yes</strong></td>
-                <td><strong>Yes</strong></td>
-            </tr>
-        </tbody>
-    </table>
-
-    <h2 class="section-heading">2.4 IDENTIFIED GAP</h2>
-    <p>
-        From the survey, we found that there is no system that is both secure (biometric) and smart enough to understand the college timetable (batches and subjects). Existing systems are either too simple (manual) or too rigid (static scanners). There is a need for a system that allows the teacher to decide "When" and "Who" can mark attendance. Also, many systems fail if the internet disconnects, which is a common issue in our classrooms.
-    </p>
-
-    <h2 class="section-heading">2.5 PROBLEM DEFINITION</h2>
-    <p>
-        Based on these findings, we defined our main problem statement:
-    </p>
-    <p>
-        <strong>"To design a low-cost, smart attendance system that uses fingerprints to stop proxies, allows teachers to control sessions for specific batches, and continues to work even when the internet is not available."</strong>
-    </p>
-
-    <h2 class="section-heading">2.6 CHAPTER SUMMARY</h2>
-    <p>
-        In this chapter, we reviewed the current methods of attendance marking. We saw that manual systems are slow and prone to errors, while existing digital systems like RFID and GPS have security holes. We concluded that a new system is needed that combines the security of biometrics with the flexibility of teacher control. This leads us to the next chapter where we will define the exact scope of our project.
-    </p>
+<h1>Chapter–2 Literature Survey</h1>
+<ul>
+<li><strong>Biometric Systems:</strong> Traditional fixed systems provide high accuracy but lack schedule awareness (Ross &amp; Jain, 2021). Students can mark attendance and leave class.</li>
+<li><strong>IoT Attendance:</strong> Recent IEEE papers discuss IoT-enabled attendance, but many lack offline queuing mechanisms, leading to data loss in unstable networks.</li>
+<li><strong>Session-Based Tokenization:</strong> Secure systems in banking use time-limited tokens; we adapt this for attendance, generating a unique token for every lecture slot.</li>
+<li><strong>Gap Analysis:</strong> Existing solutions are either purely software (easy to spoof) or purely hardware (dumb terminals). Attendro bridges this by making the hardware &quot;context-aware&quot; via a cloud connection.</li>
+</ul>
+<hr />
 
 </body>
 </html>

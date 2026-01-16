@@ -12,6 +12,7 @@ import { getTodaySlots } from '@/services/timetable';
 import { getSubjectAllocations, type SubjectAllocation } from '@/services/allocations';
 import { getRecentActivity } from '@/services/activity';
 import { getClassByTeacherId, type Class } from '@/services/classes';
+import { getFacultyLeaves } from '@/services/leaves';
 
 interface LectureSlot {
   id: string;
@@ -44,6 +45,7 @@ const FacultyDashboardPage: React.FC = () => {
     totalLectures: 0,
     completed: 0,
     pending: 0,
+    leaves: 0,
     substitutions: 0,
   });
   const [loading, setLoading] = useState(true);
@@ -124,8 +126,30 @@ const FacultyDashboardPage: React.FC = () => {
       fetchTodayData(fId),
       fetchAllocations(fId),
       fetchAssignedClass(fId),
+      fetchLeavesData(fId),
       profileId ? fetchActivity(profileId) : Promise.resolve(),
     ]);
+  };
+
+  const fetchLeavesData = async(fId: string) => {
+    try {
+        const leaves = await getFacultyLeaves({ faculty_id: fId, status: 'APPROVED' });
+        // Count leaves in current month basically, or just show pending count?
+        // Let's show Pending leaves count to alert faculty, or approved leaves this month.
+        // For dashboard quick stat, "Leaves Taken (This Month)" is good.
+        const now = new Date();
+        const thisMonthLeaves = leaves?.filter(l => {
+            const d = new Date(l.date);
+            return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+        }) || [];
+        
+        setStats(prev => ({
+            ...prev,
+            leaves: thisMonthLeaves.length
+        }));
+    } catch (e) {
+        console.error("Error fetching leaves", e);
+    }
   };
 
   const fetchAssignedClass = async (fId: string) => {
@@ -317,6 +341,32 @@ const FacultyDashboardPage: React.FC = () => {
             icon={RefreshCw}
             color="accent"
           />
+          <StatCard
+            title="Leaves (Month)"
+            value={loading ? '...' : stats.leaves}
+            icon={BookOpen}
+            color="danger"
+          />
+        </div>
+
+        {/* Quick Actions */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+            <Button variant="outline" className="h-auto py-4 flex flex-col gap-2 border-border/50 hover:border-primary/50 hover:bg-primary/5" onClick={() => navigate('/faculty/attendance/new')}>
+                <CheckCircle className="w-6 h-6 text-primary" />
+                <span>Mark Attendance</span>
+            </Button>
+            <Button variant="outline" className="h-auto py-4 flex flex-col gap-2 border-border/50 hover:border-accent/50 hover:bg-accent/5" onClick={() => navigate('/faculty/leave')}>
+                <Calendar className="w-6 h-6 text-accent" />
+                <span>Apply Leave</span>
+            </Button>
+            <Button variant="outline" className="h-auto py-4 flex flex-col gap-2 border-border/50 hover:border-success/50 hover:bg-success/5" onClick={() => navigate('/faculty/reports')}>
+                <Activity className="w-6 h-6 text-success" />
+                <span>My Reports</span>
+            </Button>
+             <Button variant="outline" className="h-auto py-4 flex flex-col gap-2 border-border/50 hover:border-warning/50 hover:bg-warning/5" onClick={() => navigate('/faculty/settings')}>
+                <AlertCircle className="w-6 h-6 text-warning" />
+                 <span>Settings</span>
+            </Button>
         </div>
 
         {assignedClass && (

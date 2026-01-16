@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
 import { toast } from '@/hooks/use-toast';
+import { Firewall } from '@/utils/firewall';
 import ritLogo from '@/assets/rit-logo.jpg';
 
 const FacultyLoginForm: React.FC = () => {
@@ -42,6 +43,25 @@ const FacultyLoginForm: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
+    // Security Checks
+    if (!Firewall.checkRateLimit('faculty_login')) {
+      toast({
+        title: 'Too Many Attempts',
+        description: 'You are doing that too fast. Please wait a moment.',
+        variant: 'destructive',
+      });
+      return;
+    }
+    
+    if (!Firewall.inspect({ email })) {
+      toast({
+        title: 'Security Alert',
+        description: 'Malicious input detected.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
     if (!validateForm()) return;
     
     setIsLoading(true);

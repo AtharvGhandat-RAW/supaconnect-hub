@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { User, Mail, Building2, Lock, Moon, Sun, Globe, LogOut, Save, Eye, EyeOff } from 'lucide-react';
+import { User, Mail, Building2, Lock, Moon, Sun, Globe, LogOut, Save, Eye, EyeOff, Bell, Shield } from 'lucide-react';
 import PageShell from '@/components/layout/PageShell';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -12,11 +12,18 @@ import { useAuth } from '@/hooks/useAuth';
 import { useTheme } from '@/hooks/useTheme';
 import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
+import { MFAEnrollment } from '@/components/auth/MFAEnrollment';
+import { MFAService } from '@/services/mfa';
+import { Firewall } from '@/utils/firewall';
 
 const PREFS_KEY = 'faculty_preferences';
 
 interface Preferences {
   language: 'en' | 'mr';
+  email_notifications: boolean;
+  sms_notifications: boolean;
+  two_factor_auth: boolean;
+  login_alerts: boolean;
 }
 
 const FacultySettingsPage: React.FC = () => {
@@ -36,17 +43,33 @@ const FacultySettingsPage: React.FC = () => {
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [changingPassword, setChangingPassword] = useState(false);
 
+  // MFA State
+  const [showMFAEnrollment, setShowMFAEnrollment] = useState(false);
+
   // Preferences
   const [preferences, setPreferences] = useState<Preferences>({
     language: 'en',
+    email_notifications: true,
+    sms_notifications: false,
+    two_factor_auth: false,
+    login_alerts: true,
   });
 
   useEffect(() => {
+    // Check actual MFA status on load
+    MFAService.listFactors().then(factors => {
+        const isEnabled = factors && factors.length > 0;
+        setPreferences(p => ({ ...p, two_factor_auth: isEnabled }));
+    }).catch(console.error);
+
     // Load preferences from localStorage
     const stored = localStorage.getItem(PREFS_KEY);
     if (stored) {
       try {
-        setPreferences(JSON.parse(stored));
+        setPreferences({
+             ...preferences, // merge with defaults in case of new keys
+             ...JSON.parse(stored)
+        });
       } catch (e) {
         console.error('Error parsing preferences:', e);
       }
@@ -141,6 +164,7 @@ const FacultySettingsPage: React.FC = () => {
   }
 
   return (
+    <>
     <PageShell role="faculty">
       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6 max-w-2xl">
         <div>
@@ -227,6 +251,93 @@ const FacultySettingsPage: React.FC = () => {
           </div>
         </div>
 
+        {/* Notifications Section */}
+        <div className="glass-card rounded-xl p-6">
+          <h2 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
+            <Bell className="w-5 h-5" />
+            Notifications
+          </h2>
+          <div className="space-y-4">
+             <div className="flex items-center justify-between">
+              <div>
+                <Label className="text-foreground">Email Notifications</Label>
+                <p className="text-sm text-muted-foreground">Receive updates via email</p>
+              </div>
+              <Switch
+                checked={preferences.email_notifications}
+                onCheckedChange={(val) => savePreferences({...preferences, email_notifications: val})}
+              />
+            </div>
+            <div className="flex items-center justify-between">
+              <div>
+                <Label className="text-foreground">SMS Alerts</Label>
+                <p className="text-sm text-muted-foreground">Receive urgent alerts via SMS</p>
+              </div>
+              <Switch
+                checked={preferences.sms_notifications}
+                onCheckedChange={(val) => savePreferences({...preferences, sms_notifications: val})}
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Advanced Security Section */ /*
+        <div className="glass-card rounded-xl p-6">
+          <h2 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
+            <Shield className="w-5 h-5" />
+            Advanced Security
+          </h2>
+          <div className="space-y-4">
+             <div className="flex items-center justify-between">
+              <div>
+                <Label className="text-foreground">Two-Factor Authentication</Label>
+                <p className="text-sm text-muted-foreground">Enable extra security layer</p>
+              </div>
+              <Switch
+                 checked={preferences.two_factor_auth}
+                 onCheckedChange={async (val) => {
+                     if (val) {
+                         // Enable MFA
+                         if (Firewall.checkRateLimit('mfa_toggle')) {
+                             setShowMFAEnrollment(true);
+                         } else {
+                             toast({ title: 'Rate Limit', description: 'Please wait before trying again', variant: 'destructive' });
+                         }
+                     } else {
+                         // Disable MFA - In real app, ask for password/confirmation first
+                         if (!confirm("Are you sure you want to disable 2FA? This will lower your account security.")) return;
+                         
+                         try {
+                             const factors = await MFAService.listFactors();
+                             if (factors && factors.length > 0) {
+                                 // Un-enroll all factors for simplicity in this demo
+                                 for (const factor of factors) {
+                                     await MFAService.unenroll(factor.id);
+                                 }
+                                 setPreferences({...preferences, two_factor_auth: false});
+                                 toast({ title: '2FA Disabled', description: 'Two-factor authentication has been turned off.' });
+                             }
+                         } catch (e) {
+                             console.error(e);
+                             toast({ title: 'Error', description: 'Failed to disable 2FA', variant: 'destructive' });
+                         }
+                     }
+                 }}
+              />
+            </div>
+             <div className="flex items-center justify-between">
+              <div>
+                <Label className="text-foreground">Login Alerts</Label>
+                <p className="text-sm text-muted-foreground">Notify on new login detection</p>
+              </div>
+               <Switch
+                 checked={preferences.login_alerts}
+                 onCheckedChange={(val) => savePreferences({...preferences, login_alerts: val})}
+              />
+            </div>
+          </div>
+        </div>
+
         {/* Security Section */}
         <div className="glass-card rounded-xl p-6">
           <h2 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
@@ -302,7 +413,17 @@ const FacultySettingsPage: React.FC = () => {
         </Button>
       </motion.div>
     </PageShell>
+
+    <MFAEnrollment 
+        isOpen={showMFAEnrollment} 
+        onClose={() => setShowMFAEnrollment(false)}
+        onEnrolled={() => {
+             setPreferences(p => ({ ...p, two_factor_auth: true }));
+        }}
+    />
+    </>
   );
 };
+
 
 export default FacultySettingsPage;

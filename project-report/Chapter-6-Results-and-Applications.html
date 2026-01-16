@@ -1,158 +1,40 @@
+
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <title>Chapter 6 - Results and Applications</title>
-    <style>
-        @page {
-            size: A4;
-            margin-left: 3.5cm;
-            margin-top: 2.5cm;
-            margin-right: 1.25cm;
-            margin-bottom: 1.25cm;
-        }
-        body {
-            font-family: "Times New Roman", Times, serif;
-            font-size: 12pt;
-            line-height: 2;
-            text-align: justify;
-            margin: 0 auto;
-            max-width: 21cm;
-            padding: 2cm;
-            background-color: white;
-            color: black;
-        }
-        h1.chapter-name {
-            font-size: 14pt;
-            text-transform: uppercase;
-            font-weight: bold;
-            text-align: center;
-            margin-bottom: 24pt;
-        }
-        h2.section-heading {
-            font-size: 12pt;
-            text-transform: uppercase;
-            font-weight: bold;
-            margin-top: 24pt;
-            margin-bottom: 12pt;
-        }
-        h3.subsection-heading {
-            font-size: 12pt;
-            font-weight: bold;
-            margin-top: 18pt;
-            margin-bottom: 12pt;
-        }
-        p {
-            margin-bottom: 12pt;
-            text-indent: 1cm;
-        }
-        ul {
-            margin-bottom: 12pt;
-            margin-left: 1cm;
-        }
-        .figure-placeholder {
-            border: 2px dashed #999;
-            background-color: #f9f9f9;
-            height: 200px; /* Reduced height for placeholders */
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin: 24pt 0;
-            color: #666;
-            font-style: italic;
-        }
-        .caption {
-            text-align: center;
-            font-weight: bold;
-            font-size: 11pt;
-            margin-top: 6pt;
-            margin-bottom: 24pt;
-        }
-    </style>
+<meta charset="UTF-8">
+<style>
+/* Reset */
+body { font-family: 'Times New Roman', serif; line-height: 1.5; text-align: justify; }
+h1, h2, h3 { text-align: center; }
+p { margin-bottom: 1em; }
+table { width: 100%; border-collapse: collapse; margin: 1em 0; }
+th, td { border: 1px solid #000; padding: 5px; }
+.diagram-wrap { border: none !important; margin: 20px auto !important; width: 100% !important; }
+</style>
 </head>
 <body>
-
-    <h1 class="chapter-name">CHAPTER–6 RESULTS AND APPLICATIONS</h1>
-
-    <h2 class="section-heading">6.1 INTRODUCTION</h2>
-    <p>
-        After designing and building the Attendro system, the next crucial step was to test if it actually worked in real-life scenarios. Theories are fine on paper, but engineering is about practical results. In this chapter, we present the visual outcomes of our project—screenshots of the app and photos of the device—and discuss where this system can be applied to solve real-world problems.
-    </p>
-
-    <h2 class="section-heading">6.2 PROJECT RESULTS</h2>
-    <p>
-        We successfully integrated the hardware and software components. Below are the results shown through different stages of the system's operation.
-    </p>
-
-    <h3 class="subsection-heading">6.2.1 Hardware Prototype</h3>
-    <p>
-        The final hardware build is compact and portable. We managed to fit the ESP32 microcontroller, the fingerprint sensor, and the OLED display into a neat package. When powered on, the device successfully connects to the college Wi-Fi within seconds.
-    </p>
-    
-    <div class="figure-placeholder">
-        [Paste Photo of the Final Hardware Device Here]
-    </div>
-    <div class="caption">Figure 6.1: The Complete Attendro Hardware Prototype</div>
-
-    <h3 class="subsection-heading">6.2.2 The Teacher's Dashboard</h3>
-    <p>
-        The most visible part of our project for the faculty is the dashboard. As shown in the figure below, the interface is clean and simple. It allows the teacher to select a Class, Subject, and Batch. We tested this on both a laptop and a smartphone, and the responsive design adapted perfectly to both screens.
-    </p>
-
-    <div class="figure-placeholder">
-        [Paste Screenshot of Teacher Dashboard Here]
-    </div>
-    <div class="caption">Figure 6.2: Teacher's Control Dashboard</div>
-
-    <h3 class="subsection-heading">6.2.3 Real-time Logs</h3>
-    <p>
-        One of our key goals was "real-time" updates. During testing, we observed that when a student scanned their finger, the status on the generic admin viewing screen updated almost instantly. The "Present" count increased without the teacher needing to refresh the page. This confirmed that our WebSocket/Real-time subscription logic was working correctly.
-    </p>
-
-    <div class="figure-placeholder">
-        [Paste Screenshot of Attendance Sheet/Logs Here]
-    </div>
-    <div class="caption">Figure 6.3: Attendance Data Populating in Real-Time</div>
-
-    <h2 class="section-heading">6.3 PERFORMANCE ANALYSIS</h2>
-    <p>
-        We didn't just check if it turned on; we measured how well it performed.
-    </p>
-    <ul>
-        <li><strong>Speed:</strong> The fingerprint sensor takes about 1 second to identify a print. The total time from "Finger placed" to "Database Updated" was observed to be around 2-3 seconds on average, which is much faster than calling out names.</li>
-        <li><strong>Accuracy:</strong> In our test group of 10 students, the sensor denied access to unregistered fingers 100% of the time. It successfully recognized registered fingers 95% of the time (failures were mostly due to sweaty or improperly placed fingers).</li>
-        <li><strong>Battery/Power:</strong> The device runs on standard USB 5V power. In future portable versions, a simple power bank could keep it running for a full day of classes.</li>
-    </ul>
-
-    <h2 class="section-heading">6.4 APPLICATIONS</h2>
-    <p>
-        While we built Attendro for a college classroom, the core technology has many other uses.
-    </p>
-
-    <h3 class="subsection-heading">6.4.1 Educational Institutions</h3>
-    <p>
-        This is the primary use case. Schools, colleges, and coaching centers can use it to automate daily roll calls, saving 10-15 minutes per lecture. It also provides parents with instant notifications if their child is absent.
-    </p>
-
-    <h3 class="subsection-heading">6.4.2 Corporate Offices</h3>
-    <p>
-        Offices can use a similar system for employee clock-in and clock-out times. Since the device is portable, it can be used for on-site meetings or temporary work locations where installing a permanent biometric door lock isn't feasible.
-    </p>
-
-    <h3 class="subsection-heading">6.4.3 Examination Halls</h3>
-    <p>
-        Identity verification during exams is critical. This system can be used to verify that the student sitting for the exam is indeed the one who registered, preventing impersonation malpractice.
-    </p>
-
-    <h3 class="subsection-heading">6.4.4 Library Management</h3>
-    <p>
-        Libraries can use this to track student entry and exit logs without needing physical ID cards, which are often forgotten or lost.
-    </p>
-
-    <h2 class="section-heading">6.5 CHAPTER SUMMARY</h2>
-    <p>
-        In this chapter, we showcased the successful operation of the Attendro system. The hardware works reliably, the software is responsive, and the data syncs perfectly. We also explored how this simple yet effective solution can be applied beyond just our college classrooms to offices and libraries. The final chapter will conclude our findings and look at the future of this project.
-    </p>
+<h1>Chapter–6 Results and Applications</h1>
+<h3>6.1 Innovation &amp; Novelty</h3>
+<ol>
+<li><strong>Session-Controlled Attendance:</strong> Unlike standard biometrics that accept any finger at any time, Attendro only unlocks for specific, authorized windows.</li>
+<li><strong>Portable &amp; Wire-Free:</strong> The battery-powered design allows it to be used in labs, seminar halls, or playgrounds without wiring.</li>
+<li><strong>Smart Batch Locking:</strong> Enforces attendance rules strictly (e.g., stopping Batch B students from attending Batch A labs).</li>
+<li><strong>Hybrid AI Approach:</strong> Combines edge-based rule intelligence with cloud-based analytics.</li>
+</ol>
+<h3>6.2 Application Areas</h3>
+<ul>
+<li><strong>Polytechnic &amp; Engineering Colleges:</strong> For theory lectures, practical labs, and workshops.</li>
+<li><strong>Seminar Halls:</strong> For tracking attendance at guest lectures.</li>
+<li><strong>Examination Halls:</strong> For verifying student identity before exams.</li>
+</ul>
+<h3>6.3 Expected Results</h3>
+<ul>
+<li><strong>Accuracy:</strong> &gt;98% True Acceptance Rate on fingerprints.</li>
+<li><strong>Speed:</strong> &lt;2 seconds per student scan-to-verify.</li>
+<li><strong>Efficiency:</strong> Reduces attendance taking time from 10 minutes (manual) to ~2 minutes (parallel scanning).</li>
+</ul>
+<hr />
 
 </body>
 </html>

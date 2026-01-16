@@ -13,7 +13,8 @@ import { getSettings, updateSettings, type Settings } from '@/services/settings'
 import { getUpcomingHolidays } from '@/services/holidays';
 import React, { useState, useEffect } from 'react';
 
-const ADMIN_MASTER_PIN = '1234'; // Hardcoded for demo/security level requested
+// Use environment variable for the PIN, fallback to '1234' if not set
+const ADMIN_MASTER_PIN = import.meta.env.VITE_ADMIN_MASTER_PIN || '1234';
 
 const AdminSettingsPage: React.FC = () => {
   const { theme, toggleTheme } = useTheme();
