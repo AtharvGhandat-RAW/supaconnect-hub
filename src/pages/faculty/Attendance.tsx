@@ -15,6 +15,7 @@ import {
   createAttendanceSession, 
   createAttendanceRecords,
   getLastAttendanceSession,
+  getLastClassAttendanceToday,
   getAttendanceRecordsWithStatus,
   getRecentAbsencePatterns,
   getMonthlySubjectAbsences
@@ -47,6 +48,9 @@ const FacultyAttendancePage: React.FC = () => {
   const [absencePatterns, setAbsencePatterns] = useState<Map<string, number>>(new Map());
   const [monthlyAbsences, setMonthlyAbsences] = useState<Map<string, number>>(new Map());
   const [classTeacher, setClassTeacher] = useState<{name: string, phone?: string} | null>(null);
+  
+  // New state for copy functionality
+  const [copySourceSession, setCopySourceSession] = useState<{id: string, time: string, subject: string} | null>(null);
 
   const state = location.state as {
     classId: string;
@@ -55,6 +59,8 @@ const FacultyAttendancePage: React.FC = () => {
     className: string;
     subjectName: string;
     isSubstitution?: boolean;
+    batchId?: string;
+    batchName?: string;
   } | undefined;
 
   const dataFetchedRef = React.useRef(false);
@@ -103,12 +109,31 @@ const FacultyAttendancePage: React.FC = () => {
 
         // Fetch data with individual error handling for better debugging
         try {
-            const [studentDataResult, patternsResult, monthlyStatsResult, classInfoResult, lastSessionResult] = await Promise.allSettled([
-                getStudents({ class_id: state.classId, status: 'ACTIVE' }),
+            // Determine how to fetch students (Class vs Batch)
+            let studentsPromise;
+            if (state.batchId) {
+                // Fetch batch students
+                studentsPromise = supabase
+                    .from('student_batches')
+                    .select('student:students(*)')
+                    .eq('batch_id', state.batchId)
+                    .then(({ data, error }) => {
+                        if (error) throw error;
+                        // @ts-ignore
+                        return data.map(d => d.student).filter(s => s.status === 'ACTIVE') as Student[];
+                    });
+            } else {
+                // Fetch whole class
+                studentsPromise = getStudents({ class_id: state.classId, status: 'ACTIVE' });
+            }
+
+            const [studentDataResult, patternsResult, monthlyStatsResult, classInfoResult, lastSessionResult, sameDaySourceResult] = await Promise.allSettled([
+                studentsPromise,
                 getRecentAbsencePatterns(state.classId, state.subjectId, 5),
                 getMonthlySubjectAbsences(state.classId, state.subjectId),
                 getClassWithTeacher(state.classId),
                 getLastAttendanceSession(state.classId, state.subjectId),
+                getLastClassAttendanceToday(state.classId, new Date().toISOString().split('T')[0], state.batchId)
             ]);
 
             // Process Students
@@ -116,10 +141,10 @@ const FacultyAttendancePage: React.FC = () => {
             if (studentDataResult.status === 'fulfilled') {
                 studentData = studentDataResult.value;
                 if (!studentData || studentData.length === 0) {
-                    console.warn(`No active students found for class ${state.classId}`);
+                    console.warn(`No active students found for class ${state.classId} (Batch: ${state.batchId || 'None'})`);
                     toast({ 
                         title: 'No Students Found', 
-                        description: 'Could not find any active students for this class. Please contact admin.',
+                        description: 'Could not find any active students for this class/batch.',
                         variant: 'destructive'
                     });
                 }
@@ -145,9 +170,20 @@ const FacultyAttendancePage: React.FC = () => {
                 // Non-critical?
             }
 
-            // Process Last Session
+            // Process Last Session (Subject Specific context)
             const lastSession = lastSessionResult.status === 'fulfilled' ? lastSessionResult.value : null;
-            if (lastSessionResult.status === 'rejected') console.error('Failed to fetch last session:', lastSessionResult.reason);
+
+            // Process Same Day Source (For Copying)
+            const sameDaySource = sameDaySourceResult.status === 'fulfilled' ? sameDaySourceResult.value : null;
+            if (sameDaySource && sameDaySource.id) {
+                // @ts-ignore
+                const subjectName = sameDaySource.subject?.name || 'Unknown Subject';
+                setCopySourceSession({
+                    id: sameDaySource.id,
+                    time: sameDaySource.start_time,
+                    subject: subjectName
+                });
+            }
 
             setAbsencePatterns(patterns);
             setMonthlyAbsences(monthlyStats);
@@ -212,6 +248,32 @@ const FacultyAttendancePage: React.FC = () => {
     setStudents(prev =>
       prev.map(s => s.id === studentId ? { ...s, isPresent: !s.isPresent } : s)
     );
+  };
+
+  const handleCopyFromSession = async () => {
+    if (!copySourceSession) return;
+    
+    try {
+        setLoading(true);
+        const records = await getAttendanceRecordsWithStatus(copySourceSession.id);
+        
+        if (records.size > 0) {
+            setStudents(prev => prev.map(s => ({
+                ...s,
+                isPresent: records.has(s.id) ? records.get(s.id) === 'PRESENT' : s.isPresent // Only override if record exists, else keep current
+            })));
+            
+            toast({
+                title: 'Attendance Copied',
+                description: `Copied attendance from ${copySourceSession.subject} (${copySourceSession.time}).`,
+            });
+        }
+    } catch (error) {
+        console.error('Error copying attendance:', error);
+        toast({ title: 'Error', description: 'Failed to copy attendance', variant: 'destructive' });
+    } finally {
+        setLoading(false);
+    }
   };
 
   const handleMarkAllPresent = () => {
@@ -354,6 +416,7 @@ ${studentDetails}
         date: today,
         start_time: cleanStartTime,
         is_substitution: state.isSubstitution || false,
+        batch_id: state.batchId || null,
       });
 
       // Create attendance records
@@ -450,6 +513,17 @@ ${studentDetails}
 
             {/* Quick Actions */}
             <div className="flex flex-wrap gap-2">
+              {copySourceSession && (
+                <Button 
+                  variant="outline"
+                  size="sm"
+                  onClick={handleCopyFromSession}
+                  className="gap-2 border-primary/30 hover:bg-primary/10 text-primary"
+                >
+                    <Copy className="w-4 h-4" />
+                    Copy Attendance from {copySourceSession.subject}
+                </Button>
+              )}
               {absencePatterns.size > 0 && Array.from(absencePatterns.values()).some(v => v >= 3) && (
                 <Button 
                   variant="outline" 

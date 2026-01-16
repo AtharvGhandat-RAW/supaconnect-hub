@@ -9,6 +9,7 @@ export interface AttendanceSession {
   date: string;
   start_time: string;
   is_substitution: boolean;
+  batch_id?: string | null;
   created_at: string;
 }
 
@@ -76,6 +77,7 @@ export async function createAttendanceSession(session: {
   date: string;
   start_time: string;
   is_substitution?: boolean;
+  batch_id?: string | null;
 }) {
   try {
     // Validate required fields
@@ -290,6 +292,30 @@ export async function getLastAttendanceSession(classId: string, subjectId: strin
     .maybeSingle();
 
   if (error) throw error;
+  return data;
+}
+
+// Get the last attendance session for a class on a specific date (for Copy functionality)
+export async function getLastClassAttendanceToday(classId: string, date: string, batchId?: string | null) {
+  let query = supabase
+    .from('attendance_sessions')
+    .select('id, date, start_time, subject:subjects(name)')
+    .eq('class_id', classId)
+    .eq('date', date)
+    .neq('start_time', new Date().toISOString().split('T')[1]?.substring(0, 5)) // Exclude current assumed time if possible, but safer to rely on ID check in UI
+    .order('start_time', { ascending: false })
+    .limit(1);
+
+  if (batchId) {
+    query = query.eq('batch_id', batchId);
+  } else {
+    // Logic: If looking for lecture attendance (Whole Class), find other sessions that were also Whole Class
+    // AND batch_id IS NULL
+    query = query.is('batch_id', null);
+  }
+
+  const { data, error } = await query.maybeSingle();
+  if (error && error.code !== 'PGRST116') throw error; // Ignore not found error
   return data;
 }
 

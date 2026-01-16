@@ -19,6 +19,8 @@ interface LectureSlot {
   subjectCode: string;
   subjectId: string;
   classId: string;
+  batchId?: string;
+  batchName?: string;
   time: string;
   room: string;
   isSubstitution: boolean;
@@ -127,6 +129,8 @@ const FacultyTodayPage: React.FC = () => {
             subject: slot.subjects?.name || 'Unknown',
             subjectCode: slot.subjects?.subject_code || '',
             subjectId: slot.subjects?.id || '',
+            batchId: slot.batch_id || undefined,
+            batchName: slot.batches?.name || undefined,
             time: slot.start_time,
             room: slot.room_no || 'TBA',
             isSubstitution: false,
@@ -227,8 +231,8 @@ const FacultyTodayPage: React.FC = () => {
         subjectId: slot.subjectId,
         startTime: slot.time,
         className: `${slot.className} ${slot.division}`,
-        subjectName: slot.subject,
-        isSubstitution: slot.isSubstitution,
+        subjectName: slot.subject,        batchId: slot.batchId,
+        batchName: slot.batchName,        isSubstitution: slot.isSubstitution,
       },
     });
   };
