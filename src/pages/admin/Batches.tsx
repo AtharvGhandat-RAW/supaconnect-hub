@@ -48,21 +48,13 @@ const AdminBatches: React.FC<BatchesPageProps> = ({ role = 'admin' }) => {
                         .single();
                     
                     if (facultyParams) {
-                        const { data: allocations } = await supabase
-                            .from('subject_allocations')
-                            .select('class_id')
-                            .eq('faculty_id', facultyParams.id);
+                        // Fetch classes where the faculty is the class teacher
+                        const { data: teacherClasses } = await supabase
+                            .from('classes')
+                            .select('*')
+                            .eq('class_teacher_id', facultyParams.id);
                         
-                        if (allocations && allocations.length > 0) {
-                            const classIds = Array.from(new Set(allocations.map(a => a.class_id)));
-                            const allClasses = await getClasses(); 
-                            // filtering client side since getClasses returns all and we want to reuse the type logic
-                            // or better, fetch specifically if we want to optimize, but let's filter for safety
-                            const allowed = allClasses.filter(c => classIds.includes(c.id));
-                            setClasses(allowed);
-                        } else {
-                            setClasses([]);
-                        }
+                        setClasses(teacherClasses || []);
                     }
                 } catch (e) {
                     console.error('Error fetching faculty classes', e);
