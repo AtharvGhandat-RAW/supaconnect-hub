@@ -35,6 +35,7 @@ interface SlotNeedingSub {
   start_time: string;
   classes?: { id: string; name: string; division: string };
   subjects?: { id: string; name: string; subject_code: string };
+  substitution?: { isSubstituted: boolean; subName: string; status: string } | null;
 }
 
 const AdminSubstitutionsPage: React.FC = () => {
@@ -57,13 +58,21 @@ const AdminSubstitutionsPage: React.FC = () => {
 
   const fetchData = async () => {
     try {
-      const [subsData, leavesData, facultyData] = await Promise.all([
-        getSubstitutionAssignments({ dateFrom: dateFilter }),
-        getFacultyLeaves({ status: 'APPROVED', dateFrom: dateFilter }),
-        getFaculty(),
-      ]);
+      // Get all approved leaves for the selected date
+      const { data: leavesData } = await supabase
+        .from('faculty_leaves')
+        .select('*, faculty:faculty_id(id, profiles(name))')
+        .eq('status', 'APPROVED')
+        .eq('date', dateFilter);
+
+      // Get substitutions history
+      const subsData = await getSubstitutionAssignments({ date: dateFilter }); // Changed to exact date for better focus
+
+      // Get Faculty list
+      const facultyData = await getFaculty();
+      
       setSubstitutions(subsData);
-      setPendingLeaves(leavesData || []);
+      setPendingLeaves(leavesData as any || []);
       setFaculty(facultyData);
     } catch (error) {
       console.error('Error fetching data:', error);
@@ -283,219 +292,212 @@ const AdminSubstitutionsPage: React.FC = () => {
 
   return (
     <PageShell role="admin">
-      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div>
-            <h1 className="text-2xl lg:text-3xl font-display font-bold text-foreground">
-              Substitution Management
-            </h1>
-            <p className="text-muted-foreground mt-1">
-              Manage faculty substitutions for leaves and absences
-            </p>
-          </div>
-        </div>
-
-        {/* Pending Leave Cards */}
-        {pendingLeaves.filter(l => l.status === 'APPROVED').length > 0 && (
-          <div className="space-y-3">
-            <h2 className="text-lg font-semibold text-foreground flex items-center gap-2">
-              <RefreshCw className="w-5 h-5 text-warning" />
-              Approved Leaves Needing Substitutes
-            </h2>
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-              {pendingLeaves.filter(l => l.status === 'APPROVED').map(leave => (
-                <motion.div
-                  key={leave.id}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="glass-card p-4 rounded-xl border border-warning/30"
-                >
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <h3 className="font-medium text-foreground">
-                        {leave.faculty?.profiles?.name || 'Unknown Faculty'}
-                      </h3>
-                      <p className="text-sm text-muted-foreground mt-1">
-                        {new Date(leave.date).toLocaleDateString('en-US', {
-                          weekday: 'short',
-                          month: 'short',
-                          day: 'numeric',
-                        })}
-                      </p>
-                      <StatusBadge variant="warning" className="mt-2">
-                        {leave.leave_type.replace('_', ' ')}
-                      </StatusBadge>
-                    </div>
-                    <Button
-                      size="sm"
-                      onClick={() => handleOpenAssignDialog(leave)}
-                      className="btn-gradient"
-                    >
-                      <Plus className="w-4 h-4 mr-1" />
-                      Assign
-                    </Button>
-                  </div>
-                </motion.div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Filters */}
-        <div className="flex flex-col sm:flex-row gap-4">
-          <div>
-            <Label className="text-sm text-muted-foreground">From Date</Label>
-            <Input
-              type="date"
-              value={dateFilter}
-              onChange={(e) => setDateFilter(e.target.value)}
-              className="bg-white/5 border-border/50 mt-1"
-            />
-          </div>
-          <div>
-            <Label className="text-sm text-muted-foreground">Status</Label>
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-40 bg-white/5 border-border/50 mt-1">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Status</SelectItem>
-                <SelectItem value="PENDING">Pending</SelectItem>
-                <SelectItem value="CONFIRMED">Confirmed</SelectItem>
-                <SelectItem value="COMPLETED">Completed</SelectItem>
-                <SelectItem value="CANCELLED">Cancelled</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
-
-        {/* Stats */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <div className="glass-card p-4 rounded-xl">
-            <p className="text-sm text-muted-foreground">Total Substitutions</p>
-            <p className="text-2xl font-bold text-foreground">{substitutions.length}</p>
-          </div>
-          <div className="glass-card p-4 rounded-xl">
-            <p className="text-sm text-muted-foreground">Pending</p>
-            <p className="text-2xl font-bold text-warning">{substitutions.filter(s => s.status === 'PENDING').length}</p>
-          </div>
-          <div className="glass-card p-4 rounded-xl">
-            <p className="text-sm text-muted-foreground">Confirmed</p>
-            <p className="text-2xl font-bold text-success">{substitutions.filter(s => s.status === 'CONFIRMED').length}</p>
-          </div>
-          <div className="glass-card p-4 rounded-xl">
-            <p className="text-sm text-muted-foreground">Auto Assigned</p>
-            <p className="text-2xl font-bold text-accent">{substitutions.filter(s => s.assignment_type === 'AUTO').length}</p>
-          </div>
-        </div>
-
-        <DataTable
-          columns={columns}
-          data={filteredSubstitutions}
-          keyExtractor={(sub) => sub.id}
-          isLoading={loading}
-          emptyMessage="No substitutions found"
-        />
-
-        {/* Manual Assignment Dialog */}
-        <Dialog open={isAssignDialogOpen} onOpenChange={(open) => {
-          setIsAssignDialogOpen(open);
-          if (!open) resetAssignForm();
-        }}>
-          <DialogContent className="glass-card border-border/50 max-w-lg">
-            <DialogHeader>
-              <DialogTitle>Assign Substitute</DialogTitle>
-            </DialogHeader>
-            <div className="space-y-4 mt-4">
-              {selectedLeave && (
-                <div className="p-3 bg-warning/10 rounded-lg border border-warning/30">
-                  <p className="text-sm font-medium">
-                    {selectedLeave.faculty?.profiles?.name} is on leave
-                  </p>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    {new Date(selectedLeave.date).toLocaleDateString()} • {selectedLeave.leave_type.replace('_', ' ')}
-                  </p>
-                </div>
-              )}
-
-              <div>
-                <Label>Select Slot</Label>
-                {slotsNeedingSub.length === 0 ? (
-                  <p className="text-sm text-muted-foreground mt-2">
-                    All slots have been assigned substitutes.
-                  </p>
-                ) : (
-                  <div className="space-y-2 mt-2 max-h-40 overflow-y-auto">
-                    {slotsNeedingSub.map(slot => (
-                      <div
-                        key={slot.id}
-                        onClick={() => handleSlotSelect(slot)}
-                        className={`p-3 rounded-lg cursor-pointer transition-all ${
-                          selectedSlot?.id === slot.id
-                            ? 'bg-primary/20 border border-primary/50'
-                            : 'bg-white/5 border border-border/30 hover:bg-white/10'
-                        }`}
-                      >
-                        <div className="flex justify-between">
-                          <span className="font-medium">{slot.start_time}</span>
-                          <span className="text-sm text-muted-foreground">
-                            {slot.classes?.name} {slot.classes?.division}
-                          </span>
-                        </div>
-                        <p className="text-xs text-muted-foreground mt-1">
-                          {slot.subjects?.name} ({slot.subjects?.subject_code})
-                        </p>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-
-              {selectedSlot && (
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div>
-                  <Label>Select Substitute Faculty</Label>
-                  {availableFaculty.length === 0 ? (
-                    <p className="text-sm text-muted-foreground mt-2">
-                      No faculty available at this time.
+                    <h1 className="text-2xl lg:text-3xl font-display font-bold text-foreground">
+                        Substitution Management
+                    </h1>
+                    <p className="text-muted-foreground mt-1">
+                        Manage faculty substitutions for leaves and absences
                     </p>
-                  ) : (
-                    <Select value={selectedSubFaculty} onValueChange={setSelectedSubFaculty}>
-                      <SelectTrigger className="bg-white/5 border-border/50 mt-1">
-                        <SelectValue placeholder="Select faculty" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {availableFaculty.map(f => (
-                          <SelectItem key={f.id} value={f.id}>
-                            {Array.isArray(f.profiles) ? f.profiles[0]?.name : f.profiles?.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  )}
                 </div>
-              )}
-
-              <div>
-                <Label>Notes (Optional)</Label>
-                <Textarea
-                  value={notes}
-                  onChange={(e) => setNotes(e.target.value)}
-                  placeholder="Any additional notes..."
-                  className="bg-white/5 border-border/50 mt-1"
-                />
-              </div>
-
-              <Button
-                onClick={handleCreateSubstitution}
-                disabled={!selectedSlot || !selectedSubFaculty}
-                className="w-full btn-gradient"
-              >
-                Assign Substitute
-              </Button>
+                
+                {/* Date Picker Control at Top Level */}
+                <div className="flex items-center gap-2">
+                     <Calendar className="w-5 h-5 text-muted-foreground" />
+                     <Input
+                        type="date"
+                        value={dateFilter}
+                        onChange={(e) => setDateFilter(e.target.value)}
+                        className="bg-background border-border/50 w-auto"
+                     />
+                </div>
             </div>
-          </DialogContent>
-        </Dialog>
-      </motion.div>
+
+            {/* Tabs for different views - Simplified to just main view now */}
+            <div className="grid gap-6">
+                
+            {/* 1. Absent Faculty Section */}
+            <div className="glass-card rounded-xl p-6 border-l-4 border-l-destructive/50">
+                <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                    <UserCheck className="w-5 h-5 text-destructive" />
+                    Faculty On Leave ({new Date(dateFilter).toLocaleDateString()})
+                </h2>
+                
+                {pendingLeaves.length === 0 ? (
+                    <p className="text-muted-foreground italic">No faculty on approved leave for this date.</p>
+                ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        {pendingLeaves.map(leave => (
+                            <div key={leave.id} className="p-4 rounded-lg bg-background/50 border border-border/50 flex justify-between items-center group hover:border-primary/50 transition-colors cursor-pointer"
+                                onClick={() => handleOpenAssignDialog(leave)}>
+                                <div>
+                                    <p className="font-semibold">{leave.faculty?.profiles?.name}</p>
+                                    <span className="text-xs px-2 py-0.5 rounded-full bg-destructive/10 text-destructive border border-destructive/20">
+                                        {leave.leave_type.replace('_', ' ')} - Approved
+                                    </span>
+                                </div>
+                                <Button size="sm" variant="secondary" className="group-hover:bg-primary group-hover:text-primary-foreground">
+                                    Manage Lectures
+                                </Button>
+                            </div>
+                        ))}
+                    </div>
+                )}
+            </div>
+
+            {/* 2. All Substitutions List */}
+            <div className="glass-card rounded-xl p-6">
+                <div className="flex justify-between items-center mb-6">
+                    <h2 className="text-lg font-semibold">Today's Substitutions</h2>
+                    <div className="flex gap-2">
+                        <Select value={statusFilter} onValueChange={setStatusFilter}>
+                        <SelectTrigger className="w-[150px] bg-muted/50 border-border/50">
+                            <SelectValue placeholder="Filter Status" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="all">All Status</SelectItem>
+                            <SelectItem value="PENDING">Pending</SelectItem>
+                            <SelectItem value="CONFIRMED">Confirmed</SelectItem>
+                            <SelectItem value="COMPLETED">Completed</SelectItem>
+                        </SelectContent>
+                        </Select>
+                    </div>
+                </div>
+                
+                {/* Stats */}
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                    <div className="glass-card p-4 rounded-xl bg-muted/20">
+                        <p className="text-sm text-muted-foreground">Total</p>
+                        <p className="text-2xl font-bold text-foreground">{substitutions.length}</p>
+                    </div>
+                    <div className="glass-card p-4 rounded-xl bg-warning/10">
+                        <p className="text-sm text-muted-foreground">Pending</p>
+                        <p className="text-2xl font-bold text-warning">{substitutions.filter(s => s.status === 'PENDING').length}</p>
+                    </div>
+                    <div className="glass-card p-4 rounded-xl bg-success/10">
+                        <p className="text-sm text-muted-foreground">Confirmed</p>
+                        <p className="text-2xl font-bold text-success">{substitutions.filter(s => s.status === 'CONFIRMED').length}</p>
+                    </div>
+                    <div className="glass-card p-4 rounded-xl bg-accent/10">
+                        <p className="text-sm text-muted-foreground">Auto Assigned</p>
+                        <p className="text-2xl font-bold text-accent">{substitutions.filter(s => s.assignment_type === 'AUTO').length}</p>
+                    </div>
+                </div>
+                
+                <DataTable
+                columns={columns}
+                data={filteredSubstitutions}
+                keyExtractor={(sub) => sub.id}
+                isLoading={loading}
+                emptyMessage="No substitutions found for this date"
+                />
+            </div>
+            </div>
+
+            {/* Assign Dialog */}
+            <Dialog open={isAssignDialogOpen} onOpenChange={setIsAssignDialogOpen}>
+            <DialogContent className="max-w-4xl max-h-[85vh] overflow-y-auto">
+                <DialogHeader>
+                <DialogTitle>Manage Lectures - {selectedLeave?.faculty?.profiles?.name}</DialogTitle>
+                </DialogHeader>
+                
+                {!selectedSlot ? (
+                    // Step 1: Select Lecture
+                    <div className="space-y-4 py-4">
+                        <p className="text-sm text-muted-foreground">Select a lecture to assign a substitute:</p>
+                        <div className="grid gap-3">
+                            {slotsNeedingSub.length === 0 ? (
+                                <div className="p-8 text-center text-muted-foreground bg-muted/20 rounded-lg border border-dashed border-border">
+                                    No lectures scheduled for this day, or all have been handled.
+                                </div>
+                            ) : (
+                                slotsNeedingSub.map(slot => (
+                                    <div key={slot.id} className={`p-4 rounded-lg border ${slot.substitution ? 'bg-green-500/5 border-green-500/20' : 'bg-card border-border'} flex justify-between items-center`}>
+                                        <div className="flex items-center gap-4">
+                                            <div className="p-2 bg-primary/10 rounded text-primary font-mono text-sm font-bold">
+                                                {slot.start_time.slice(0, 5)}
+                                            </div>
+                                            <div>
+                                                <p className="font-semibold">{slot.subjects?.name} ({slot.subjects?.subject_code})</p>
+                                                <p className="text-sm text-muted-foreground">{slot.classes?.name} {slot.classes?.division}</p>
+                                            </div>
+                                        </div>
+                                        
+                                        {slot.substitution ? (
+                                            <div className="text-right">
+                                                <span className="text-xs font-medium text-green-500 block mb-1">Substituted</span>
+                                                <p className="text-sm font-medium">{slot.substitution.subName}</p>
+                                            </div>
+                                        ) : (
+                                            <Button size="sm" onClick={() => handleSlotSelect(slot)}>
+                                                Assign Substitute
+                                            </Button>
+                                        )}
+                                    </div>
+                                ))
+                            )}
+                        </div>
+                    </div>
+                ) : (
+                    // Step 2: Select Substitute
+                    <div className="space-y-4 py-4">
+                        <div className="bg-muted/30 p-3 rounded-md mb-4 flex items-center justify-between">
+                            <div>
+                                <span className="text-xs uppercase text-muted-foreground font-bold">Selected Lecture</span>
+                                <div className="font-medium text-sm">
+                                    {selectedSlot.start_time.slice(0, 5)} | {selectedSlot.subjects?.name} | {selectedSlot.classes?.name}
+                                </div>
+                            </div>
+                            <Button variant="ghost" size="sm" onClick={() => { setSelectedSlot(null); setAvailableFaculty([]); setSelectedSubFaculty(''); }}>
+                                Change
+                            </Button>
+                        </div>
+
+                        <div className="space-y-3">
+                            <Label>Select Substitute Faculty</Label>
+                            <Select value={selectedSubFaculty} onValueChange={setSelectedSubFaculty}>
+                                <SelectTrigger className="w-full">
+                                    <SelectValue placeholder="Select available faculty..." />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {availableFaculty.length === 0 ? (
+                                        <SelectItem value="none" disabled>No available faculty found for this time slot (checking overlaps)</SelectItem>
+                                    ) : (
+                                        availableFaculty.map(f => (
+                                            <SelectItem key={f.id} value={f.id}>
+                                                {f.profiles?.name} {f.department ? `(${f.department})` : ''}
+                                            </SelectItem>
+                                        ))
+                                    )}
+                                </SelectContent>
+                            </Select>
+                            <p className="text-xs text-muted-foreground">
+                                * List only shows active faculty who are NOT teaching another class at {selectedSlot.start_time} and are NOT on leave.
+                            </p>
+                        </div>
+                        
+                        <div className="space-y-2">
+                            <Label>Notes (Optional)</Label>
+                            <Textarea 
+                                placeholder="Reason or instructions..." 
+                                value={notes}
+                                onChange={(e) => setNotes(e.target.value)}
+                            />
+                        </div>
+
+                        <div className="flex justify-end gap-2 pt-4">
+                            <Button variant="outline" onClick={() => { setSelectedSlot(null); setSelectedSubFaculty(''); }}>Back</Button>
+                            <Button onClick={handleCreateSubstitution} disabled={!selectedSubFaculty} className="btn-gradient bg-primary text-primary-foreground">
+                                Confirm Substitution
+                            </Button>
+                        </div>
+                    </div>
+                )}
+            </DialogContent>
+            </Dialog>
+        </motion.div>
     </PageShell>
   );
 };

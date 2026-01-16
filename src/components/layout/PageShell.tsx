@@ -20,6 +20,7 @@ import {
   Link2,
   CalendarDays,
   RefreshCw,
+  Book,
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
@@ -45,6 +46,7 @@ const adminNavItems: NavItem[] = [
   { label: 'Substitutions', path: '/admin/substitutions', icon: <RefreshCw className="w-5 h-5" /> },
   { label: 'Attendance', path: '/admin/attendance-monitor', icon: <ClipboardList className="w-5 h-5" /> },
   { label: 'Defaulters', path: '/admin/defaulters', icon: <AlertTriangle className="w-5 h-5" /> },
+  { label: 'Absentee Book', path: '/admin/fines', icon: <Book className="w-5 h-5" /> },
   { label: 'Promotion', path: '/admin/promotion', icon: <ArrowUpCircle className="w-5 h-5" /> },
   { label: 'Reports', path: '/admin/reports', icon: <FileBarChart className="w-5 h-5" /> },
   { label: 'Settings', path: '/admin/settings', icon: <Settings className="w-5 h-5" /> },
@@ -53,6 +55,7 @@ const adminNavItems: NavItem[] = [
 const facultyNavItems: NavItem[] = [
   { label: 'Dashboard', path: '/faculty/dashboard', icon: <LayoutDashboard className="w-5 h-5" /> },
   { label: "Today's Lectures", path: '/faculty/today', icon: <Calendar className="w-5 h-5" /> },
+  { label: 'My Class', path: '/faculty/my-class', icon: <Users className="w-5 h-5" /> },
   { label: 'Leave', path: '/faculty/leave', icon: <CalendarOff className="w-5 h-5" /> },
   { label: 'Reports', path: '/faculty/reports', icon: <FileBarChart className="w-5 h-5" /> },
   { label: 'My Subjects', path: '/faculty/subjects', icon: <BookOpen className="w-5 h-5" /> },

@@ -50,7 +50,6 @@ const AdminTimetablePage: React.FC = () => {
     subject_id: '',
     day_of_week: 'Monday',
     start_time: '09:00',
-    end_time: '10:00',
     room_no: '',
     valid_from: new Date().toISOString().split('T')[0],
     valid_to: new Date(Date.now() + 180 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
@@ -135,7 +134,6 @@ const AdminTimetablePage: React.FC = () => {
         subject_id: '',
         day_of_week: 'Monday',
         start_time: '09:00',
-        end_time: '10:00',
         room_no: '',
         valid_from: new Date().toISOString().split('T')[0],
         valid_to: new Date(Date.now() + 180 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
@@ -144,8 +142,13 @@ const AdminTimetablePage: React.FC = () => {
       setSelectedYear('');
       setSelectedSemester('');
       fetchData();
-    } catch (error) {
-      toast({ title: 'Error', description: 'Failed to create slot', variant: 'destructive' });
+    } catch (error: any) {
+      console.error(error);
+      toast({ 
+        title: 'Error', 
+        description: error.message || 'Failed to create slot', 
+        variant: 'destructive' 
+      });
     }
   };
 
@@ -174,7 +177,6 @@ const AdminTimetablePage: React.FC = () => {
 
       const dayIdx = headers.indexOf('day_of_week');
       const timeIdx = headers.indexOf('start_time');
-      const endTimeIdx = headers.indexOf('end_time');
       const classIdx = headers.indexOf('class_name');
       const divIdx = headers.indexOf('division');
       const subjectIdx = headers.indexOf('subject_code');
@@ -302,7 +304,6 @@ const AdminTimetablePage: React.FC = () => {
           await createTimetableSlot({
             day_of_week: values[dayIdx],
             start_time: values[timeIdx],
-            end_time: endTimeIdx !== -1 ? values[endTimeIdx] : null,
             class_id: classObj.id,
             subject_id: subjectObj.id,
             faculty_id: facultyObj.id,
@@ -324,7 +325,11 @@ const AdminTimetablePage: React.FC = () => {
     if (fileInputRef.current) fileInputRef.current.value = '';
   }; const columns = [
     { key: 'day_of_week', header: 'Day' },
-    { key: 'start_time', header: 'Time', render: (slot: TimetableSlotWithDetails) => `${slot.start_time?.substring(0,5)} - ${slot.end_time?.substring(0,5) || '?'}` },
+    { 
+      key: 'start_time', 
+      header: 'Start Time', 
+      render: (slot: TimetableSlotWithDetails) => <span className="font-mono">{slot.start_time?.substring(0,5)}</span> 
+    },
     {
       key: 'class',
       header: 'Class',
@@ -466,15 +471,6 @@ const AdminTimetablePage: React.FC = () => {
                         type="time"
                         value={formData.start_time}
                         onChange={(e) => setFormData({ ...formData, start_time: e.target.value })}
-                        className="bg-white/5 border-border/50"
-                      />
-                    </div>
-                    <div>
-                      <Label>End Time</Label>
-                      <Input
-                        type="time"
-                        value={formData.end_time || ''}
-                        onChange={(e) => setFormData({ ...formData, end_time: e.target.value })}
                         className="bg-white/5 border-border/50"
                       />
                     </div>

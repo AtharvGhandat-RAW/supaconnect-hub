@@ -15,10 +15,16 @@ import { getStudents, createStudent, bulkCreateStudents, updateStudent, deleteSt
 import { getClasses, type Class } from '@/services/classes';
 import { downloadTemplate } from '@/utils/export';
 import { supabase } from '@/integrations/supabase/client';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 const AdminStudentsPage: React.FC = () => {
   const [students, setStudents] = useState<Student[]>([]);
   const [classes, setClasses] = useState<Class[]>([]);
+  // Attendance State
+  const [attendanceData, setAttendanceData] = useState<any[]>([]);
+  const [attendanceLoading, setAttendanceLoading] = useState(false);
+
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [classFilter, setClassFilter] = useState('all');
@@ -63,6 +69,41 @@ const AdminStudentsPage: React.FC = () => {
       });
     } else {
       setFormData({ ...formData, class_id: classId });
+    }
+  };
+
+  // Load attendance when viewing a student
+  useEffect(() => {
+    if (isViewDialogOpen && selectedStudent) {
+      fetchStudentAttendance(selectedStudent.id);
+    }
+  }, [isViewDialogOpen, selectedStudent]);
+
+  const fetchStudentAttendance = async (studentId: string) => {
+    setAttendanceLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('attendance_records')
+        .select(`
+            id,
+            status,
+            session_id,
+            session:attendance_sessions!inner (
+                date,
+                start_time,
+                subject:subjects!inner (name, subject_code)
+            )
+        `)
+        .eq('student_id', studentId)
+        .order('created_at', { ascending: false });
+            
+      if (error) throw error;
+      setAttendanceData(data || []);
+    } catch (err) {
+      console.error('Attendance fetch error:', err);
+      // Don't show toast on every error to avoid spam, just log
+    } finally {
+      setAttendanceLoading(false);
     }
   };
 
@@ -597,57 +638,145 @@ const AdminStudentsPage: React.FC = () => {
 
         {/* View Student Dialog */}
         <Dialog open={isViewDialogOpen} onOpenChange={setIsViewDialogOpen}>
-          <DialogContent className="glass-card border-border/50 max-w-lg">
-            <DialogHeader>
-              <DialogTitle>Student Details</DialogTitle>
-            </DialogHeader>
+          <DialogContent className="glass-card border-border/50 max-w-3xl max-h-[85vh] overflow-hidden flex flex-col p-0">
+            <div className="p-6 pb-2">
+                <DialogHeader>
+                <DialogTitle>Student Details</DialogTitle>
+                </DialogHeader>
+            </div>
+            
             {selectedStudent && (
-              <div className="space-y-4 mt-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label className="text-muted-foreground text-xs">Name</Label>
-                    <p className="font-medium">{selectedStudent.name}</p>
-                  </div>
-                  <div>
-                    <Label className="text-muted-foreground text-xs">Roll No</Label>
-                    <p className="font-medium">{selectedStudent.roll_no || '-'}</p>
-                  </div>
-                  <div>
-                    <Label className="text-muted-foreground text-xs">Enrollment No</Label>
-                    <p className="font-medium">{selectedStudent.enrollment_no || '-'}</p>
-                  </div>
-                  <div>
-                    <Label className="text-muted-foreground text-xs">Year / Semester</Label>
-                    <p className="font-medium">{selectedStudent.year} / {selectedStudent.semester}</p>
-                  </div>
-                  <div>
-                    <Label className="text-muted-foreground text-xs">Division</Label>
-                    <p className="font-medium">{selectedStudent.division || '-'}</p>
-                  </div>
-                  <div>
-                    <Label className="text-muted-foreground text-xs">Status</Label>
-                    <StatusBadge variant={selectedStudent.status === 'ACTIVE' ? 'success' : selectedStudent.status === 'YD' ? 'warning' : 'outline'}>
-                      {selectedStudent.status}
-                    </StatusBadge>
-                  </div>
-                  <div>
-                    <Label className="text-muted-foreground text-xs">Mobile</Label>
-                    <p className="font-medium">{selectedStudent.mobile || '-'}</p>
-                  </div>
-                  <div>
-                    <Label className="text-muted-foreground text-xs">Email</Label>
-                    <p className="font-medium">{selectedStudent.email || '-'}</p>
-                  </div>
+              <Tabs defaultValue="profile" className="w-full flex-1 flex flex-col overflow-hidden">
+                <div className="px-6">
+                    <TabsList className="grid w-full grid-cols-2">
+                        <TabsTrigger value="profile">Profile Information</TabsTrigger>
+                        <TabsTrigger value="attendance">Attendance Records</TabsTrigger>
+                    </TabsList>
                 </div>
-                <Button 
-                  onClick={() => setIsViewDialogOpen(false)} 
-                  className="w-full"
-                  variant="outline"
-                >
-                  Close
-                </Button>
-              </div>
+                
+                <TabsContent value="profile" className="flex-1 overflow-y-auto p-6 space-y-4 mt-0">
+                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className="space-y-1 p-3 bg-muted/20 rounded-lg">
+                            <Label className="text-muted-foreground text-xs uppercase tracking-wider font-bold">Full Name</Label>
+                            <p className="font-semibold text-lg text-foreground">{selectedStudent.name}</p>
+                        </div>
+                        <div className="space-y-1 p-3 bg-muted/20 rounded-lg">
+                            <Label className="text-muted-foreground text-xs uppercase tracking-wider font-bold">Enrollment No</Label>
+                            <p className="font-mono text-lg">{selectedStudent.enrollment_no || '-'}</p>
+                        </div>
+                        <div className="space-y-1 p-3 bg-muted/20 rounded-lg col-span-2 md:col-span-1">
+                            <Label className="text-muted-foreground text-xs uppercase tracking-wider font-bold">Class Info</Label>
+                            <div className="flex gap-2 mt-1">
+                                <span className="px-2 py-1 bg-primary/10 rounded text-xs font-bold text-primary border border-primary/20">Year {selectedStudent.year}</span>
+                                <span className="px-2 py-1 bg-primary/10 rounded text-xs font-bold text-primary border border-primary/20">Sem {selectedStudent.semester}</span>
+                                <span className="px-2 py-1 bg-primary/10 rounded text-xs font-bold text-primary border border-primary/20">Div {selectedStudent.division || '-'}</span>
+                            </div>
+                        </div>
+                        <div className="space-y-1 p-3 bg-muted/20 rounded-lg">
+                            <Label className="text-muted-foreground text-xs uppercase tracking-wider font-bold">Roll No</Label>
+                            <p className="font-mono text-lg font-bold text-primary">{selectedStudent.roll_no || '-'}</p>
+                        </div>
+                        <div className="space-y-1 p-3 bg-muted/20 rounded-lg col-span-2">
+                            <Label className="text-muted-foreground text-xs uppercase tracking-wider font-bold">Contact Details</Label>
+                            <div className="grid grid-cols-2 gap-4 mt-1">
+                                <div>
+                                    <span className="text-xs text-muted-foreground block">Mobile</span>
+                                    <p>{selectedStudent.mobile || '-'}</p>
+                                </div>
+                                <div>
+                                    <span className="text-xs text-muted-foreground block">Email</span>
+                                    <p className="break-all">{selectedStudent.email || '-'}</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div className="space-y-1 p-3 bg-muted/20 rounded-lg col-span-2">
+                            <Label className="text-muted-foreground text-xs uppercase tracking-wider font-bold">Current Status</Label>
+                            <div className="mt-1">
+                                <StatusBadge variant={selectedStudent.status === 'ACTIVE' ? 'success' : 'warning'}>
+                                    {selectedStudent.status}
+                                </StatusBadge>
+                            </div>
+                        </div>
+                     </div>
+                </TabsContent>
+
+                <TabsContent value="attendance" className="flex-1 overflow-hidden flex flex-col p-6 mt-0 h-full">
+                    {attendanceLoading ? (
+                        <div className="flex justify-center items-center h-full">
+                            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                        </div>
+                    ) : (
+                        <div className="flex flex-col h-full gap-4">
+                            {/* Summary Stats */}
+                            <div className="grid grid-cols-3 gap-4 shrink-0">
+                                <div className="bg-background border border-border/50 p-4 rounded-xl text-center shadow-sm">
+                                    <span className="text-xs text-muted-foreground font-bold uppercase">Total Lectures</span>
+                                    <p className="text-3xl font-bold mt-1 text-foreground">{attendanceData.length}</p>
+                                </div>
+                                <div className="bg-green-500/5 border border-green-500/20 p-4 rounded-xl text-center shadow-sm">
+                                    <span className="text-xs text-green-600 font-bold uppercase">Present</span>
+                                    <p className="text-3xl font-bold mt-1 text-green-700">
+                                        {attendanceData.filter(a => a.status === 'PRESENT').length}
+                                    </p>
+                                </div>
+                                <div className="bg-blue-500/5 border border-blue-500/20 p-4 rounded-xl text-center shadow-sm">
+                                    <span className="text-xs text-blue-600 font-bold uppercase">Attendance %</span>
+                                    <p className="text-3xl font-bold mt-1 text-blue-700">
+                                        {attendanceData.length > 0 
+                                            ? Math.round((attendanceData.filter(a => a.status === 'PRESENT').length / attendanceData.length) * 100) 
+                                            : 0}%
+                                    </p>
+                                </div>
+                            </div>
+                            
+                            <div className="text-sm font-semibold text-muted-foreground mt-2 shrink-0">Recent Activity</div>
+
+                             <ScrollArea className="flex-1 border rounded-xl bg-background/50">
+                                <div className="p-2 space-y-2">
+                                    {attendanceData.length === 0 ? (
+                                        <div className="flex flex-col items-center justify-center h-40 text-muted-foreground">
+                                            <p>No attendance records found for this student.</p>
+                                        </div>
+                                    ) : (
+                                        attendanceData.map((record, i) => (
+                                            <div key={i} className="flex justify-between items-center p-3 rounded-lg bg-card border border-border/50 hover:bg-accent/5 transition-colors group">
+                                                <div className="flex gap-3 items-center">
+                                                    <div className={`w-2 h-10 rounded-full ${record.status === 'PRESENT' ? 'bg-green-500' : 'bg-red-500'}`} />
+                                                    <div>
+                                                        <p className="font-semibold text-sm text-foreground">
+                                                            {record.session?.subject?.name || 'Unknown Subject'}
+                                                        </p>
+                                                        <div className="flex gap-2 text-xs text-muted-foreground">
+                                                            <span>{record.session?.subject?.subject_code}</span>
+                                                            <span>•</span>
+                                                            <span>{new Date(record.session?.date).toLocaleDateString()}</span>
+                                                            <span>•</span>
+                                                            <span className="font-mono bg-muted px-1 rounded">{record.session?.start_time}</span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <span className={`text-xs font-bold px-3 py-1 rounded-full border ${
+                                                    record.status === 'PRESENT' 
+                                                        ? 'bg-green-100 text-green-700 border-green-200' 
+                                                        : 'bg-red-100 text-red-700 border-red-200'
+                                                }`}>
+                                                    {record.status}
+                                                </span>
+                                            </div>
+                                        ))
+                                    )}
+                                </div>
+                            </ScrollArea>
+                        </div>
+                    )}
+                </TabsContent>
+              </Tabs>
             )}
+            <div className="p-4 border-t mt-auto bg-muted/10">
+                <Button onClick={() => setIsViewDialogOpen(false)} className="w-full" variant="outline">
+                  Close Student Details
+                </Button>
+            </div>
           </DialogContent>
         </Dialog>
 

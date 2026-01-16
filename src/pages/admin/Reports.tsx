@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, PieChart, Pie, Cell } from 'recharts';
-import { BarChart3, Download, FileText, Printer, Wand2, AlertTriangle, CheckCircle, Users, BookOpen } from 'lucide-react';
+import { BarChart3, Download, FileText, Printer, Wand2, AlertTriangle, CheckCircle, Users, BookOpen, RotateCcw } from 'lucide-react';
 import PageShell from '@/components/layout/PageShell';
 import DataTable from '@/components/ui/DataTable';
 import { Button } from '@/components/ui/button';
@@ -13,6 +13,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { getClasses, type Class } from '@/services/classes';
 import { getSubjects, type Subject } from '@/services/subjects';
 import { getStudents, type Student } from '@/services/students';
+import { getFaculty, type Faculty } from '@/services/faculty';
 import { supabase } from '@/integrations/supabase/client';
 import { downloadCSV, generatePDFContent, printPDF } from '@/utils/export';
 import { toast } from '@/hooks/use-toast';
@@ -42,12 +43,15 @@ const AdminReportsPage: React.FC = () => {
   const [classes, setClasses] = useState<Class[]>([]);
   const [subjects, setSubjects] = useState<Subject[]>([]);
   const [allStudents, setAllStudents] = useState<Student[]>([]);
+  const [facultyList, setFacultyList] = useState<Faculty[]>([]);
+  const [substitutionReports, setSubstitutionReports] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [generating, setGenerating] = useState(false);
   const [manipulating, setManipulating] = useState(false);
   const [selectedClass, setSelectedClass] = useState('');
   const [selectedSubject, setSelectedSubject] = useState('all');
   const [selectedStudent, setSelectedStudent] = useState('all');
+  const [selectedFaculty, setSelectedFaculty] = useState('all');
   const [reportType, setReportType] = useState<'student-wise' | 'subject-wise'>('student-wise');
   const [dateFrom, setDateFrom] = useState(() => {
     const d = new Date();
@@ -63,17 +67,48 @@ const AdminReportsPage: React.FC = () => {
   const [studentsToFix, setStudentsToFix] = useState<StudentReport[]>([]);
 
   useEffect(() => {
+    async function fetchSubstitutions() {
+        if (reportType !== 'substitutions') return;
+        
+        let subQuery = supabase
+        .from('substitution_assignments')
+        .select(`
+          *,
+          original_faculty:original_faculty_id(profiles(name)),
+          sub_faculty:sub_faculty_id(profiles(name)),
+          classes(name, division),
+          subjects(name, subject_code)
+        `)
+        .gte('date', dateFrom)
+        .lte('date', dateTo);
+
+       if (selectedClass) subQuery = subQuery.eq('class_id', selectedClass);
+       
+       const { data } = await subQuery;
+       
+       let filtered = data || [];
+       if (selectedFaculty !== 'all') {
+           filtered = filtered.filter((s: any) => s.original_faculty_id === selectedFaculty || s.sub_faculty_id === selectedFaculty);
+       }
+       setSubstitutionReports(filtered);
+    }
+    fetchSubstitutions();
+  }, [reportType, dateFrom, dateTo, selectedClass, selectedFaculty]);
+
+  useEffect(() => {
     async function fetchInitialData() {
       try {
-        const [classData, subjectData, studentData, settingsData] = await Promise.all([
+        const [classData, subjectData, studentData, facultyData, settingsData] = await Promise.all([
           getClasses(),
           getSubjects(),
           getStudents(),
+          getFaculty(),
           supabase.from('settings').select('defaulter_threshold').maybeSingle(),
         ]);
         setClasses(classData);
         setSubjects(subjectData);
         setAllStudents(studentData);
+        setFacultyList(facultyData);
         if (settingsData.data?.defaulter_threshold) {
           setThreshold(settingsData.data.defaulter_threshold);
         }
@@ -95,35 +130,36 @@ const AdminReportsPage: React.FC = () => {
   const filteredStudents = allStudents.filter(s => s.class_id === selectedClass);
 
   const handleGenerateReport = async () => {
-    if (!selectedClass) {
-      toast({ title: 'Error', description: 'Please select a class', variant: 'destructive' });
+    if (!selectedClass && selectedFaculty === 'all') {
+      toast({ title: 'Error', description: 'Please select a Class or Faculty', variant: 'destructive' });
       return;
     }
 
     setGenerating(true);
     try {
-      const { data: students } = await supabase
-        .from('students')
-        .select('id, roll_no, name, enrollment_no')
-        .eq('class_id', selectedClass)
-        .eq('status', 'ACTIVE')
-        .order('roll_no');
-
-      if (!students || students.length === 0) {
-        setStudentReports([]);
-        setSubjectReports([]);
-        setAttendanceData([]);
-        toast({ title: 'No Data', description: 'No students found in this class' });
-        return;
+      let students: Student[] = [];
+      if (selectedClass) {
+        const { data } = await supabase
+          .from('students')
+          .select('id, roll_no, name, enrollment_no')
+          .eq('class_id', selectedClass)
+          .eq('status', 'ACTIVE')
+          .order('roll_no');
+        students = data || [];
       }
 
       let sessionQuery = supabase
         .from('attendance_sessions')
-        .select('id, date, subject_id, subjects(id, name, code)')
-        .eq('class_id', selectedClass)
+        .select('id, date, subject_id, subjects(id, name, subject_code)')
         .gte('date', dateFrom)
         .lte('date', dateTo);
 
+      if (selectedClass) {
+        sessionQuery = sessionQuery.eq('class_id', selectedClass);
+      }
+      if (selectedFaculty !== 'all') {
+        sessionQuery = sessionQuery.eq('faculty_id', selectedFaculty);
+      }
       if (selectedSubject !== 'all') {
         sessionQuery = sessionQuery.eq('subject_id', selectedSubject);
       }
@@ -166,10 +202,10 @@ const AdminReportsPage: React.FC = () => {
 
       sessions.forEach(session => {
         const sessionRecords = records?.filter(r => r.session_id === session.id) || [];
-        const subjectsArr = session.subjects as unknown as { id: string; name: string; code: string } | null;
+        const subjectsArr = session.subjects as unknown as { id: string; name: string; subject_code: string } | null;
         const subjectId = subjectsArr?.id || session.subject_id;
         const subjectName = subjectsArr?.name || 'Unknown';
-        const subjectCode = subjectsArr?.code || '';
+        const subjectCode = subjectsArr?.subject_code || '';
 
         if (!subjectMap.has(subjectId)) {
           subjectMap.set(subjectId, {
@@ -325,11 +361,14 @@ const AdminReportsPage: React.FC = () => {
     setManipulating(true);
     try {
       for (const student of studentsToFix) {
-        // Calculate how many additional "PRESENT" we need to reach 76%
-        // Formula: (present + x) / (total + x) >= 0.76
-        // Solving for x: x >= (0.76 * total - present) / 0.24
-        const neededPresent = Math.ceil((0.76 * student.total - student.present) / 0.24);
+        // We want new percentage >= 0.75 by changing 'ABSENT' to 'PRESENT'.
+        // Denominator (Total) stays the same.
+        // (Present + x) / Total >= 0.76 (using 0.76 to be safe)
+        // x >= 0.76 * Total - Present
         
+        let neededPresent = Math.ceil(0.76 * student.total - student.present);
+        
+        // If neededPresent is negative (already above 76%), skip.
         if (neededPresent <= 0) continue;
 
         const { data: existingSessions } = await supabase
@@ -347,21 +386,28 @@ const AdminReportsPage: React.FC = () => {
           .select('id, session_id')
           .eq('student_id', student.student_id)
           .eq('status', 'ABSENT')
-          .in('session_id', existingSessions.map(s => s.id))
-          .limit(neededPresent);
+          .in('session_id', existingSessions.map(s => s.id));
+        
+        // Limit the number of records to flip
+        const recordsToFlip = absentRecords ? absentRecords.slice(0, neededPresent) : [];
 
-        if (absentRecords && absentRecords.length > 0) {
-          const recordIds = absentRecords.map(r => r.id);
+        if (recordsToFlip.length > 0) {
+          const recordIds = recordsToFlip.map(r => r.id);
           await supabase
             .from('attendance_records')
-            .update({ status: 'PRESENT', updated_at: new Date().toISOString() })
+            .update({ 
+              status: 'PRESENT', 
+              remark: 'Marked Present by Admin/HOD',
+              is_admin_override: true,
+              updated_at: new Date().toISOString() 
+            } as any)
             .in('id', recordIds);
         }
       }
 
       toast({ 
         title: 'Manipulation Complete', 
-        description: `${studentsToFix.length} students' attendance has been permanently updated to above 75%` 
+        description: `${studentsToFix.length} students' attendance has been permanently updated.` 
       });
       
       setShowManipulateDialog(false);
@@ -383,9 +429,22 @@ const AdminReportsPage: React.FC = () => {
     const subj = selectedSubject === 'all' ? 'All Subjects' : subjects.find(s => s.id === selectedSubject)?.name || '';
     
     const manipulatedReports = studentReports.map(r => {
+      // If student is already above threshold or has 0 total classes, no change.
       if (r.percentage >= 75 || r.total === 0) return r;
-      const newPresent = Math.ceil(r.total * 0.76);
-      return { ...r, present: newPresent, percentage: 76 };
+
+      // Calculate the minimum additional 'present' needed to reach 76% (to be safe > 75)
+      // (Present + x) / Total >= 0.76 => x >= 0.76*Total - Present
+      let needed = Math.ceil(0.76 * r.total - r.present);
+      
+      // We cannot add more 'present' than the number of 'absent' sessions (Total - Present).
+      // Max possible X is (Total - Present).
+      const maxPossible = r.total - r.present;
+      if (needed > maxPossible) needed = maxPossible;
+
+      const newPresent = r.present + needed;
+      const newPercentage = Math.round((newPresent / r.total) * 100);
+
+      return { ...r, present: newPresent, percentage: newPercentage };
     });
 
     const html = generatePDFContent({
@@ -460,12 +519,29 @@ const AdminReportsPage: React.FC = () => {
         <div className="glass-card rounded-xl p-4">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-4">
             <div>
-              <Label>Class *</Label>
-              <Select value={selectedClass} onValueChange={(v) => { setSelectedClass(v); setSelectedSubject('all'); setSelectedStudent('all'); }}>
+              <Label>Faculty</Label>
+              <Select value={selectedFaculty} onValueChange={setSelectedFaculty}>
+                <SelectTrigger className="bg-muted/50 border-border/50 mt-1">
+                  <SelectValue placeholder="All Faculty" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Faculty</SelectItem>
+                  {facultyList.map(f => (
+                    <SelectItem key={f.id} value={f.id}>
+                      {f.profiles?.name || 'Unknown'}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label>Class</Label>
+              <Select value={selectedClass || "all_classes"} onValueChange={(v) => { setSelectedClass(v === "all_classes" ? "" : v); setSelectedSubject('all'); setSelectedStudent('all'); }}>
                 <SelectTrigger className="bg-muted/50 border-border/50 mt-1">
                   <SelectValue placeholder="Select class" />
                 </SelectTrigger>
                 <SelectContent>
+                  <SelectItem value="all_classes">All Classes</SelectItem>
                   {classes.map(c => (
                     <SelectItem key={c.id} value={c.id}>{c.name} {c.division}</SelectItem>
                   ))}
@@ -636,6 +712,14 @@ const AdminReportsPage: React.FC = () => {
                   <BookOpen className="w-4 h-4" />
                   Subject-wise Report
                 </TabsTrigger>
+                <TabsTrigger value="defaulters" className="gap-2">
+                  <AlertTriangle className="w-4 h-4" />
+                  Defaulter List
+                </TabsTrigger>
+                <TabsTrigger value="substitutions" className="gap-2">
+                  <RotateCcw className="w-4 h-4" />
+                  Substitution Report
+                </TabsTrigger>
               </TabsList>
 
               <TabsContent value="student-wise" className="space-y-6">
@@ -746,6 +830,64 @@ const AdminReportsPage: React.FC = () => {
                   />
                 </div>
               </TabsContent>
+
+              <TabsContent value="defaulters" className="space-y-6">
+                <div className="glass-card rounded-xl p-6">
+                  <div className="flex justify-between items-center mb-4">
+                    <div>
+                      <h2 className="text-lg font-semibold text-foreground">Defaulter List (Below {threshold}%)</h2>
+                      <p className="text-sm text-muted-foreground">Students requiring attention</p>
+                    </div>
+                    <Button variant="outline" size="sm" onClick={() => {
+                        const defaulters = studentReports.filter(r => r.percentage < threshold && r.total > 0);
+                        if (defaulters.length === 0) return;
+                        const cls = classes.find(c => c.id === selectedClass);
+                        const subj = selectedSubject === 'all' ? 'All Subjects' : subjects.find(s => s.id === selectedSubject)?.name || '';
+                        const html = generatePDFContent({
+                           title: 'Defaulter List Report',
+                           subtitle: `${cls?.name} ${cls?.division} | ${subj} | ${dateFrom} to ${dateTo}`,
+                           headers: ['Roll No', 'Name', 'Enrollment No', 'Present', 'Total', 'Percentage'],
+                           rows: defaulters.map(r => [
+                             r.roll_no?.toString() || '-',
+                             r.name,
+                             r.enrollment_no || '-',
+                             r.present.toString(),
+                             r.total.toString(),
+                             `${r.percentage}%`
+                           ])
+                        });
+                        printPDF(html);
+                    }}>
+                      <Printer className="w-4 h-4 mr-2" />
+                      Print Defaulter List
+                    </Button>
+                  </div>
+                  <DataTable
+                    columns={studentColumns}
+                    data={studentReports.filter(r => r.percentage < threshold && r.total > 0)}
+                    keyExtractor={(r) => r.student_id}
+                    emptyMessage="No defaulters found"
+                  />
+                </div>
+              </TabsContent>
+              <TabsContent value="substitutions" className="space-y-6">
+                <div className="glass-card rounded-xl p-6">
+                  <h2 className="text-lg font-semibold text-foreground mb-4">Substitution Report</h2>
+                  <DataTable
+                    data={substitutionReports}
+                    keyExtractor={(r: any) => r.id}
+                    columns={[
+                        { key: 'date', header: 'Date' },
+                        { key: 'original_name', header: 'Original Faculty', render: (r: any) => r.original_faculty?.profiles?.name || '-' },
+                        { key: 'sub_name', header: 'Substitute', render: (r: any) => r.sub_faculty?.profiles?.name || '-' },
+                        { key: 'subject', header: 'Subject', render: (r: any) => r.subjects?.name || '-' },
+                        { key: 'class', header: 'Class', render: (r: any) => `${r.classes?.name || ''} ${r.classes?.division || ''}` },
+                        { key: 'status', header: 'Status' }
+                    ]}
+                    emptyMessage="No substitutions found"
+                  />
+                </div>
+              </TabsContent>
             </Tabs>
           </>
         )}
@@ -777,14 +919,23 @@ const AdminReportsPage: React.FC = () => {
                         </tr>
                       </thead>
                       <tbody>
-                        {studentsToFix.map(s => (
+                        {studentsToFix.map(s => {
+                          let needed = Math.ceil(0.76 * s.total - s.present);
+                          const maxPossible = s.total - s.present;
+                          if (needed > maxPossible) needed = maxPossible;
+                          
+                          const newPresent = s.present + needed;
+                          const newPercentage = s.total > 0 ? Math.round((newPresent / s.total) * 100) : 0;
+                          
+                          return (
                           <tr key={s.student_id} className="border-b border-border/30">
                             <td className="p-2">{s.roll_no || '-'}</td>
                             <td className="p-2">{s.name}</td>
                             <td className="p-2 text-right text-destructive">{s.percentage}%</td>
-                            <td className="p-2 text-right text-green-500">76%</td>
+                            <td className="p-2 text-right text-green-500">{newPercentage}%</td>
                           </tr>
-                        ))}
+                          )
+                        })}
                       </tbody>
                     </table>
                   </div>

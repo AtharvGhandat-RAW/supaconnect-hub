@@ -10,11 +10,19 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
-import { getSubjectAllocations, type SubjectAllocation } from '@/services/allocations';
-import { getClasses, type Class } from '@/services/classes';
-import { downloadCSV, generatePDFContent, printPDF } from '@/utils/export';
+import {
+  getClassByTeacherId,
+  getClasses,
+  type Class,
+} from '@/services/classes';
 import { getSettings } from '@/services/settings';
+import { generatePDFContent, printPDF } from '@/utils/export';
+import {
+  getSubjectAllocations,
+  type SubjectAllocation,
+} from '@/services/allocations';
 import ritLogo from '@/assets/rit-logo.jpg';
+import { Printer } from 'lucide-react';
 
 interface StudentAttendance {
   id: string;
@@ -31,6 +39,7 @@ const FacultyReportsPage: React.FC = () => {
   const [facultyId, setFacultyId] = useState<string | null>(null);
   const [allocations, setAllocations] = useState<SubjectAllocation[]>([]);
   const [classes, setClasses] = useState<Class[]>([]);
+  const [myClass, setMyClass] = useState<Class | null>(null);
   const [loading, setLoading] = useState(true);
   const [reportLoading, setReportLoading] = useState(false);
   const [selectedClass, setSelectedClass] = useState('');
@@ -57,13 +66,16 @@ const FacultyReportsPage: React.FC = () => {
 
         if (facultyData) {
           setFacultyId(facultyData.id);
-          const [allocs, classData, settings] = await Promise.all([
+          const [allocs, classData, settings, myClassData] = await Promise.all([
             getSubjectAllocations(facultyData.id),
             getClasses(),
             getSettings(),
+            getClassByTeacherId(facultyData.id),
           ]);
           setAllocations(allocs);
           setClasses(classData);
+          setMyClass(myClassData);
+
           if (settings?.defaulter_threshold) {
             setThreshold(settings.defaulter_threshold);
           }
@@ -95,15 +107,50 @@ const FacultyReportsPage: React.FC = () => {
         return;
       }
 
-      // Get sessions for this class/subject in date range
-      const { data: sessions } = await supabase
+      // Base query for sessions
+      let sessionQuery = supabase
         .from('attendance_sessions')
         .select('id')
         .eq('class_id', selectedClass)
-        .eq('subject_id', selectedSubject)
-        .eq('faculty_id', facultyId)
         .gte('date', dateFrom)
         .lte('date', dateTo);
+
+      const isMyClass = myClass?.id === selectedClass;
+      const isOverallReport = selectedSubject === 'all_subjects' || selectedSubject === 'defaulters';
+
+      // Apply filters based on role and selection
+      if (isOverallReport) {
+        // If it's my class and I want overall report, don't filter by faculty or subject
+        // Just get everything for this class
+      } else {
+        // Specific subject selected
+        sessionQuery = sessionQuery.eq('subject_id', selectedSubject);
+
+        // If it's NOT my class, I can only see my own sessions
+        // If it IS my class, I can see all sessions for that subject (even if subbed/shared)
+        // ideally, usually class teachers want to see everything.
+        // But let's stick to: if I select a subject I teach, I see my sessions.
+        // Wait, if I am class teacher, I might want to see how Other Teacher is doing with my class?
+        // Let's assume for specific subject selection, we default to "My Sessions" unless we add a "All Faculty" toggle.
+        // For simplicity now: If I select a specific subject from the dropdown (which are MY subjects), I see MY sessions.
+        // The "Overall Class Report" covers the "How is the class doing generally" use case.
+        if (!isMyClass) {
+             sessionQuery = sessionQuery.eq('faculty_id', facultyId);
+        } else {
+             // If it is my class, and I selected a subject I teach... do I want to see just my sessions or all?
+             // Usually all sessions for that subject.
+             // But the dropdown only shows subjects I teach.
+             // Let's enforce faculty_id for subject-specific reports to be safe and consistent with previous behavior,
+             // unless it's explicitly an "Admin/Class Teacher" feature.
+             // However, for "Overall Class Report", we definitely need ALL sessions.
+             sessionQuery = sessionQuery.eq('faculty_id', facultyId);
+        }
+      } 
+      
+      // Update: If it is 'all_subjects' (Class Report), we DO NOT filter by faculty.
+      // If it is a specific subject, we currently filter by faculty (only my sessions).
+
+      const { data: sessions } = await sessionQuery;
 
       if (!sessions || sessions.length === 0) {
         setStudentData(students.map(s => ({
@@ -135,7 +182,7 @@ const FacultyReportsPage: React.FC = () => {
         }
       });
 
-      const reportData: StudentAttendance[] = students.map(s => {
+      let reportData: StudentAttendance[] = students.map(s => {
         const stats = studentStats.get(s.id) || { present: 0, total: 0 };
         return {
           ...s,
@@ -144,6 +191,10 @@ const FacultyReportsPage: React.FC = () => {
           percentage: stats.total > 0 ? Math.round((stats.present / stats.total) * 100) : 0,
         };
       });
+      
+      if (selectedSubject === 'defaulters') {
+          reportData = reportData.filter(s => s.percentage < threshold && s.total > 0);
+      }
 
       setStudentData(reportData);
     } catch (error) {
@@ -165,14 +216,23 @@ const FacultyReportsPage: React.FC = () => {
   };
 
   const handleExportPDF = () => {
-    const selectedAlloc = allocations.find(a => a.subject_id === selectedSubject);
-    const subjectName = selectedAlloc?.subjects?.name || '';
+    let subjectName = '';
+    
+    if (selectedSubject === 'all_subjects') {
+        subjectName = 'Overall Class Report';
+    } else if (selectedSubject === 'defaulters') {
+        subjectName = 'Defaulter List';
+    } else {
+        const selectedAlloc = allocations.find(a => a.subject_id === selectedSubject);
+        subjectName = selectedAlloc?.subjects?.name || 'Unknown Subject';
+    }
+
     const classData = classes.find(c => c.id === selectedClass);
     const className = classData ? `${classData.name} ${classData.division}` : '';
 
     const htmlContent = generatePDFContent({
       title: 'Attendance Report',
-      subtitle: `Class: ${className} | Subject: ${subjectName}`,
+      subtitle: `Class: ${className} | ${subjectName}`,
       date: `${dateFrom} to ${dateTo}`,
       logoSrc: ritLogo,
       headers: ['Roll No', 'Name', 'Enrollment', 'Present', 'Total', 'Attendance %'],
@@ -190,6 +250,11 @@ const FacultyReportsPage: React.FC = () => {
   };
 
   const filteredSubjects = allocations.filter(a => a.class_id === selectedClass);
+  // Get unique classes from allocations + myClassId
+  const availableClassIds = Array.from(new Set([
+    ...allocations.map(a => a.class_id),
+    ...(myClass ? [myClass.id] : [])
+  ]));
 
   const columns = [
     { key: 'roll_no', header: 'Roll No', render: (s: StudentAttendance) => s.roll_no || '-' },
@@ -208,12 +273,16 @@ const FacultyReportsPage: React.FC = () => {
     },
   ];
 
+  const isMyClass = myClass?.id === selectedClass;
+
   return (
     <PageShell role="faculty">
       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
         <div>
           <h1 className="text-2xl lg:text-3xl font-display font-bold text-foreground">Reports</h1>
-          <p className="text-muted-foreground mt-1">Generate attendance reports for your classes</p>
+          <p className="text-muted-foreground mt-1">
+             {myClass ? `Manage reports for ${myClass.name} ${myClass.division} and your subjects` : 'Generate attendance reports for your classes'}
+          </p>
         </div>
 
         {/* Filters */}
@@ -226,11 +295,12 @@ const FacultyReportsPage: React.FC = () => {
                   <SelectValue placeholder="Select class" />
                 </SelectTrigger>
                 <SelectContent>
-                  {[...new Set(allocations.map(a => a.class_id))].map(classId => {
+                  {availableClassIds.map(classId => {
                     const classData = classes.find(c => c.id === classId);
+                    const isOwnClass = myClass?.id === classId;
                     return (
                       <SelectItem key={classId} value={classId}>
-                        {classData?.name} {classData?.division}
+                        {classData?.name} {classData?.division} {isOwnClass ? '(Class Teacher)' : ''}
                       </SelectItem>
                     );
                   })}
@@ -238,12 +308,19 @@ const FacultyReportsPage: React.FC = () => {
               </Select>
             </div>
             <div>
-              <Label>Subject</Label>
+              <Label>Subject / Report Type</Label>
               <Select value={selectedSubject} onValueChange={setSelectedSubject} disabled={!selectedClass}>
                 <SelectTrigger className="bg-white/5 border-border/50 mt-1">
                   <SelectValue placeholder="Select subject" />
                 </SelectTrigger>
                 <SelectContent>
+                  {isMyClass && (
+                    <>
+                        <SelectItem value="all_subjects" className="font-semibold text-primary">All Subjects (Aggregate)</SelectItem>
+                        <SelectItem value="defaulters" className="font-semibold text-destructive">Defaulter List</SelectItem>
+                        <div className="h-px bg-border/50 my-2" />
+                    </>
+                  )}
                   {filteredSubjects.map(a => (
                     <SelectItem key={a.subject_id} value={a.subject_id}>
                       {a.subjects?.name}
@@ -289,8 +366,8 @@ const FacultyReportsPage: React.FC = () => {
               Export CSV
             </Button>
             <Button variant="outline" onClick={handleExportPDF} className="border-border/50">
-              <FileText className="w-4 h-4 mr-2" />
-              Export PDF
+              <Printer className="w-4 h-4 mr-2" />
+              Print Reoprt
             </Button>
           </div>
         )}

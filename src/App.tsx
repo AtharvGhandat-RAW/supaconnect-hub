@@ -21,6 +21,7 @@ import AdminTimetable from "./pages/admin/Timetable";
 import AdminFacultyLeave from "./pages/admin/FacultyLeave";
 import AdminAttendanceMonitor from "./pages/admin/AttendanceMonitor";
 import AdminDefaulters from "./pages/admin/Defaulters";
+import AdminFineManagement from "./pages/admin/FineManagement";
 import AdminPromotion from "./pages/admin/Promotion";
 import AdminReports from "./pages/admin/Reports";
 import AdminSettings from "./pages/admin/Settings";
@@ -37,6 +38,7 @@ import FacultyLeave from "./pages/faculty/Leave";
 import FacultyReports from "./pages/faculty/Reports";
 import FacultySubjects from "./pages/faculty/Subjects";
 import FacultySettings from "./pages/faculty/Settings";
+import FacultyMyClass from "./pages/faculty/MyClass";
 import { useEffect } from "react";
 import { App as CapacitorApp } from "@capacitor/app";
 
@@ -76,6 +78,7 @@ const App = () => {
           <Route path="/admin/faculty-leave" element={<RouteGuard allowedRole="ADMIN"><AdminFacultyLeave /></RouteGuard>} />
           <Route path="/admin/attendance-monitor" element={<RouteGuard allowedRole="ADMIN"><AdminAttendanceMonitor /></RouteGuard>} />
           <Route path="/admin/defaulters" element={<RouteGuard allowedRole="ADMIN"><AdminDefaulters /></RouteGuard>} />
+          <Route path="/admin/fines" element={<RouteGuard allowedRole="ADMIN"><AdminFineManagement /></RouteGuard>} />
           <Route path="/admin/promotion" element={<RouteGuard allowedRole="ADMIN"><AdminPromotion /></RouteGuard>} />
           <Route path="/admin/batches" element={<RouteGuard allowedRole="ADMIN"><AdminBatches /></RouteGuard>} />
           <Route path="/admin/holidays" element={<RouteGuard allowedRole="ADMIN"><AdminHolidays /></RouteGuard>} />
@@ -86,6 +89,7 @@ const App = () => {
           {/* Faculty routes */}
           <Route path="/faculty/dashboard" element={<RouteGuard allowedRole="FACULTY"><FacultyDashboard /></RouteGuard>} />
           <Route path="/faculty/today" element={<RouteGuard allowedRole="FACULTY"><FacultyToday /></RouteGuard>} />
+          <Route path="/faculty/my-class" element={<RouteGuard allowedRole="FACULTY"><FacultyMyClass /></RouteGuard>} />
           <Route path="/faculty/attendance/:sessionId" element={<RouteGuard allowedRole="FACULTY"><FacultyAttendance /></RouteGuard>} />
           <Route path="/faculty/attendance/:sessionId/view" element={<RouteGuard allowedRole="FACULTY"><FacultyAttendanceView /></RouteGuard>} />
           <Route path="/faculty/leave" element={<RouteGuard allowedRole="FACULTY"><FacultyLeave /></RouteGuard>} />

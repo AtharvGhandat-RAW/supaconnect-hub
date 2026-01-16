@@ -8,7 +8,6 @@ export interface TimetableSlot {
   subject_id: string;
   day_of_week: string;
   start_time: string;
-  end_time?: string | null;
   room_no: string | null;
   valid_from: string;
   valid_to: string;
@@ -109,18 +108,36 @@ async function ensureAllocation(facultyId: string, classId: string, subjectId: s
 
 export async function createTimetableSlot(slot: Omit<TimetableSlot, 'id' | 'created_at'>) {
   // Check for duplicate slot (same class, day, time)
-  const { data: existingSlot } = await supabase
+  // Modified to support Batch vs Whole Class logic
+  const { data: existingSlots } = await supabase
     .from('timetable_slots')
-    .select('id')
+    .select('id, batch_id')
     .eq('class_id', slot.class_id)
     .eq('day_of_week', slot.day_of_week)
     .eq('start_time', slot.start_time)
     .lte('valid_from', slot.valid_to)
-    .gte('valid_to', slot.valid_from)
-    .maybeSingle();
+    .gte('valid_to', slot.valid_from);
 
-  if (existingSlot) {
-    throw new Error(`A timetable slot already exists for this class at the same day and time`);
+  if (existingSlots && existingSlots.length > 0) {
+    for (const existing of existingSlots) {
+       // If validating a "Whole Class" slot (batch_id is null/empty)
+       if (!slot.batch_id) {
+           throw new Error(`A timetable slot already exists for this class at this time.`);
+       }
+
+       // If validating a "Batch" slot:
+       // 1. Conflict if an existing slot is "Whole Class"
+       if (!existing.batch_id) {
+           throw new Error(`A 'Whole Class' session exists at this time. Cannot assign a batch.`);
+       }
+
+       // 2. Conflict if same batch is already assigned
+       if (existing.batch_id === slot.batch_id) {
+           throw new Error(`This batch is already assigned at this time.`);
+       }
+       
+       // If Different Batch -> Allowed (Parallel Sessions)
+    }
   }
 
   // Check if faculty is already assigned at this time

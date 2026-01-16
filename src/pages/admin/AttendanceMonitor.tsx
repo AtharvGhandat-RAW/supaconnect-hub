@@ -92,12 +92,13 @@ const AdminAttendanceMonitorPage: React.FC = () => {
     }
   };
 
-  const handleToggleStatus = async (recordId: string, currentStatus: 'PRESENT' | 'ABSENT') => {
+  const handleToggleStatus = async (recordId: string, currentStatus: 'PRESENT' | 'ABSENT', studentName?: string) => {
     const newStatus = currentStatus === 'PRESENT' ? 'ABSENT' : 'PRESENT';
+    const remark = newStatus === 'PRESENT' ? 'Marked Present by Admin/HOD' : 'Marked Absent by Admin/HOD';
 
     try {
-      await updateAttendanceRecord(recordId, { status: newStatus });
-      toast({ title: 'Success', description: 'Attendance updated' });
+      await updateAttendanceRecord(recordId, { status: newStatus, remark: remark });
+      toast({ title: 'Success', description: `Attendance updated for ${studentName || 'student'}` });
       if (selectedSession) handleViewSession(selectedSession);
     } catch (error) {
       toast({ title: 'Error', description: 'Failed to update', variant: 'destructive' });
@@ -161,7 +162,7 @@ const AdminAttendanceMonitorPage: React.FC = () => {
         <Button
           variant="ghost"
           size="sm"
-          onClick={() => handleToggleStatus(r.id, r.status)}
+          onClick={() => handleToggleStatus(r.id, r.status, r.students?.name)}
           className="text-muted-foreground hover:text-foreground"
         >
           Toggle

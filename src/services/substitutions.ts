@@ -134,18 +134,34 @@ export async function getSlotsNeedingSubstitutes(facultyId: string, date: string
   
   if (error) throw error;
   
-  // Check which slots already have substitutions
+  // Check which slots already have substitutions (get relevant data including substitute name)
   const { data: existingSubs } = await supabase
     .from('substitution_assignments')
-    .select('start_time')
+    .select(`
+      start_time,
+      status,
+      sub_faculty:sub_faculty_id ( profiles(name) )
+    `)
     .eq('src_faculty_id', facultyId)
-    .eq('date', date);
+    .eq('date', date)
+    .neq('status', 'CANCELLED');
   
-  const subTimes = new Set(existingSubs?.map(s => s.start_time) || []);
+  const subMap = new Map();
+  existingSubs?.forEach((s: any) => {
+      subMap.set(s.start_time, {
+          isSubstituted: true,
+          subName: s.sub_faculty?.profiles?.name,
+          status: s.status
+      });
+  });
   
-  // Return slots that don't have substitutions yet
-  return (slots || []).filter(slot => !subTimes.has(slot.start_time));
+  // Augment slots with substitution info
+  return (slots || []).map(slot => ({
+      ...slot,
+      substitution: subMap.get(slot.start_time) || null
+  }));
 }
+
 
 // Get available faculty for substitution at a specific time
 export async function getAvailableFacultyForSlot(
@@ -163,7 +179,7 @@ export async function getAvailableFacultyForSlot(
     .eq('status', 'Active')
     .neq('id', excludeFacultyId);
   
-  // Get busy faculty at this time
+  // Get busy faculty at this time (teaching regular class)
   const { data: busyFaculty } = await supabase
     .from('timetable_slots')
     .select('faculty_id')
@@ -192,6 +208,9 @@ export async function getAvailableFacultyForSlot(
     ...(onLeave?.map(l => l.faculty_id) || []),
     ...(alreadySubbing?.map(s => s.sub_faculty_id) || []),
   ]);
+  
+  // Calculate specific "smart" suggestions (faculty free in this slot but having class before/after)
+  // This helps finding "already in college" faculty
   
   return (allFaculty || []).filter(f => !busyIds.has(f.id));
 }
