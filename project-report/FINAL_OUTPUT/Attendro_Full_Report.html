@@ -1,0 +1,359 @@
+<!DOCTYPE html><html><head><meta charset="UTF-8"><style>
+@page {
+    size: A4;
+    margin-top: 2.5cm;
+    margin-bottom: 1.25cm;
+    margin-left: 3.5cm;
+    margin-right: 1.25cm;
+    @bottom-center {
+        content: counter(page);
+        font-family: "Times New Roman", Times, serif;
+        font-size: 10pt;
+    }
+}
+
+body {
+    font-family: "Times New Roman", Times, serif;
+    font-size: 12pt;
+    line-height: 2; /* Double space */
+    text-align: justify;
+    margin: 0;
+}
+
+h1 {
+    font-size: 14pt;
+    font-weight: bold;
+    text-transform: uppercase;
+    text-align: center;
+    page-break-before: always;
+    margin-top: 0;
+}
+
+h2 {
+    font-size: 12pt;
+    font-weight: bold;
+    text-transform: uppercase;
+    margin-top: 24pt;
+    margin-bottom: 12pt;
+    page-break-after: avoid;
+    text-align: left;
+}
+
+h3 {
+    font-size: 12pt;
+    font-weight: bold;
+    text-transform: none;
+    margin-top: 18pt;
+    margin-bottom: 12pt;
+    page-break-after: avoid;
+    text-align: left;
+}
+
+p, li, div {
+    margin-bottom: 12pt;
+    text-indent: 0;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 12pt;
+    line-height: 1.5;
+}
+th, td {
+    border: 1px solid black;
+    padding: 6pt;
+    vertical-align: top;
+    text-align: left;
+}
+
+/* Title Page & Cert */
+.title-page-container {
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    height: 100%;
+    page-break-after: always;
+    line-height: 1.5;
+}
+.title-project-title { font-size: 16pt; font-weight: bold; text-transform: uppercase; margin-bottom: 2cm; }
+.certificate-container { text-align: justify; page-break-after: always; }
+.cert-title { text-align: center; text-transform: uppercase; font-weight: bold; font-size: 14pt; margin-bottom: 2cm; }
+.sig-table { width: 100%; border: none; margin-top: 3cm; }
+.sig-table td { border: none; text-align: center; vertical-align: bottom; height: 2cm; }
+
+/* Diagram Wrapping for Report */
+.report-diagram {
+    margin: 20px 0;
+    page-break-inside: avoid;
+    text-align: center;
+    display: flex;
+    justify-content: center;
+}
+
+/* Include styles from Diagram HTMLs (simplified/normalized) */
+.diagram-wrap { 
+    background: #fff; 
+    width: 100% !important; /* Force fit to page width */ 
+    max-width: 600px;
+    border: 1px solid #ccc; 
+    padding: 10px; 
+    font-family: "Times New Roman", serif;
+    line-height: 1.2; /* Reset line height inside diagrams */
+    margin: 0 auto;
+}
+.diagram-title { text-align: center; font-size: 11pt; font-weight: bold; margin-bottom: 10px; }
+
+/* 01 Arch */
+.arch { display: flex; flex-direction: column; gap: 8px; }
+.layer { border: 1.5px solid #333; border-radius: 4px; padding: 10px 12px; background: #fafafa; position: relative; }
+.layer-label { position: absolute; top: -9px; left: 12px; background: #fff; padding: 0 6px; font-weight: bold; font-size: 9pt; }
+.layer-row { display: flex; justify-content: center; gap: 10px; flex-wrap: wrap; padding-top: 6px; }
+.box { border: 1px solid #333; border-radius: 3px; padding: 5px 10px; font-size: 8pt; text-align: center; min-width: 60px; background: #fff; }
+.box.blue { background: #2563eb; color: #fff; border-color: #1d4ed8; }
+.box.green { background: #059669; color: #fff; border-color: #047857; }
+.box.red { background: #dc2626; color: #fff; border-color: #b91c1c; }
+.box.orange { background: #ea580c; color: #fff; border-color: #c2410c; }
+.arrow { text-align: center; font-size: 14pt; color: #555; line-height: 1; }
+
+/* 02 DB - Flex Fallback for Grid */
+.er { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; }
+.entity { border: 1.5px solid #333; font-size: 7.5pt; background: #fff; width: 30%; min-width: 140px; }
+.entity-hd { background: #1e3a5f; color: #fff; padding: 4px; font-weight: bold; text-align: center; font-size: 8pt; border-bottom: 1.5px solid #333; }
+.entity-bd { padding: 4px; }
+.attr { display: flex; justify-content: space-between; padding: 1px 0; border-bottom: 1px dashed #ddd; }
+.pk { color: #b91c1c; font-weight: bold; }
+.fk { color: #1d4ed8; }
+
+/* 03 Flow */
+.flow { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+.node { padding: 6px 14px; font-size: 8pt; text-align: center; border: 1.5px solid #333; min-width: 100px; }
+.start, .end { border-radius: 20px; background: #d1fae5; }
+.process { background: #fff; }
+.io { background: #dbeafe; transform: skewX(-10deg); }
+.io span { display: inline-block; transform: skewX(10deg); }
+
+/* 04 Device */
+.wiring { display: flex; justify-content: center; gap: 20px; align-items: center; }
+.device { border: 1.5px solid #333; padding: 6px; text-align: center; font-size: 8pt; background: #f9f9f9; border-radius: 4px; }
+.oled-states { display: flex; justify-content: center; gap: 12px; flex-wrap: wrap; margin-top: 8px; }
+.oled { width: 80px; height: 40px; background: #000; border: 2px solid #333; display: flex; flex-direction: column; justify-content: center; align-items: center; color: #0f0; font-family: monospace; font-size: 6pt; }
+
+/* 05 Security */
+.layers { display: flex; flex-direction: column; gap: 4px; }
+.layer-sec { display: flex; align-items: center; border: 1px solid #333; background: #fff; }
+.layer-num { width: 20px; background: #1e3a5f; color: #fff; font-size: 8pt; font-weight: bold; text-align: center; padding: 4px 0; }
+.layer-name { padding: 4px 8px; font-size: 8pt; border-right: 1px solid #ddd; font-weight: bold; }
+.layer-desc { padding: 4px 8px; font-size: 7.5pt; color: #444; }
+
+</style></head><body><div class='section-wrapper'><div class="title-page-container"><div class="title-project-title">ATTENDRO: Smart Biometric + App-Based Attendance Management System using AI & IoT</div><p>A Project Report Submitted by</p><p><strong>[STUDENT NAME]</strong></p><p>In partial fulfillment of the requirements for the Diploma in</p><p><strong>APPLIED AI & ML</strong></p><p>At</p><p><strong>Rajarambapu Institute of Technology, Islampur</strong></p><p><strong>2025–2026</strong></p><br><br><p>Under the Guidance of</p><p><strong>[GUIDE NAME]</strong></p></div></div>
+<div class='section-wrapper'><div class="certificate-container"><div class="cert-title">CERTIFICATE</div><p>This is to certify that the project titled <strong>"ATTENDRO: Smart Biometric + App-Based Attendance Management System using AI & IoT"</strong> has been carried out by <strong>[Student Name]</strong> under my guidance and supervision in partial fulfillment of the requirements for the award of the Diploma in <strong>Applied AI & ML</strong> at <strong>Rajarambapu Institute of Technology, Islampur</strong>, during the academic year <strong>2025–2026</strong>.</p><table class="sig-table"><tr><td>___________________<br><strong>Guide</strong></td><td>___________________<br><strong>H.O.D.</strong></td><td>___________________<br><strong>Principal</strong></td></tr><tr><td colspan="3" style="text-align:left; padding-top:1cm;">Date: _______________<br>Place: Islampur</td></tr></table></div></div>
+<div class='section-wrapper'><h1>Acknowledgement</h1>
+<p>I express sincere gratitude to <strong>[Guide Name]</strong> for guidance and feedback, to the <strong>Department of Applied AI &amp; ML</strong> for providing laboratory resources, to my group members for their dedicated collaboration, and to my parents for their unwavering support throughout this project.</p></div>
+<div class='section-wrapper'><h1>Table of Contents</h1>
+<ul>
+<li>Title Page ............................................................... i  </li>
+<li>Certificate of the Guide ................................................ ii  </li>
+<li>Acknowledgement ......................................................... iii  </li>
+<li>Index / Contents ........................................................ iv  </li>
+<li>Abstract ............................................................... v  </li>
+<li>List of Figures ........................................................ vi  </li>
+<li>List of Tables ......................................................... vii  </li>
+<li>Chapter–1 Introduction ................................................. 1  </li>
+<li>Chapter–2 Literature Survey ............................................. 5  </li>
+<li>Chapter–3 Scope of the Project .......................................... 9  </li>
+<li>Chapter–4 Methodology / Approach ........................................ 13  </li>
+<li>Chapter–5 Designs, Working and Processes ............................... 18  </li>
+<li>Chapter–6 Results and Applications ...................................... 27  </li>
+<li>Chapter–7 Conclusion ................................................... 32  </li>
+<li>References ............................................................. 34</li>
+</ul></div>
+<div class='section-wrapper'><h1>Abstract</h1>
+<p>This project presents <strong>Attendro</strong>, an intelligent, portable, and offline-first biometric attendance system designed for educational institutes. Addressing the limitations of fixed biometric terminals and proxy-prone manual registers, Attendro introduces a <strong>session-controlled</strong> architecture where attendance can only be marked during active, authorized lecture sessions. The system integrates an <strong>ESP32-based portable device</strong> with a fingerprint sensor, a <strong>Supabase (Cloud)</strong> backend for real-time synchronization, and a <strong>Faculty Web App</strong> for session management. </p>
+<p>Key innovations include <strong>Time-Variant Batch Locking</strong> (ensuring students only mark attendance for their specific batch), <strong>Offline-First Synchronization</strong> (queueing scans when Wi-Fi is unavailable), and <strong>Context-Aware AI Rules</strong> that validate scans against subject, class, and schedule constraints locally. This system satisfies AIML diploma requirements by leveraging biometric pattern recognition and rule-based decision intelligence to ensure data integrity and operational efficiency.</p></div>
+<div class='section-wrapper'><h1>List of Figures</h1>
+<ol>
+<li>System Architecture Diagram – Figure 1  </li>
+<li>Database Schema (ER Diagram) – Figure 2  </li>
+<li>User Workflow &amp; Experience – Figure 3  </li>
+<li>Device Interface &amp; Wiring – Figure 4  </li>
+<li>Security Model &amp; Session Token Flow – Figure 5  </li>
+<li>Use Case Diagram – Figure 6  </li>
+<li>Context-Level DFD – Figure 7  </li>
+</ol></div>
+<div class='section-wrapper'><h1>List of Tables</h1>
+<ol>
+<li>Pin Configuration (ESP32 to R307/OLED) – Table 1  </li>
+<li>Security Threat Matrix – Table 2  </li>
+<li>Database Entities Description – Table 3  </li>
+</ol>
+<hr /></div>
+<div class='section-wrapper'><h1>Chapter 1 Introduction</h1>
+<h2>1.1 Problem Statement</h2>
+<p>Polytechnic institutes and colleges today face significant challenges in attendance management:
+1.  <strong>Proxy Attendance:</strong> Manual rolls are easily manipulated, and QR-code systems can be shared remotely.
+2.  <strong>Lack of Context:</strong> Standard biometric machines allow "punching in" at any time, even if the student skips the actual lecture.
+3.  <strong>Data Fragmentation:</strong> Attendance data is often siloed in physical registers, delaying the generation of defaulter lists and compliance reports.
+4.  <strong>Fixed Infrastructure:</strong> Wall-mounted biometric devices are expensive to install in every classroom and laboratory.</p>
+<h2>1.2 Objectives</h2>
+<p>The primary objective is to design and build a <strong>Portable, Session-Controlled Biometric Attendance System</strong> that ensures attendance is taken only during an active lecture session for the correct subject, class, and batch.
+Specific sub-objectives include:
+- <strong>Portable Hardware:</strong> Develop an ESP32-based battery-powered device that moves with the faculty.
+- <strong>Session Control:</strong> Implement "Session Tokens" to lock attendance to specific time windows.
+- <strong>Offline Resilience:</strong> Ensure the system works without active Internet, syncing data when connectivity returns.
+- <strong>AI Integration:</strong> Incorporate biometric pattern recognition and rule-based AI for context verification.
+- <strong>Real-Time Analytics:</strong> Provide instant access to attendance stats via a web dashboard.</p>
+<h2>1.3 Constraints and Assumptions</h2>
+<ul>
+<li>The device relies on periodic Wi-Fi connectivity for synchronization.</li>
+<li>Fingerprint templates are stored securely and matched either on-device or on-server depending on mode.</li>
+<li>Faculty are responsible for charging the portable devices and initiating sessions via their smartphones.</li>
+</ul>
+<hr /></div>
+<div class='section-wrapper'><h1>Chapter 2 Literature Survey</h1>
+<ul>
+<li><strong>Biometric Systems:</strong> Traditional fixed systems provide high accuracy but lack schedule awareness (Ross &amp; Jain, 2021). Students can mark attendance and leave class.</li>
+<li><strong>IoT Attendance:</strong> Recent IEEE papers discuss IoT-enabled attendance, but many lack offline queuing mechanisms, leading to data loss in unstable networks.</li>
+<li><strong>Session-Based Tokenization:</strong> Secure systems in banking use time-limited tokens; we adapt this for attendance, generating a unique token for every lecture slot.</li>
+<li><strong>Gap Analysis:</strong> Existing solutions are either purely software (easy to spoof) or purely hardware (dumb terminals). Attendro bridges this by making the hardware "context-aware" via a cloud connection.</li>
+</ul>
+<hr /></div>
+<div class='section-wrapper'><h1>Chapter 3 Scope of the Project</h1>
+<h2>3.1 Overview</h2>
+<p>The project scope covers the end-to-end development of hardware, firmware, cloud infrastructure, and a web application.</p>
+<h2>3.2 In-Scope Deliverables</h2>
+<ol>
+<li><strong>Portable Device Firmware (ESP32):</strong><ul>
+<li>Wi-Fi connectivity and Session Polling.</li>
+<li>Fingerprint acquisition and Template generation.</li>
+<li>Local Rule Engine (Context checks).</li>
+<li>Offline Queue Management and Synchronization logic.</li>
+</ul>
+</li>
+<li><strong>Central Cloud (Supabase):</strong><ul>
+<li>SQL Schema for Users, Classes, and Attendance.</li>
+<li>Edge Functions for <code>start_session</code>, <code>mark_attendance</code>, and <code>sync_offline</code>.</li>
+<li>Row-Level Security (RLS) to protect flexible data.</li>
+</ul>
+</li>
+<li><strong>Faculty/Admin Web Interface:</strong><ul>
+<li>Dashboard for Timetable and Analytics.</li>
+<li>Session Control (Start/End).</li>
+<li>Reporting Module (Defaulters, PDF Export).</li>
+</ul>
+</li>
+</ol>
+<h2>3.3 Out-of-Scope</h2>
+<ul>
+<li>Advanced face recognition or iris scanning.</li>
+<li>Payroll processing integration.</li>
+<li>Hardware enclosure manufacturing (prototype uses acrylic/3D print case).</li>
+</ul>
+<hr /></div>
+<div class='section-wrapper'><h1>Chapter 4 Methodology / Approach</h1>
+<h2>4.1 System Overview</h2>
+<p>The system comprises three main interconnected components:
+1.  <strong>Portable Device:</strong> Handheld unit carried by faculty to class. It serves as the capture point.
+    - <em>Hardware:</em> ESP32 Controller, R307 Fingerprint Sensor, 0.96" OLED Display, Rechargeable Battery.
+    - <em>Identity:</em> Each device has a burned-in, unique <code>device_code</code>.
+2.  <strong>Central Cloud (Supabase):</strong> The brain of the system.
+    - Stores all Master Data (Students, Subjects) and Transaction Data (Sessions, Logs).
+    - Runs "Edge Functions" (Serverless API) to handle complex logic securely.
+3.  <strong>Faculty App (Web):</strong> The control center.
+    - Allows faculty to log in, select their current class/subject, and "Start Session" on a specific device code.</p>
+<h2>4.2 Device Logic &amp; Workflow</h2>
+<p>The device operates in a continuous state machine loop:
+1.  <strong>Boot:</strong> Connects to Wi-Fi and displays its <code>device_code</code>.
+2.  <strong>Poll:</strong> Periodically checks the Cloud for an "Active Session" linked to its ID.
+3.  <strong>Session Active:</strong> Once a session starts, it locks to that Class/Subject. The OLED displays "Marketing: [Subject]".
+4.  <strong>Scan &amp; Capture:</strong>
+    - Student places finger.
+    - Device captures image -&gt; extracts Template.
+    - Device verifies <strong>Context Rules</strong> locally (Is this batch allowed? Duplicate scan?).
+5.  <strong>Sync:</strong>
+    - <strong>Online:</strong> Pushes data immediately to Cloud Edge Function.
+    - <strong>Offline:</strong> Saves scan to onboard memory (Queue) with timestamp. Pushes when Wi-Fi returns.</p>
+<h2>4.3 Offline-First &amp; Sync Strategy</h2>
+<p>To ensure robustness in campus environments with spotty Wi-Fi:
+- <strong>Local Queue:</strong> The ESP32 maintains a circular buffer of attendance records.
+- <strong>Deferred Matching:</strong> If the server cannot be reached, the scan is stored. Upon reconnection, the queue is flushed in batches.
+- <strong>Integrity Check:</strong> Records are only deleted from the device queue after receiving a positive <code>200 OK</code> acknowledgement from the server. This guarantees zero data loss.</p>
+<h2>4.4 AI &amp; AIML Justification</h2>
+<p>This project meets AIML diploma requirements through:
+1.  <strong>Biometric Pattern Recognition:</strong> The core sensor performs feature extraction (minutiae points) and template matching, a fundamental pattern recognition task.
+2.  <strong>Context-Aware Rule-Based Intelligence:</strong> The device implements a "Classical AI" rule engine (If-Then logic) to make autonomous decisions:
+    - <em>If</em> Current Time &gt; End Time → Reject.
+    - <em>If</em> Roll No is not in Batch A → Reject.
+    - <em>If</em> Student already marked → Reject.
+3.  <strong>Behavioral Analysis (Future/Server-side):</strong> collected timestamp data can be analyzed to detect anomalies, such as "Rapid Fire Scans" indicating a potential bypass attempt.</p>
+<hr /></div>
+<div class='section-wrapper'><h1>Chapter 5 Designs, Working and Processes</h1>
+<h2>5.1 Hardware Design</h2>
+<ul>
+<li><strong>Controller:</strong> ESP32 DevKit V1 (Dual-core, Wi-Fi/BLE).</li>
+<li><strong>Biometric Sensor:</strong> R307 / Waveshare Optical Sensor (UART interface).</li>
+<li><strong>Display:</strong> SSD1306 I2C OLED (Visual feedback for students).</li>
+<li><strong>Power:</strong> Li-Ion Battery with TP4056 charging module.</li>
+</ul>
+<h2>5.2 Database Description (Supabase)</h2>
+<p>The database is normalized to ensure consistency:
+- <code>devices</code>: Stores <code>device_code</code>, <code>status</code>, and <code>last_seen_at</code>.
+- <code>lecture_sessions</code>: The core entity connecting <code>faculty_id</code>, <code>device_code</code>, <code>subject_id</code>, <code>class_id</code>, <code>batch_id</code>, and <code>session_token</code>.
+- <code>students</code>: Contains <code>roll_no</code>, <code>fingerprint_template</code> (optional), and mapping to multiple classes.
+- <code>attendance_records</code>: Use <code>session_id</code> and <code>roll_no</code> as unique composite keys to prevent duplicates.
+- <code>finger_templates</code>: Central repository for "Enroll Once, Use Anywhere".</p>
+<h2>5.3 Session &amp; Context Rules (The Verification Logic)</h2>
+<p>A scan is only accepted if it passes the following <strong>Context Rules</strong>:
+1.  <strong>Time Window:</strong> <code>Current Time</code> must be between <code>session.start</code> and <code>session.end</code>.
+2.  <strong>Device Match:</strong> The provided <code>session_token</code> matches the device's current active session.
+3.  <strong>Batch Lock:</strong> If the session is for "Batch A" (e.g., Roll 1-20), a student with Roll 25 is rejected.
+4.  <strong>De-Duplication:</strong> Checks if <code>attendance_records</code> already contains this <code>roll_no</code> for this <code>session_id</code>.</p>
+<h2>5.4 Use Case Scenarios</h2>
+<p><strong>Scenario A: Normal Lecture</strong>
+1. Faculty enters class, opens Web App.
+2. Selects "Third Year", "Data Structures", "Theory".
+3. Clicks "Start Session".
+4. Device beeps and shows "Data Structures Active".
+5. Device is passed around; students scan.
+6. Faculty clicks "End Session". Report is generated instantly.</p>
+<p><strong>Scenario B: No Internet</strong>
+1. Session starts (while online or cached).
+2. Internet cuts out.
+3. Students continue scanning; device shows "Saved Offline".
+4. Faculty returns to staff room (Wi-Fi restored).
+5. Device automatically flushes queue; server processes records.</p>
+<hr /></div>
+<div class='section-wrapper'><h1>Chapter 6 Results and Applications</h1>
+<h2>6.1 Innovation &amp; Novelty</h2>
+<ol>
+<li><strong>Session-Controlled Attendance:</strong> Unlike standard biometrics that accept any finger at any time, Attendro only unlocks for specific, authorized windows.</li>
+<li><strong>Portable &amp; Wire-Free:</strong> The battery-powered design allows it to be used in labs, seminar halls, or playgrounds without wiring.</li>
+<li><strong>Smart Batch Locking:</strong> Enforces attendance rules strictly (e.g., stopping Batch B students from attending Batch A labs).</li>
+<li><strong>Hybrid AI Approach:</strong> Combines edge-based rule intelligence with cloud-based analytics.</li>
+</ol>
+<h2>6.2 Application Areas</h2>
+<ul>
+<li><strong>Polytechnic &amp; Engineering Colleges:</strong> For theory lectures, practical labs, and workshops.</li>
+<li><strong>Seminar Halls:</strong> For tracking attendance at guest lectures.</li>
+<li><strong>Examination Halls:</strong> For verifying student identity before exams.</li>
+</ul>
+<h2>6.3 Expected Results</h2>
+<ul>
+<li><strong>Accuracy:</strong> &gt;98% True Acceptance Rate on fingerprints.</li>
+<li><strong>Speed:</strong> &lt;2 seconds per student scan-to-verify.</li>
+<li><strong>Efficiency:</strong> Reduces attendance taking time from 10 minutes (manual) to ~2 minutes (parallel scanning).</li>
+</ul>
+<hr /></div>
+<div class='section-wrapper'><h1>Chapter 7 Conclusion</h1>
+<p>Attendro successfully demonstrates how IoT and AI can modernize a legacy process. By decoupling the biometric sensor from the wall and connecting it to a session-aware cloud brain, we eliminate proxy attendance and automate the tedious task of compliance reporting. The system is offline-tolerant, secure, and user-friendly, making it a viable product for educational institutions.</p>
+<hr /></div>
+<div class='section-wrapper'><h1>References</h1>
+<p>[1] Ross, A., &amp; Jain, A. (2021). "Biometric sensor interoperability". <em>IEEE Trans. on PAMI</em>.<br />
+[2] Espressif Systems. (2023). "ESP32 Technical Reference Manual".<br />
+[3] Supabase. (2024). "Realtime &amp; Edge Functions Documentation".<br />
+[4] "R307 Optical Fingerprint Sensor Datasheet", Hangzhou Grow Technology.  </p>
+<hr />
+<p><em>Diagrams referenced in List of Figures are available in the project documentation folder.</em></p></div>
+</body></html>

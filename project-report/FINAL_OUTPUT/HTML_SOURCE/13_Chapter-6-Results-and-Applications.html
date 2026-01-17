@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Chapter–6 Results and Applications</title>
+<style>
+
+@page {
+    size: A4;
+    margin-top: 2.5cm;
+    margin-bottom: 1.25cm;
+    margin-left: 3.5cm;
+    margin-right: 1.25cm;
+    @bottom-center {
+        content: counter(page);
+        font-family: "Times New Roman", Times, serif;
+        font-size: 10pt;
+    }
+}
+
+body {
+    font-family: "Times New Roman", Times, serif;
+    font-size: 12pt;
+    line-height: 2; /* Double space */
+    text-align: justify;
+    margin: 0;
+}
+
+/* Chapter Name / Topic Name - TNR 14 Capital */
+h1 {
+    font-size: 14pt;
+    font-weight: bold;
+    text-transform: uppercase;
+    text-align: center;
+    page-break-before: always;
+    margin-top: 0;
+}
+
+/* Section Heading - TNR 12 Capital Bold */
+h2 {
+    font-size: 12pt;
+    font-weight: bold;
+    text-transform: uppercase;
+    margin-top: 24pt;
+    margin-bottom: 12pt;
+    page-break-after: avoid;
+    text-align: left; /* Usually sections are left aligned, but rule doesn't specify, standard is left */
+}
+
+/* Subsection Heading - TNR 12 Bold Normal */
+h3 {
+    font-size: 12pt;
+    font-weight: bold;
+    text-transform: none;
+    margin-top: 18pt;
+    margin-bottom: 12pt;
+    page-break-after: avoid;
+    text-align: left;
+}
+
+p {
+    margin-bottom: 12pt;
+    text-indent: 0; 
+}
+
+/* Tables */
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 12pt;
+    line-height: 1.5; /* Single/1.5 space inside tables usually looks better */
+}
+th, td {
+    border: 1px solid black;
+    padding: 6pt;
+    vertical-align: top;
+    text-align: left;
+}
+
+ul, ol {
+    margin-bottom: 12pt;
+}
+
+/* Cover Page Specifics */
+.cover-page {
+    text-align: center;
+    page-break-after: always;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    height: 90vh; /* Simulate full page centering */
+}
+.cover-title {
+    font-size: 16pt;
+    font-weight: bold;
+    text-transform: uppercase;
+    margin-bottom: 2cm;
+}
+.cover-info {
+    font-size: 14pt;
+    margin-bottom: 1cm;
+}
+
+/* Hide the page number on title page? Usually yes, but user said 'Title Page (i)' */
+/* We will let it handle automatic numbering or custom */
+
+
+</style>
+</head>
+<body>
+<h1>Chapter–6 Results and Applications</h1>
+<h3>6.1 Innovation &amp; Novelty</h3>
+<ol>
+<li><strong>Session-Controlled Attendance:</strong> Unlike standard biometrics that accept any finger at any time, Attendro only unlocks for specific, authorized windows.</li>
+<li><strong>Portable &amp; Wire-Free:</strong> The battery-powered design allows it to be used in labs, seminar halls, or playgrounds without wiring.</li>
+<li><strong>Smart Batch Locking:</strong> Enforces attendance rules strictly (e.g., stopping Batch B students from attending Batch A labs).</li>
+<li><strong>Hybrid AI Approach:</strong> Combines edge-based rule intelligence with cloud-based analytics.</li>
+</ol>
+<h3>6.2 Application Areas</h3>
+<ul>
+<li><strong>Polytechnic &amp; Engineering Colleges:</strong> For theory lectures, practical labs, and workshops.</li>
+<li><strong>Seminar Halls:</strong> For tracking attendance at guest lectures.</li>
+<li><strong>Examination Halls:</strong> For verifying student identity before exams.</li>
+</ul>
+<h3>6.3 Expected Results</h3>
+<ul>
+<li><strong>Accuracy:</strong> &gt;98% True Acceptance Rate on fingerprints.</li>
+<li><strong>Speed:</strong> &lt;2 seconds per student scan-to-verify.</li>
+<li><strong>Efficiency:</strong> Reduces attendance taking time from 10 minutes (manual) to ~2 minutes (parallel scanning).</li>
+</ul>
+<hr />
+</body>
+</html>

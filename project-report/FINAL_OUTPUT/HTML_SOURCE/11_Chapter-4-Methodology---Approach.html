@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Chapter–4 Methodology / Approach</title>
+<style>
+
+@page {
+    size: A4;
+    margin-top: 2.5cm;
+    margin-bottom: 1.25cm;
+    margin-left: 3.5cm;
+    margin-right: 1.25cm;
+    @bottom-center {
+        content: counter(page);
+        font-family: "Times New Roman", Times, serif;
+        font-size: 10pt;
+    }
+}
+
+body {
+    font-family: "Times New Roman", Times, serif;
+    font-size: 12pt;
+    line-height: 2; /* Double space */
+    text-align: justify;
+    margin: 0;
+}
+
+/* Chapter Name / Topic Name - TNR 14 Capital */
+h1 {
+    font-size: 14pt;
+    font-weight: bold;
+    text-transform: uppercase;
+    text-align: center;
+    page-break-before: always;
+    margin-top: 0;
+}
+
+/* Section Heading - TNR 12 Capital Bold */
+h2 {
+    font-size: 12pt;
+    font-weight: bold;
+    text-transform: uppercase;
+    margin-top: 24pt;
+    margin-bottom: 12pt;
+    page-break-after: avoid;
+    text-align: left; /* Usually sections are left aligned, but rule doesn't specify, standard is left */
+}
+
+/* Subsection Heading - TNR 12 Bold Normal */
+h3 {
+    font-size: 12pt;
+    font-weight: bold;
+    text-transform: none;
+    margin-top: 18pt;
+    margin-bottom: 12pt;
+    page-break-after: avoid;
+    text-align: left;
+}
+
+p {
+    margin-bottom: 12pt;
+    text-indent: 0; 
+}
+
+/* Tables */
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 12pt;
+    line-height: 1.5; /* Single/1.5 space inside tables usually looks better */
+}
+th, td {
+    border: 1px solid black;
+    padding: 6pt;
+    vertical-align: top;
+    text-align: left;
+}
+
+ul, ol {
+    margin-bottom: 12pt;
+}
+
+/* Cover Page Specifics */
+.cover-page {
+    text-align: center;
+    page-break-after: always;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    height: 90vh; /* Simulate full page centering */
+}
+.cover-title {
+    font-size: 16pt;
+    font-weight: bold;
+    text-transform: uppercase;
+    margin-bottom: 2cm;
+}
+.cover-info {
+    font-size: 14pt;
+    margin-bottom: 1cm;
+}
+
+/* Hide the page number on title page? Usually yes, but user said 'Title Page (i)' */
+/* We will let it handle automatic numbering or custom */
+
+
+</style>
+</head>
+<body>
+<h1>Chapter–4 Methodology / Approach</h1>
+<h3>4.1 System Overview</h3>
+<p>The system comprises three main interconnected components:
+1.  <strong>Portable Device:</strong> Handheld unit carried by faculty to class. It serves as the capture point.
+    - <em>Hardware:</em> ESP32 Controller, R307 Fingerprint Sensor, 0.96" OLED Display, Rechargeable Battery.
+    - <em>Identity:</em> Each device has a burned-in, unique <code>device_code</code>.
+2.  <strong>Central Cloud (Supabase):</strong> The brain of the system.
+    - Stores all Master Data (Students, Subjects) and Transaction Data (Sessions, Logs).
+    - Runs "Edge Functions" (Serverless API) to handle complex logic securely.
+3.  <strong>Faculty App (Web):</strong> The control center.
+    - Allows faculty to log in, select their current class/subject, and "Start Session" on a specific device code.</p>
+<h3>4.2 Device Logic &amp; Workflow</h3>
+<p>The device operates in a continuous state machine loop:
+1.  <strong>Boot:</strong> Connects to Wi-Fi and displays its <code>device_code</code>.
+2.  <strong>Poll:</strong> Periodically checks the Cloud for an "Active Session" linked to its ID.
+3.  <strong>Session Active:</strong> Once a session starts, it locks to that Class/Subject. The OLED displays "Marketing: [Subject]".
+4.  <strong>Scan &amp; Capture:</strong>
+    - Student places finger.
+    - Device captures image -&gt; extracts Template.
+    - Device verifies <strong>Context Rules</strong> locally (Is this batch allowed? Duplicate scan?).
+5.  <strong>Sync:</strong>
+    - <strong>Online:</strong> Pushes data immediately to Cloud Edge Function.
+    - <strong>Offline:</strong> Saves scan to onboard memory (Queue) with timestamp. Pushes when Wi-Fi returns.</p>
+<h3>4.3 Offline-First &amp; Sync Strategy</h3>
+<p>To ensure robustness in campus environments with spotty Wi-Fi:
+- <strong>Local Queue:</strong> The ESP32 maintains a circular buffer of attendance records.
+- <strong>Deferred Matching:</strong> If the server cannot be reached, the scan is stored. Upon reconnection, the queue is flushed in batches.
+- <strong>Integrity Check:</strong> Records are only deleted from the device queue after receiving a positive <code>200 OK</code> acknowledgement from the server. This guarantees zero data loss.</p>
+<h3>4.4 AI &amp; AIML Justification</h3>
+<p>This project meets AIML diploma requirements through:
+1.  <strong>Biometric Pattern Recognition:</strong> The core sensor performs feature extraction (minutiae points) and template matching, a fundamental pattern recognition task.
+2.  <strong>Context-Aware Rule-Based Intelligence:</strong> The device implements a "Classical AI" rule engine (If-Then logic) to make autonomous decisions:
+    - <em>If</em> Current Time &gt; End Time → Reject.
+    - <em>If</em> Roll No is not in Batch A → Reject.
+    - <em>If</em> Student already marked → Reject.
+3.  <strong>Behavioral Analysis (Future/Server-side):</strong> collected timestamp data can be analyzed to detect anomalies, such as "Rapid Fire Scans" indicating a potential bypass attempt.</p>
+<hr />
+</body>
+</html>

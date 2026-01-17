@@ -1,0 +1,168 @@
+<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Chapter 5 Designs, Working and Processes</title><style>
+@page {
+    size: A4;
+    margin-top: 2.5cm;
+    margin-bottom: 1.25cm;
+    margin-left: 3.5cm;
+    margin-right: 1.25cm;
+    @bottom-center {
+        content: counter(page);
+        font-family: "Times New Roman", Times, serif;
+        font-size: 10pt;
+    }
+}
+
+body {
+    font-family: "Times New Roman", Times, serif;
+    font-size: 12pt;
+    line-height: 2; /* Double space */
+    text-align: justify;
+    margin: 0;
+}
+
+/* Chapter Name / Topic Name - TNR 14 Capital */
+h1 {
+    font-size: 14pt;
+    font-weight: bold;
+    text-transform: uppercase;
+    text-align: center;
+    page-break-before: always;
+    margin-top: 0;
+}
+
+/* Section Heading - TNR 12 Capital Bold */
+h2 {
+    font-size: 12pt;
+    font-weight: bold;
+    text-transform: uppercase;
+    margin-top: 24pt;
+    margin-bottom: 12pt;
+    page-break-after: avoid;
+    text-align: left;
+}
+
+/* Subsection Heading - TNR 12 Bold Normal */
+h3 {
+    font-size: 12pt;
+    font-weight: bold;
+    text-transform: none;
+    margin-top: 18pt;
+    margin-bottom: 12pt;
+    page-break-after: avoid;
+    text-align: left;
+}
+
+p, li, div {
+    margin-bottom: 12pt;
+    text-indent: 0;
+}
+
+/* Tables */
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 12pt;
+    line-height: 1.5;
+}
+th, td {
+    border: 1px solid black;
+    padding: 6pt;
+    vertical-align: top;
+    text-align: left;
+}
+
+/* Special Layouts */
+
+/* 1. Title Page */
+.title-page-container {
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    height: 100%;
+    page-break-after: always;
+    line-height: 1.5; /* Looser on title page? Or keep double? Rule says report is double space. Title page can be exception or standard. */
+}
+.title-project-title {
+    font-size: 16pt; /* Slightly bigger for visual distinction, or keep 14 capital per rule */
+    font-weight: bold;
+    text-transform: uppercase;
+    margin-bottom: 2cm;
+}
+.title-label {
+    font-weight: bold;
+    margin-top: 1cm;
+}
+.title-value {
+    margin-bottom: 0.5cm;
+    text-transform: uppercase; /* Often names are uppercase on covers */
+}
+
+/* 2. Certificate */
+.certificate-container {
+    text-align: justify;
+    page-break-after: always;
+}
+.cert-title {
+    text-align: center;
+    text-transform: uppercase;
+    font-weight: bold;
+    font-size: 14pt;
+    margin-bottom: 2cm;
+}
+.cert-signatures {
+    margin-top: 3cm;
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap; /* In case WeasyPrint supports flex well */
+}
+/* Weasyprint flex support is decent, but table is safer for signatures */
+.sig-table {
+    width: 100%;
+    border: none;
+    margin-top: 3cm;
+}
+.sig-table td {
+    border: none;
+    text-align: center;
+    vertical-align: bottom;
+    height: 2cm;
+}
+
+</style></head><body><h1>Chapter 5 Designs, Working and Processes</h1>
+<h2>5.1 Hardware Design</h2>
+<ul>
+<li><strong>Controller:</strong> ESP32 DevKit V1 (Dual-core, Wi-Fi/BLE).</li>
+<li><strong>Biometric Sensor:</strong> R307 / Waveshare Optical Sensor (UART interface).</li>
+<li><strong>Display:</strong> SSD1306 I2C OLED (Visual feedback for students).</li>
+<li><strong>Power:</strong> Li-Ion Battery with TP4056 charging module.</li>
+</ul>
+<h2>5.2 Database Description (Supabase)</h2>
+<p>The database is normalized to ensure consistency:
+- <code>devices</code>: Stores <code>device_code</code>, <code>status</code>, and <code>last_seen_at</code>.
+- <code>lecture_sessions</code>: The core entity connecting <code>faculty_id</code>, <code>device_code</code>, <code>subject_id</code>, <code>class_id</code>, <code>batch_id</code>, and <code>session_token</code>.
+- <code>students</code>: Contains <code>roll_no</code>, <code>fingerprint_template</code> (optional), and mapping to multiple classes.
+- <code>attendance_records</code>: Use <code>session_id</code> and <code>roll_no</code> as unique composite keys to prevent duplicates.
+- <code>finger_templates</code>: Central repository for "Enroll Once, Use Anywhere".</p>
+<h2>5.3 Session &amp; Context Rules (The Verification Logic)</h2>
+<p>A scan is only accepted if it passes the following <strong>Context Rules</strong>:
+1.  <strong>Time Window:</strong> <code>Current Time</code> must be between <code>session.start</code> and <code>session.end</code>.
+2.  <strong>Device Match:</strong> The provided <code>session_token</code> matches the device's current active session.
+3.  <strong>Batch Lock:</strong> If the session is for "Batch A" (e.g., Roll 1-20), a student with Roll 25 is rejected.
+4.  <strong>De-Duplication:</strong> Checks if <code>attendance_records</code> already contains this <code>roll_no</code> for this <code>session_id</code>.</p>
+<h2>5.4 Use Case Scenarios</h2>
+<p><strong>Scenario A: Normal Lecture</strong>
+1. Faculty enters class, opens Web App.
+2. Selects "Third Year", "Data Structures", "Theory".
+3. Clicks "Start Session".
+4. Device beeps and shows "Data Structures Active".
+5. Device is passed around; students scan.
+6. Faculty clicks "End Session". Report is generated instantly.</p>
+<p><strong>Scenario B: No Internet</strong>
+1. Session starts (while online or cached).
+2. Internet cuts out.
+3. Students continue scanning; device shows "Saved Offline".
+4. Faculty returns to staff room (Wi-Fi restored).
+5. Device automatically flushes queue; server processes records.</p>
+<hr /></body></html>
