@@ -11,6 +11,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { getClasses } from '@/services/classes';
 import { toast } from '@/hooks/use-toast';
 import { downloadCSV, generatePDFContent, printPDF } from '@/utils/export';
+import ReportPreviewDialog from '@/components/ReportPreviewDialog';
 
 const AdminFineManagement: React.FC = () => {
   const [loading, setLoading] = useState(false);
@@ -19,6 +20,9 @@ const AdminFineManagement: React.FC = () => {
   const [finePerDay, setFinePerDay] = useState<number>(100);
   const [bookName, setBookName] = useState<string>('');
   const [defaulters, setDefaulters] = useState<any[]>([]);
+  const [showPreview, setShowPreview] = useState(false);
+  const [previewContent, setPreviewContent] = useState('');
+  const [previewTitle, setPreviewTitle] = useState('');
   
   // Filters
   const [classFilter, setClassFilter] = useState('all');
@@ -191,12 +195,9 @@ const AdminFineManagement: React.FC = () => {
         </div>
     `;
     
-    const printWindow = window.open('', '', 'width=800,height=600');
-    if (printWindow) {
-        printWindow.document.write(content);
-        printWindow.document.close();
-        printWindow.print();
-    }
+    setPreviewContent(content);
+    setPreviewTitle(bookName || `Fine-Report-${selectedMonth}`);
+    setShowPreview(true);
   };
 
   const columns = [
@@ -274,16 +275,16 @@ const AdminFineManagement: React.FC = () => {
             {defaulters.length > 0 && (
                 <div className="pt-4 border-t border-border/50 animate-in fade-in slide-in-from-bottom-4">
                     <div className="flex justify-between items-center mb-4">
-                        <div className="space-y-1">
+                        <div className="space-y-1 w-full sm:w-auto">
                              <Label>Book Name / Report Title</Label>
-                             <div className="flex gap-2">
+                             <div className="flex flex-col sm:flex-row gap-2">
                                 <Input 
                                     placeholder={`Report-${selectedMonth}`}
                                     value={bookName}
                                     onChange={(e) => setBookName(e.target.value)}
-                                    className="w-64"
+                                    className="w-full sm:w-64"
                                 />
-                                <Button variant="outline" onClick={handleExportPDF}>
+                                <Button variant="outline" onClick={handleExportPDF} className="w-full sm:w-auto">
                                     <Download className="w-4 h-4 mr-2" />
                                     Export Book
                                 </Button>
@@ -304,6 +305,12 @@ const AdminFineManagement: React.FC = () => {
                 </div>
             )}
         </div>
+        <ReportPreviewDialog 
+            open={showPreview} 
+            onOpenChange={setShowPreview} 
+            title={previewTitle} 
+            htmlContent={previewContent} 
+        />
       </motion.div>
     </PageShell>
   );

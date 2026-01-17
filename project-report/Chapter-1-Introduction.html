@@ -1,45 +1,214 @@
-
 <!DOCTYPE html>
 <html>
 <head>
 <meta charset="UTF-8">
+<script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+<script>mermaid.initialize({startOnLoad:true});</script>
 <style>
-/* Reset */
-body { font-family: 'Times New Roman', serif; line-height: 1.5; text-align: justify; }
-h1, h2, h3 { text-align: center; }
-p { margin-bottom: 1em; }
-table { width: 100%; border-collapse: collapse; margin: 1em 0; }
-th, td { border: 1px solid #000; padding: 5px; }
-.diagram-wrap { border: none !important; margin: 20px auto !important; width: 100% !important; }
+body { 
+    font-family: 'Times New Roman', serif; 
+    line-height: 2.0; 
+    text-align: justify; 
+    font-size: 12pt; 
+    margin: 1in; 
+    color: #000;
+}
+h1 { 
+    text-align: center; 
+    margin-bottom: 2rem; 
+    font-size: 16pt; 
+    font-weight: bold; 
+    text-transform: uppercase;
+}
+h2 { 
+    font-size: 14pt; 
+    font-weight: bold;
+    margin-top: 1.5rem; 
+}
+h3 { 
+    font-size: 13pt; 
+    font-weight: bold;
+    margin-top: 1rem; 
+}
+p { 
+    margin-bottom: 1em; 
+}
+ul, ol { 
+    margin: 1em 2em; 
+}
+li { 
+    margin-bottom: 0.5em; 
+}
+.diagram-container { 
+    text-align: center; 
+    margin: 2rem 0; 
+    padding: 10px;
+    border: 1px solid #ddd;
+}
+.caption { 
+    font-style: italic; 
+    text-align: center; 
+    margin-top: 0.5rem; 
+    font-size: 11pt; 
+    font-weight: bold;
+}
 </style>
 </head>
 <body>
-<h1>Chapter–1 Introduction</h1>
-<h3>1.1 Problem Statement</h3>
-<p>Polytechnic institutes and colleges today face significant challenges in attendance management:</p>
-<ol>
-<li><strong>Proxy Attendance:</strong> Manual rolls are easily manipulated, and QR-code systems can be shared remotely.</li>
-<li><strong>Lack of Context:</strong> Standard biometric machines allow &quot;punching in&quot; at any time, even if the student skips the actual lecture.</li>
-<li><strong>Data Fragmentation:</strong> Attendance data is often siloed in physical registers, delaying the generation of defaulter lists and compliance reports.</li>
-<li><strong>Fixed Infrastructure:</strong> Wall-mounted biometric devices are expensive to install in every classroom and laboratory.</li>
-</ol>
-<h3>1.2 Objectives</h3>
-<p>The primary objective is to design and build a <strong>Portable, Session-Controlled Biometric Attendance System</strong> that ensures attendance is taken only during an active lecture session for the correct subject, class, and batch.
-Specific sub-objectives include:</p>
+
+<h1>Chapter 1<br>Introduction</h1>
+
+<h2>1.1 Introduction</h2>
+<p>
+    In the dynamic landscape of educational administration, the accurate recording of student attendance remains a fundamental yet challenging task. Traditional methods of attendance tracking—primarily paper-based roll calls or sign-in sheets—have long been the standard in polytechnic institutes like the Rajarambapu Institute of Technology. However, these manual processes are increasingly proving to be inefficient, time-consuming, and prone to manipulation. As academic institutions strive for higher standards of accountability and data integrity, the limitations of archaic systems become glaringly obvious.
+</p>
+<p>
+    The advent of biometric technology promised a robust solution to identity verification. Early adopters integrated fingerprint scanners and facial recognition units into fixed entry points of buildings or classrooms. While this represented a significant leap forward in security, it introduced new rigidities. Fixed infrastructure requires substantial capital investment for installation in every lecture hall and laboratory. Moreover, a static device at a door cannot verify whether a student remains in the class for the duration of the lecture or merely "punches in" and leaves—a phenomenon that undermines the very purpose of attendance tracking.
+</p>
+<p>
+    This project, titled "Attendro: A Portable, Session-Controlled Biometric Attendance System with Centralized Fingerprint," proposes a paradigm shift. Moving away from fixed, location-centric systems, Attendro introduces a student-centric and session-centric approach. By coupling portable hardware with modern cloud synchronisation, the system empowers faculty members of the Department of Artificial Intelligence & Machine Learning to take attendance effortlessly, ensuring that the record reflects true classroom participation rather than simple presence on campus.
+</p>
+
+<h2>1.2 Problem Statement</h2>
+<p>
+    The motivation for developing Attendro stems from observing the operational inefficiencies in the current attendance management workflows within technical institutes. Specifically, four critical problems have been identified:
+</p>
+
+<h3>1.2.1 Proxy Attendance Verification</h3>
+<p>
+    In large classrooms, proxy attendance remains rampant. With manual roll calls, students often answer for absent friends. Even with basic digital solutions like QR codes, students can share the code images via messaging apps, allowing peers outside the classroom to mark their attendance remotely. This lack of verifiable physical presence compromises the integrity of academic records.
+</p>
+
+<h3>1.2.2 Lack of Session Context</h3>
+<p>
+    Most biometric systems are designed for access control rather than academic tracking. A wall-mounted device records that a student entered a room at 10:00 AM, but it fails to link that entry to a specific academic session (e.g., "Data Structures Lecture"). Consequently, administrators cannot easily distinguish between a student who attended a class and one who merely used the room for self-study. There is a disconnect between the <em>identity verification</em> and the <em>academic context</em>.
+</p>
+
+<h3>1.2.3 Data Fragmentation and Latency</h3>
+<p>
+    Currently, attendance data is often siloed in physical registers or isolated excel sheets maintained by individual faculty members. Collating this data to generate "Defaulter Lists" or monthly reports is a labour-intensive manual process that takes days. This latency prevents timely intervention for students who are falling behind.
+</p>
+
+<h3>1.2.4 Infrastructure Rigidity and Cost</h3>
+<p>
+    Installing biometric terminals in every classroom, tutorial room, and laboratory is cost-prohibitive. Wiring these devices for power and ethernet connectivity adds to the complexity. A fixed infrastructure also lacks flexibility; if a lecture is rescheduled to a seminar hall or outdoors, the attendance system cannot follow the class.
+</p>
+
+<h2>1.3 Proposed Solution: Attendro</h2>
+<p>
+    "Attendro" addresses these challenges by decentralising the hardware while centralising the data. The core of the solution is a <strong>Portable Biometric Device</strong> powered by an ESP32 microcontroller, which is carried by the faculty member to the class, much like a marker or a duster.
+</p>
+<p>
+    The workflow is designed for strictly "Session-Controlled" attendance:
+    <ol>
+        <li><strong>Session Initiation:</strong> The faculty member logs into the Attendro Mobile App/Web Portal and creates a session (e.g., "Subject: NLP, Batch: A, Time: 10:00-11:00").</li>
+        <li><strong>Device Activation:</strong> The system generates a unique Session Token. The portable device fetches this token via Wi-Fi and enters "Scanning Mode".</li>
+        <li><strong>Verification:</strong> Students press their finger on the sensor. The device locally matches the fingerprint against a cached session list or sends the template to the server for verification.</li>
+        <li><strong>Real-Time Logging:</strong> Successful matches are immediately logged to the cloud database (Supabase) against the specific session ID.</li>
+        <li><strong>Closure:</strong> Once the teacher ends the session, the device stops accepting inputs, preventing late attendance.</li>
+    </ol>
+</p>
+<p>
+    This approach ensures that attendance is only possible when the authorized faculty member is present and the session is active, effectively eliminating proxy attendance and ensuring context.
+</p>
+
+<h2>1.4 Objectives</h2>
+<p>
+    The primary goal of this project is to develop a fully functional prototype of the Attendro system. The specific technical and functional objectives are:
+</p>
 <ul>
-<li><strong>Portable Hardware:</strong> Develop an ESP32-based battery-powered device that moves with the faculty.</li>
-<li><strong>Session Control:</strong> Implement &quot;Session Tokens&quot; to lock attendance to specific time windows.</li>
-<li><strong>Offline Resilience:</strong> Ensure the system works without active Internet, syncing data when connectivity returns.</li>
-<li><strong>AI Integration:</strong> Incorporate biometric pattern recognition and rule-based AI for context verification.</li>
-<li><strong>Real-Time Analytics:</strong> Provide instant access to attendance stats via a web dashboard.</li>
+    <li>
+        <strong>To Develop Portable Hardware:</strong> To design a battery-operated, handheld unit using the ESP32 microcontroller and an optical fingerprint sensor (R307/similar) that can operate for a full academic day on a single charge.
+    </li>
+    <li>
+        <strong>To Implement Session Control Logic:</strong> To create a software architecture where biometric inputs are only valid within a time-bound window defined by the faculty, linking every scan to a specific academic subject and topic.
+    </li>
+    <li>
+        <strong>To Ensure Offline Resilience:</strong> To engineer the device to store attendance logs locally in non-volatile memory if Wi-Fi connectivity is lost, and automatically synchronise with the central server once connectivity is restored.
+    </li>
+    <li>
+        <strong>To Create a Centralised Management Dashboard:</strong> To develop a web-based interface for the HOD and faculty to view real-time statistics, manage student enrolment, and generate automated compliance reports (e.g., PDF/Excel exports).
+    </li>
 </ul>
-<h3>1.3 Constraints and Assumptions</h3>
-<ul>
-<li>The device relies on periodic Wi-Fi connectivity for synchronization.</li>
-<li>Fingerprint templates are stored securely and matched either on-device or on-server depending on mode.</li>
-<li>Faculty are responsible for charging the portable devices and initiating sessions via their smartphones.</li>
-</ul>
-<hr />
+
+<h2>1.5 Scope of the Project</h2>
+<p>
+    <strong>In Scope:</strong>
+    <ul>
+        <li>Development of the ESP32 firmware for fingerprint scanning and Wi-Fi communication.</li>
+        <li>Creation of the backend database using Supabase (PostgreSQL) for user management and log storage.</li>
+        <li>Development of a Faculty Web Interface for starting sessions and viewing reports.</li>
+        <li>Implementation of "Store and Forward" logic for offline scenarios.</li>
+        <li>Biometric template management (enrolment and verification).</li>
+    </ul>
+</p>
+<p>
+    <strong>Out of Scope:</strong>
+    <ul>
+        <li>Integration with the institute's existing legacy ERP system (standalone operation is prioritised).</li>
+        <li>Facial recognition or Iris scanning biometric modalities.</li>
+        <li>Hardware casing manufacturing (3D printing is conceptual, not industrial grade).</li>
+    </ul>
+</p>
+
+<h2>1.6 Significance of the Project</h2>
+<p>
+    For the <strong>Department of AI & ML</strong> at <strong>Rajarambapu Institute of Technology</strong>, the deployment of Attendro signifies a step towards a "Smart Campus." It reduces the administrative burden on faculty, allowing them to focus more on teaching rather than record-keeping. The transparency of the digital records builds trust between students and administration. Furthermore, the generated data can provide insights into student behaviour patterns, correlating attendance with academic performance, which is invaluable for the educational ecosystem.
+</p>
+
+<h2>1.7 System Overview Diagrams</h2>
+
+<div class="diagram-container">
+    <div class="mermaid">
+    graph TD
+        subgraph "Existing Problem"
+            A[Manual/Static System] -->|Vulnerable| B(Proxy Booking)
+            A -->|Delay| C(Data Silos)
+            A -->|Expensive| D(Fixed Hardware)
+        end
+
+        subgraph "Attendro Solution"
+            E[Attendro Portable Unit] -->|Secure| F(Biometric Verification)
+            E -->|Real-time| G(Cloud Sync)
+            E -->|Cost Effective| H(One Device per Faculty)
+        end
+
+        B -.->|Eliminated by| F
+        C -.->|Solved by| G
+        D -.->|Optimized by| H
+    </div>
+    <div class="caption">Figure 1.1: Problem vs. Solution Conceptual View</div>
+</div>
+
+<div class="diagram-container">
+    <div class="mermaid">
+    flowchart LR
+        subgraph "Classroom Environment"
+            Faculty[Faculty Mobile/Web] -- "1. Start Session" --> Cloud
+            Student[(Student)] -- "2. Fingerprint" --> Device[Portable ESP32 Device]
+            Device -- "3. Validate Session" --> Device
+        end
+        
+        subgraph "Cloud Infrastructure"
+            Device -- "4. Sync Data" --> Cloud[(Supabase Cloud)]
+            Cloud -- "5. Store Records" --> DB[(Database)]
+        end
+        
+        subgraph "Admin / Analytics"
+            DB -- "6. Fetch Reports" --> Dashboard[Admin Dashboard]
+        end
+
+        style Device fill:#f9f,stroke:#333,stroke-width:2px
+        style Cloud fill:#bbf,stroke:#333,stroke-width:2px
+    </div>
+    <div class="caption">Figure 1.2: High-Level Block Diagram of Attendro System</div>
+</div>
+
+<br>
+<p style="text-align: right; margin-top: 2rem;">
+    <strong>Academic Year:</strong> 2025-26<br>
+    <strong>Students:</strong> Atharv, Sanika, Tanisha, Kunal
+</p>
 
 </body>
 </html>

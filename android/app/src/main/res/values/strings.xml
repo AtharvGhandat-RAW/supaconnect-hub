@@ -1,7 +1,7 @@
 <?xml version='1.0' encoding='utf-8'?>
 <resources>
-    <string name="app_name">SupaConnect Hub</string>
-    <string name="title_activity_main">SupaConnect Hub</string>
+    <string name="app_name">Attendro</string>
+    <string name="title_activity_main">Attendro</string>
     <string name="package_name">com.supaconnect.app</string>
     <string name="custom_url_scheme">com.supaconnect.app</string>
 </resources>

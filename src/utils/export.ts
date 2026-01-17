@@ -1,6 +1,7 @@
 import { Capacitor } from '@capacitor/core';
 import { Filesystem, Directory, Encoding } from '@capacitor/filesystem';
 import { Share } from '@capacitor/share';
+import { jsPDF } from 'jspdf';
 
 // Export utilities for CSV/XLSX and PDF generation
 
@@ -177,19 +178,96 @@ export function generatePDFContent(options: {
 export async function printPDF(htmlContent: string, title: string = 'Report') {
   if (Capacitor.isNativePlatform()) {
     try {
-      const fileNameStr = `${title.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.html`;
-      const result = await Filesystem.writeFile({
-        path: fileNameStr,
-        data: htmlContent,
-        directory: Directory.Cache,
-        encoding: Encoding.UTF8,
+      const container = document.createElement('div');
+      // Fix: Don't move off-screen with left/top large values as html2canvas might clip it.
+      // Instead, layer it behind the app content.
+      container.style.position = 'absolute';
+      container.style.left = '0'; 
+      container.style.top = '0';
+      container.style.zIndex = '-9999';
+      container.style.width = '794px'; // A4 width at 96 DPI
+      container.style.minHeight = '1123px'; // A4 height
+      container.style.backgroundColor = '#ffffff'; // Force white background
+      container.style.color = '#000000'; // Force black text
+      
+      // Sanitize/prepare HTML for injection
+      container.innerHTML = htmlContent;
+      document.body.appendChild(container);
+
+      // Fix: Wait for images to load before capturing
+      const images = Array.from(container.getElementsByTagName('img'));
+      if (images.length > 0) {
+        await Promise.all(images.map(img => {
+          if (img.complete) return Promise.resolve();
+          return new Promise(resolve => {
+            img.onload = resolve;
+            img.onerror = resolve;
+          });
+        }));
+      }
+
+      // Fix: Small delay to ensure DOM layout is settled and fonts are ready
+      await new Promise(resolve => setTimeout(resolve, 500));
+
+      const doc = new jsPDF({
+        unit: 'pt',
+        format: 'a4',
+        orientation: 'portrait'
       });
 
-      await Share.share({
-        title: title,
-        text: `Usage Report: ${title}`,
-        url: result.uri,
-        dialogTitle: 'Share Report',
+      await doc.html(container, {
+        html2canvas: {
+          scale: 0.75, // Convert px to pt (794px * 0.75 ~= 595pt)
+          useCORS: true, // Crucial for external images
+          logging: false, // Turn off for prod
+          allowTaint: true,
+          scrollY: 0,
+          windowWidth: 794, // Ensure canvas knowns the rendering width
+        },
+        callback: async (pdf) => {
+          try {
+            const base64 = pdf.output('datauristring').split(',')[1];
+            const fileNameStr = `${title.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.pdf`;
+            
+            // Try saving to Documents folder first (Android 11+ friendly for user visibility)
+            let fileUri;
+            try {
+              const result = await Filesystem.writeFile({
+                path: fileNameStr,
+                data: base64,
+                directory: Directory.Documents,
+              });
+              fileUri = result.uri;
+              console.log('Saved to Documents:', fileUri);
+            } catch (fsError) {
+              console.warn('Could not save to Documents, falling back to Cache', fsError);
+              // Fallback to Cache if Documents fails (e.g., permissions)
+              const result = await Filesystem.writeFile({
+                path: fileNameStr,
+                data: base64,
+                directory: Directory.Cache,
+              });
+              fileUri = result.uri;
+            }
+
+            await Share.share({
+              title: title,
+              text: `Here is the ${title} usage report.`,
+              url: fileUri,
+              dialogTitle: 'Share or Save PDF',
+            });
+          } catch (err) {
+            console.error('Error saving/sharing PDF:', err);
+          } finally {
+            if (document.body.contains(container)) {
+              document.body.removeChild(container);
+            }
+          }
+        },
+        x: 0,
+        y: 0,
+        width: 595,
+        windowWidth: 794 
       });
     } catch (e) {
       console.error('Mobile report share failed', e);

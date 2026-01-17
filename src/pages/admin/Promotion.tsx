@@ -12,7 +12,8 @@ import { toast } from '@/hooks/use-toast';
 import { getClasses, type Class } from '@/services/classes';
 import { getStudentsForPromotion, executePromotion, type PromotionStudent } from '@/services/promotion';
 import { downloadCSV, generatePDFContent, printPDF } from '@/utils/export';
-import ritLogo from '@/assets/rit-logo.jpg';
+import ReportPreviewDialog from '@/components/ReportPreviewDialog';
+import ritLogo from '@/assets/logo.png';
 
 const AdminPromotionPage: React.FC = () => {
   const [classes, setClasses] = useState<Class[]>([]);
@@ -22,6 +23,9 @@ const AdminPromotionPage: React.FC = () => {
   const [sourceClass, setSourceClass] = useState('');
   const [targetClass, setTargetClass] = useState('');
   const [step, setStep] = useState<'select' | 'review' | 'complete'>('select');
+  const [showPreview, setShowPreview] = useState(false);
+  const [previewContent, setPreviewContent] = useState('');
+  const [previewTitle, setPreviewTitle] = useState('');
 
   useEffect(() => {
     async function fetchClasses() {
@@ -121,9 +125,10 @@ const AdminPromotionPage: React.FC = () => {
           s.mobile || '-',
         ]),
       });
-      printPDF(htmlContent);
+      setPreviewContent(htmlContent);
+      setPreviewTitle('Roll List');
+      setShowPreview(true);
     }
-    toast({ title: 'Success', description: `${format.toUpperCase()} exported` });
   };
 
   const sourceClassData = classes.find(c => c.id === sourceClass);
@@ -285,6 +290,12 @@ const AdminPromotionPage: React.FC = () => {
             </Button>
           </div>
         )}
+        <ReportPreviewDialog 
+            open={showPreview} 
+            onOpenChange={setShowPreview} 
+            title={previewTitle} 
+            htmlContent={previewContent} 
+        />
       </motion.div>
     </PageShell>
   );

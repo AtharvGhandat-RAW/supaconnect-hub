@@ -5,6 +5,11 @@
 @tailwind utilities;
 
 @layer base {
+  html {
+    -webkit-tap-highlight-color: transparent;
+    scroll-behavior: smooth;
+    touch-action: manipulation;
+  }
   :root {
     /* WhatsApp Dark Theme */
     --background: 200 19% 7%;

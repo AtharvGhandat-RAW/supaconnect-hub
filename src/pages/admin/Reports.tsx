@@ -17,6 +17,7 @@ import { getFaculty, type Faculty } from '@/services/faculty';
 import { supabase } from '@/integrations/supabase/client';
 import { downloadCSV, generatePDFContent, printPDF } from '@/utils/export';
 import { toast } from '@/hooks/use-toast';
+import ReportPreviewDialog from '@/components/ReportPreviewDialog';
 
 interface StudentReport {
   student_id: string;
@@ -65,6 +66,9 @@ const AdminReportsPage: React.FC = () => {
   const [threshold, setThreshold] = useState(75);
   const [showManipulateDialog, setShowManipulateDialog] = useState(false);
   const [studentsToFix, setStudentsToFix] = useState<StudentReport[]>([]);
+  const [showPreview, setShowPreview] = useState(false);
+  const [previewContent, setPreviewContent] = useState('');
+  const [previewTitle, setPreviewTitle] = useState('');
 
   useEffect(() => {
     async function fetchSubstitutions() {
@@ -342,7 +346,9 @@ const AdminReportsPage: React.FC = () => {
         `${r.percentage}%`,
       ]),
     });
-    printPDF(html);
+    setPreviewContent(html);
+    setPreviewTitle('Attendance Report (Original)');
+    setShowPreview(true);
   };
 
   const handleShowManipulateDialog = () => {
@@ -460,7 +466,9 @@ const AdminReportsPage: React.FC = () => {
         `${r.percentage}%`,
       ]),
     });
-    printPDF(html);
+    setPreviewContent(html);
+    setPreviewTitle('Attendance Report (Adjusted)');
+    setShowPreview(true);
   };
 
   const studentColumns = [
@@ -856,8 +864,10 @@ const AdminReportsPage: React.FC = () => {
                              `${r.percentage}%`
                            ])
                         });
-                        printPDF(html);
-                    }}>
+                        setPreviewContent(html);
+                        setPreviewTitle('Defaulter List Report');
+                        setShowPreview(true);
+                    }} className="w-full sm:w-auto">
                       <Printer className="w-4 h-4 mr-2" />
                       Print Defaulter List
                     </Button>
@@ -957,6 +967,13 @@ const AdminReportsPage: React.FC = () => {
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
+
+        <ReportPreviewDialog
+          open={showPreview}
+          onOpenChange={setShowPreview}
+          title={previewTitle}
+          htmlContent={previewContent}
+        />
       </motion.div>
     </PageShell>
   );

@@ -13,7 +13,8 @@ import { getClasses, type Class } from '@/services/classes';
 import { computeDefaulters, type DefaulterStudent } from '@/services/defaulters';
 import { getSettings } from '@/services/settings';
 import { downloadCSV, generatePDFContent, printPDF } from '@/utils/export';
-import ritLogo from '@/assets/rit-logo.jpg';
+import ReportPreviewDialog from '@/components/ReportPreviewDialog';
+import ritLogo from '@/assets/logo.png';
 
 const AdminDefaultersPage: React.FC = () => {
   const [classes, setClasses] = useState<Class[]>([]);
@@ -28,6 +29,9 @@ const AdminDefaultersPage: React.FC = () => {
   });
   const [dateTo, setDateTo] = useState(new Date().toISOString().split('T')[0]);
   const [threshold, setThreshold] = useState(75);
+  const [showPreview, setShowPreview] = useState(false);
+  const [previewContent, setPreviewContent] = useState('');
+  const [previewTitle, setPreviewTitle] = useState('');
 
   useEffect(() => {
     async function fetchInitialData() {
@@ -109,8 +113,9 @@ const AdminDefaultersPage: React.FC = () => {
       footer: `Students below ${threshold}% attendance threshold. Total: ${defaulters.length} students.`,
     });
 
-    printPDF(htmlContent);
-    toast({ title: 'Success', description: 'PDF generated' });
+    setPreviewContent(htmlContent);
+    setPreviewTitle('Defaulter List');
+    setShowPreview(true);
   };
 
   const columns = [
@@ -221,6 +226,12 @@ const AdminDefaultersPage: React.FC = () => {
           keyExtractor={(d) => d.id}
           isLoading={loading}
           emptyMessage={selectedClass ? "No defaulters found" : "Select a class and generate the report"}
+        />
+        <ReportPreviewDialog
+            open={showPreview}
+            onOpenChange={setShowPreview}
+            title={previewTitle}
+            htmlContent={previewContent}
         />
       </motion.div>
     </PageShell>

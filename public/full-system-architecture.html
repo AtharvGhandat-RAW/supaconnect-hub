@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SupaConnect Hub - Complete System Architecture</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #ffffff;
+            color: #1a1a1a;
+            padding: 40px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            max-width: 800px;
+        }
+
+        h1 {
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 12px;
+            color: #111;
+        }
+
+        p {
+            color: #666;
+            line-height: 1.5;
+        }
+
+        .diagram-container {
+            width: 100%;
+            max-width: 1200px; /* Wide format for full system view */
+            border: 1px solid #e5e5e5;
+            border-radius: 12px;
+            padding: 40px;
+            background: #ffffff;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            margin-bottom: 30px;
+            overflow-x: auto;
+        }
+
+        .action-bar {
+            display: flex;
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border-radius: 6px;
+            border: 1px solid #e5e5e5;
+            background: white;
+            color: #333;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+        }
+
+        .btn:hover {
+            background-color: #f9fafb;
+            border-color: #d1d5db;
+        }
+
+        .btn-primary {
+            background: #2563eb;
+            color: white;
+            border: none;
+        }
+
+        .btn-primary:hover {
+            background: #1d4ed8;
+        }
+
+        @media print {
+            body { padding: 0; }
+            .action-bar, .header p { display: none; }
+            .diagram-container { 
+                box-shadow: none; 
+                border: none; 
+                padding: 0;
+                width: 100%;
+                max-width: none;
+            }
+            /* Force landscape printing scaling usually handled by user settings, but we can suggest */
+            @page {
+                size: landscape;
+                margin: 1cm;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <h1>Complete System Architecture</h1>
+        <p>End-to-End Data Flow: From Biometric Hardware to Cloud Infrastructure & Client Applications</p>
+    </div>
+
+    <div class="action-bar">
+        <a href="biometric-implementation-plan.html" class="btn">
+            &larr; Hardware Plan
+        </a>
+        <button onclick="window.print()" class="btn btn-primary">
+            Print / Save to PDF
+        </button>
+    </div>
+
+    <div class="diagram-container">
+        <div class="mermaid">
+            flowchart TD
+                %% --- HARDWARE LAYER ---
+                subgraph Hardware ["IOT HARDWARE LAYER (Portable Device)"]
+                    direction TB
+                    User((Student))
+                    
+                    subgraph Device ["portable_unit_v1"]
+                        Sensor["R307 Optical\nFingerprint Sensor"]
+                        MCU["ESP32 Controller\n(WiFi Module)"]
+                        Display["OLED Display\nI2C (0.96 inch)"]
+                        Power["Battery / Power"]
+                    end
+                    
+                    User -->|Place Finger| Sensor
+                    Sensor -->|Raw Image/ID| MCU
+                    MCU -->|Status Info| Display
+                    Power -.-> MCU
+                end
+
+                %% --- NETWORK LAYER ---
+                subgraph Network ["CONNECTIVITY"]
+                    WiFi((WiFi Router))
+                    Internet((Internet))
+                end
+
+                MCU -.->|HTTPS POST / MQTT| WiFi
+                WiFi -.-> Internet
+
+                %% --- CLOUD LAYER ---
+                subgraph Cloud ["SUPABASE CLOUD INFRASTRUCTURE"]
+                    direction TB
+                    
+                    Internet --> API["Supabase REST API"]
+                    
+                    subgraph DB ["PostgreSQL Database"]
+                        RawLogs[("attendance_logs\n(Raw Scans)")]
+                        MasterTable[("attendance_main\n(Processed)")]
+                        Users[("users / faculty")]
+                    end
+                    
+                    subgraph Logic ["Edge Functions"]
+                        Processor["Attendance Processor\n(Validate Time/Batch)"]
+                    end
+                    
+                    API -->|Insert| RawLogs
+                    RawLogs -- Trigger --> Processor
+                    Processor -->|Update| MasterTable
+                end
+
+                %% --- APP LAYER ---
+                subgraph Apps ["CLIENT APPLICATION LAYER"]
+                    direction TB
+                    
+                    subgraph Android ["Faculty Mobile App"]
+                        AppUI["Attendance View"]
+                        Notif["Push Notifications"]
+                    end
+                    
+                    subgraph Admin ["Web Admin Dashboard"]
+                        Reports["Reports & Analytics"]
+                        Config["User Management"]
+                    end
+                end
+
+                %% --- INTER-LAYER CONNECTIONS ---
+                MasterTable -.->|Realtime Sync| AppUI
+                MasterTable -.->|Fetch Data| Reports
+                Processor -.->|Trigger| Notif
+
+                %% Styling
+                classDef hardware fill:#fff1f2,stroke:#be123c,stroke-width:2px;
+                classDef network fill:#eff6ff,stroke:#2563eb,stroke-width:2px;
+                classDef cloud fill:#ecfdf5,stroke:#059669,stroke-width:2px;
+                classDef client fill:#fdf4ff,stroke:#a21caf,stroke-width:2px;
+
+                class Sensor,MCU,Display,Power hardware;
+                class WiFi,Internet network;
+                class API,RawLogs,MasterTable,Users,Processor cloud;
+                class AppUI,Notif,Reports,Config client;
+
+                %% Specific link styles
+                linkStyle default stroke:#333,stroke-width:1px;
+        </div>
+    </div>
+
+    <script>
+        mermaid.initialize({
+            startOnLoad: true,
+            theme: 'default', // Using default white theme for reports
+            themeVariables: {
+                fontFamily: 'Inter',
+                fontSize: '14px',
+                primaryColor: '#ffffff',
+                edgeLabelBackground: '#ffffff'
+            },
+            flowchart: {
+                curve: 'basis', // Smooth curves for professional look
+                padding: 20
+            }
+        });
+    </script>
+</body>
+</html>

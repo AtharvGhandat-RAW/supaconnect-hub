@@ -24,7 +24,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
-import ritLogo from '@/assets/rit-logo.jpg';
+import ritLogo from '@/assets/logo.png';
 
 interface NavItem {
   label: string;
@@ -91,7 +91,7 @@ export const PageShell: React.FC<PageShellProps> = ({ children, role }) => {
   return (
     <div className="min-h-screen bg-background text-foreground transition-colors duration-300">
       {/* Mobile Header */}
-      <header className="lg:hidden fixed top-0 left-0 right-0 z-50 glass-card border-b border-border/50">
+      <header className="lg:hidden fixed top-0 left-0 right-0 z-50 glass-card border-b border-border/50 pt-[env(safe-area-inset-top)]">
         <div className="flex items-center justify-between p-4">
           <div className="flex items-center gap-3">
             <img src={ritLogo} alt="RIT Logo" className="w-10 h-10 rounded-full object-cover" />
@@ -128,7 +128,7 @@ export const PageShell: React.FC<PageShellProps> = ({ children, role }) => {
               animate={{ x: 0 }}
               exit={{ x: -280 }}
               transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-              className="fixed left-0 top-0 bottom-0 w-64 glass-card border-r border-border/50 z-50 lg:z-30 flex flex-col"
+              className="fixed left-0 top-0 bottom-0 w-64 glass-card border-r border-border/50 z-50 lg:z-30 flex flex-col pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)]"
             >
               {/* Logo */}
               <div className="p-6 border-b border-border/50">
@@ -237,7 +237,7 @@ export const PageShell: React.FC<PageShellProps> = ({ children, role }) => {
       </aside>
 
       {/* Main Content */}
-      <main className="lg:pl-64 pt-20 lg:pt-0">
+      <main className="lg:pl-64 pt-[calc(5rem+env(safe-area-inset-top))] lg:pt-0 pb-[env(safe-area-inset-bottom)]">
         {/* Top Bar */}
         <div className="hidden lg:flex items-center justify-between p-6 border-b border-border/30">
           <div>

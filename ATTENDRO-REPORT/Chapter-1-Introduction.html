@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chapter 1 - Introduction</title>
+    <script type="module">
+        import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+        mermaid.initialize({ startOnLoad: true, theme: 'neutral' });
+    </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <style>
+        @page {
+            size: A4;
+            margin-top: 2.5cm;
+            margin-bottom: 1.25cm;
+            margin-left: 3.5cm;
+            margin-right: 1.25cm;
+        }
+        body {
+            font-family: "Times New Roman", Times, serif;
+            font-size: 12pt;
+            line-height: 2; /* Double space */
+            text-align: justify;
+            margin: 0;
+            padding: 0;
+            background-color: white;
+            color: black;
+        }
+        .container {
+            width: 100%;
+            margin: 0 auto;
+            padding: 0; 
+            box-sizing: border-box;
+            min-height: 90vh; 
+        }
+
+        /* Typography Rules */
+        h1.chapter-title {
+            font-size: 14pt;
+            text-transform: uppercase;
+            text-align: center;
+            font-weight: bold;
+            margin-bottom: 24pt;
+            margin-top: 0;
+            page-break-before: always;
+        }
+
+        h2.section-heading {
+            font-size: 12pt;
+            font-weight: bold;
+            text-transform: uppercase;
+            margin-top: 18pt;
+            margin-bottom: 12pt;
+            text-align: left;
+        }
+
+        h3.subsection-heading {
+            font-size: 12pt;
+            font-weight: bold;
+            margin-top: 12pt;
+            margin-bottom: 6pt;
+            text-align: left;
+        }
+
+        p, li {
+            font-size: 12pt;
+            margin-bottom: 12pt;
+        }
+
+        ul, ol {
+            margin-bottom: 12pt;
+            padding-left: 1cm;
+        }
+
+        /* Diagram Styles */
+        .figure-container {
+            text-align: center;
+            margin: 24pt 0;
+            page-break-inside: avoid;
+        }
+        .figure-caption {
+            font-weight: bold;
+            margin-top: 10pt;
+            font-style: italic;
+        }
+        .download-btn-sm {
+            display: inline-block;
+            margin-top: 5px;
+            padding: 5px 10px;
+            background: #6c757d;
+            color: white;
+            font-family: sans-serif;
+            font-size: 10px;
+            text-decoration: none;
+            border-radius: 3px;
+            cursor: pointer;
+            border: none;
+        }
+        .mermaid {
+            background: white; /* Ensure background for PNG export */
+        }
+
+        /* Helper for screen viewing */
+        .screen-wrapper {
+            max-width: 210mm;
+            margin: 20px auto;
+            padding: 2.5cm 1.25cm 1.25cm 3.5cm;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            background: white;
+            box-sizing: border-box; 
+        }
+        
+        /* Main Download Buttons */
+        .controls {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .btn {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            text-decoration: none;
+            text-align: center;
+            font-family: sans-serif;
+            font-size: 14px;
+        }
+        .btn:hover { background-color: #0056b3; }
+        .btn-doc { background-color: #28a745; }
+        .btn-doc:hover { background-color: #218838; }
+
+        @media print {
+            .controls, .download-btn-sm { display: none; }
+            .screen-wrapper {
+                box-shadow: none;
+                margin: 0;
+                padding: 0;
+                width: 100%;
+                max-width: none;
+            }
+            body { background: white; }
+            @page {
+                size: A4;
+                margin-top: 2.5cm;
+                margin-bottom: 1.25cm;
+                margin-left: 3.5cm;
+                margin-right: 1.25cm;
+            }
+        }
+    </style>
+    <script>
+        function downloadDoc() {
+            var content = document.querySelector('.container').innerHTML;
+            // Remove diagram buttons for DOC
+            content = content.replace(/<button class="download-btn-sm".*?<\/button>/g, "");
+            
+            var header = "<html xmlns:o='urn:schemas-microsoft-com:office:office' "+
+                 "xmlns:w='urn:schemas-microsoft-com:office:word' "+
+                 "xmlns='http://www.w3.org/TR/REC-html40'>"+
+                 "<head><meta charset='utf-8'><title>Chapter 1</title></head><body>";
+            var footer = "</body></html>";
+            
+            var source = 'data:application/vnd.ms-word;charset=utf-8,' + encodeURIComponent(header + content + footer);
+            var fileDownload = document.createElement("a");
+            document.body.appendChild(fileDownload);
+            fileDownload.href = source;
+            fileDownload.download = 'Chapter-1-Introduction.doc';
+            fileDownload.click();
+            document.body.removeChild(fileDownload);
+        }
+
+        async function downloadDiagram(id, filename) {
+            const element = document.getElementById(id);
+            // Wait for mermaid to render
+            if(!element.querySelector('svg')) {
+                alert("Please wait for diagram to render.");
+                return;
+            }
+            
+            // Basic SVG to PNG conversion
+            const svgData = new XMLSerializer().serializeToString(element.querySelector('svg'));
+            const canvas = document.createElement("canvas");
+            const ctx = canvas.getContext("2d");
+            const img = new Image();
+            
+            const svgSize = element.querySelector('svg').getBoundingClientRect();
+            canvas.width = svgSize.width * 2; // High res
+            canvas.height = svgSize.height * 2;
+            
+            img.onload = function() {
+                ctx.fillStyle = "white";
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                const pngFile = canvas.toDataURL("image/png");
+                
+                const downloadLink = document.createElement("a");
+                downloadLink.download = filename;
+                downloadLink.href = pngFile;
+                downloadLink.click();
+            };
+            
+            img.src = "data:image/svg+xml;base64," + btoa(unescape(encodeURIComponent(svgData)));
+        }
+    </script>
+</head>
+<body>
+
+    <div class="controls">
+        <button onclick="window.print()" class="btn">Download / Print PDF</button>
+        <button onclick="downloadDoc()" class="btn btn-doc">Download DOC</button>
+    </div>
+
+    <div class="screen-wrapper">
+        <div class="container">
+            
+            <h1 class="chapter-title">CHAPTER–1 INTRODUCTION</h1>
+            
+            <h2 class="section-heading">1.1 INTRODUCTION</h2>
+            <p>
+                In the era of rapid digital transformation, educational institutions are increasingly seeking robust methods to streamline administrative processes. Among these, attendance management remains a critical yet challenging task. Traditional methods of attendance tracking, such as calling out names or passing around a paper sheet for signatures, have long been the standard in polytechnic institutes like the <strong>Rajarambapu Institute of Technology</strong>. However, these manual systems are fraught with inefficiencies, ranging from time consumption to vulnerability to manipulation.
+            </p>
+            <p>
+                The shift towards automation in educational governance has paved the way for biometric systems. While biometric authentication—using unique biological traits like fingerprints—offers a higher security level than simplistic paper signatures, standard implementation often fails to address the dynamic nature of an academic environment. A standard wall-mounted biometric device records <em>who</em> is present, but it often fails to rigorously validate <em>when</em> and <em>where</em> they are present in the context of a specific lecture session.
+            </p>
+            <p>
+                <strong>Attendro</strong> represents a paradigm shift in this domain. It is conceptualised as a "Portable, Session-Controlled Biometric Attendance System" designed specifically for the needs of the <strong>Department of Artificial Intelligence and Machine Learning</strong>. By combining the portability of IoT hardware with the intelligence of cloud-based session management, Attendro aims to eliminate the loopholes of proxy attendance while reducing the administrative burden on faculty members.
+            </p>
+
+            <h2 class="section-heading">1.2 PROBLEM STATEMENT</h2>
+            <p>
+                Despite the availability of various digital attendance solutions, most systems currently in use suffer from structural flaws that render them unsuitable for strict academic compliance. The project identifies four core problems:
+            </p>
+            
+            <h3 class="subsection-heading">1.2.1 The Phenomenon of Proxy Attendance</h3>
+            <p>
+                In manual systems, "proxy" attendance—where one student marks attendance for an absent peer—is rampant. Even in digital systems using QR codes, students can share the code images via messaging apps, effectively bypassing the physical presence requirement. This compromises the integrity of academic records and violates the norms set by the Maharashtra State Board of Technical Education (MSBTE).
+            </p>
+
+            <h3 class="subsection-heading">1.2.2 Lack of Contextual Validation</h3>
+            <p>
+                Existing wall-mounted biometric systems operate on a simple &quot;Check-In / Check-Out&quot; logic. A student can punch their finger at 10:00 AM and leave immediately, yet the system marks them as 'Present' for the day. These systems lack the granularity to distinguish between being present on campus and being present inside a specific lecture hall during a specific session.
+            </p>
+
+            <div class="figure-container" id="fig1">
+                <div class="mermaid">
+                    graph TD
+                    A[Traditional Biometric] -->|Records Time Only| B(Check In)
+                    A -->|No Session Link| C(Daily Presence)
+                    C --> D{Loophole}
+                    D -- Student Skips Class --> E[Still Marked Present]
+                    
+                    F[Attendro System] -->|Records Time + Session Token| G(Session Check In)
+                    F -->|Links to Faculty Device| H(Lecture Presence)
+                    H --> I{Validation}
+                    I -- Only During Active Session --> J[Marked Present for Subject]
+                </div>
+                <div class="figure-caption">Figure 1.1: Functional Gap between Traditional Systems and Attendro</div>
+                <button class="download-btn-sm" onclick="downloadDiagram('fig1', 'Figure_1_1.png')">Download PNG</button>
+            </div>
+
+            <h3 class="subsection-heading">1.2.3 Infrastructure and Cost Constraints</h3>
+            <p>
+                Installing fixed biometric terminals in every classroom, tutorial room, and laboratory is prohibitively expensive and requires extensive cabling for power and network connectivity. For a dynamic institute with rotating classrooms, a fixed infrastructure is rigid and difficult to scale.
+            </p>
+
+            <h2 class="section-heading">1.3 PROPOSED SOLUTION: ATTENDRO</h2>
+            <p>
+                To address these challenges, the &quot;Attendro&quot; system proposes a decentralised approach. Instead of fixing the device to a wall, the device is made portable and assigned to the faculty member. The device travels with the lecturer to the class. The core innovation lies in <strong>Session Control</strong>.
+            </p>
+            <p>
+                Attendance is not always &quot;open&quot;. It is only open when the faculty member initiates a &quot;Session&quot; via their smartphone app. This creates a secure time window (e.g., 10 minutes) during which the portable device accepts fingerprints. Once the session expires, the device stops accepting inputs, ensuring that latecomers or truants cannot register attendance.
+            </p>
+
+            <div class="figure-container" id="fig2">
+                <div class="mermaid">
+                    sequenceDiagram
+                        participant Faculty
+                        participant App
+                        participant Cloud
+                        participant Device
+                        participant Student
+                        
+                        Faculty->>App: Start Session (Sub: AMI, Batch: B1)
+                        App->>Cloud: Create Session Token
+                        Cloud->>Device: Sync Token & Rules
+                        Note over Device: Device 'Unlocks' for Scanning
+                        Student->>Device: Places Finger
+                        Device->>Device: Match Template
+                        Device->>Cloud: Upload Record (Student ID + Session ID)
+                        Faculty->>App: Stop Session
+                        Note over Device: Device 'Locks'
+                </div>
+                <div class="figure-caption">Figure 1.2: Sequence of Operation in Attendro</div>
+                <button class="download-btn-sm" onclick="downloadDiagram('fig2', 'Figure_1_2.png')">Download PNG</button>
+            </div>
+
+            <h2 class="section-heading">1.4 AIMS AND OBJECTIVES</h2>
+            <p>
+                The primary aim of this project is to develop a fully functional prototype of a portable biometric attendance system that interfaces seamlessly with a centralised database. The specific objectives are as follows:
+            </p>
+            <ol>
+                <li><strong>To Design Portable Hardware:</strong> To engineer a battery-operated, handheld unit using the ESP32 microcontroller and an optical fingerprint sensor (R307) that provides at least 6 hours of operation on a single charge.</li>
+                <li><strong>To Implement Session-Based Authentication:</strong> To develop a software logic where attendance data is valid only if tagged with a unique, active &quot;Session ID&quot; generated by the faculty.</li>
+                <li><strong>To Centralise Data Management:</strong> To create a cloud-based backend (using Supabase) that synchronises fingerprint templates across devices, ensuring that a student enrolling on one device can be verified on any other device in the department.</li>
+                <li><strong>To Automate Reporting:</strong> To generate automated PDF and Excel reports for attendance compliance, identifying defaulters (students with &lt;75% attendance) instantly.</li>
+            </ol>
+
+            <h2 class="section-heading">1.5 SIGNIFICANCE OF THE PROJECT</h2>
+            <p>
+                This project holds significant value for the academic administration. By automating the attendance process, it recovers approximately 10-15 minutes of effective teaching time per lecture that is otherwise lost to manual roll calls. For the students of the <strong>AI & ML Department</strong>, it ensures fair assessment based on actual presence. Furthermore, the system builds a digital audit trail, providing irrefutable data for parents and accreditation bodies like the NBA.
+            </p>
+
+            <h2 class="section-heading">1.6 REPORT ORGANIZATION</h2>
+            <p>
+                The remainder of this project report is organised as follows:
+            </p>
+            <ul>
+                <li><strong>Chapter 2 (Literature Survey)</strong> reviews existing biometric technologies and research papers relevant to IoT-based attendance systems.</li>
+                <li><strong>Chapter 3 (System Analysis)</strong> discusses the hardware and software requirements and the scope of the project.</li>
+                <li><strong>Chapter 4 (Methodology)</strong> details the algorithm design, database schema, and implementation steps.</li>
+                <li><strong>Chapter 5 (Results)</strong> presents the testing outcomes and snapshots of the working prototype.</li>
+                <li><strong>Chapter 6 (Conclusion)</strong> summarises the work and outlines future scope.</li>
+            </ul>
+        </div>
+    </div>
+</body>
+</html>

@@ -17,11 +17,12 @@ import {
 } from '@/services/classes';
 import { getSettings } from '@/services/settings';
 import { generatePDFContent, printPDF } from '@/utils/export';
+import ReportPreviewDialog from '@/components/ReportPreviewDialog';
 import {
   getSubjectAllocations,
   type SubjectAllocation,
 } from '@/services/allocations';
-import ritLogo from '@/assets/rit-logo.jpg';
+import ritLogo from '@/assets/logo.png';
 import { Printer } from 'lucide-react';
 
 interface StudentAttendance {
@@ -52,6 +53,9 @@ const FacultyReportsPage: React.FC = () => {
   const [dateTo, setDateTo] = useState(new Date().toISOString().split('T')[0]);
   const [studentData, setStudentData] = useState<StudentAttendance[]>([]);
   const [threshold, setThreshold] = useState(75);
+  const [showPreview, setShowPreview] = useState(false);
+  const [previewContent, setPreviewContent] = useState('');
+  const [previewTitle, setPreviewTitle] = useState('');
 
   useEffect(() => {
     async function fetchInitialData() {
@@ -246,7 +250,9 @@ const FacultyReportsPage: React.FC = () => {
       ]),
     });
 
-    printPDF(htmlContent);
+    setPreviewContent(htmlContent);
+    setPreviewTitle('Attendance Report');
+    setShowPreview(true);
   };
 
   const filteredSubjects = allocations.filter(a => a.class_id === selectedClass);
@@ -360,14 +366,14 @@ const FacultyReportsPage: React.FC = () => {
         </div>
 
         {studentData.length > 0 && (
-          <div className="flex gap-2">
-            <Button variant="outline" onClick={handleExportCSV} className="border-border/50">
+          <div className="flex flex-col sm:flex-row gap-2 mt-4">
+            <Button variant="outline" onClick={handleExportCSV} className="w-full sm:w-auto border-border/50">
               <Download className="w-4 h-4 mr-2" />
               Export CSV
             </Button>
-            <Button variant="outline" onClick={handleExportPDF} className="border-border/50">
+            <Button variant="outline" onClick={handleExportPDF} className="w-full sm:w-auto border-border/50">
               <Printer className="w-4 h-4 mr-2" />
-              Print Reoprt
+              Print Report
             </Button>
           </div>
         )}
@@ -386,6 +392,12 @@ const FacultyReportsPage: React.FC = () => {
             emptyMessage="No data available"
           />
         )}
+        <ReportPreviewDialog 
+            open={showPreview} 
+            onOpenChange={setShowPreview} 
+            title={previewTitle} 
+            htmlContent={previewContent} 
+        />
       </motion.div>
     </PageShell>
   );

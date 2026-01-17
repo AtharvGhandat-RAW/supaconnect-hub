@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cover Page</title>
+    <style>
+        @page {
+            size: A4;
+            margin-top: 2.5cm;
+            margin-bottom: 1.25cm;
+            margin-left: 3.5cm;
+            margin-right: 1.25cm;
+        }
+        body {
+            font-family: "Times New Roman", Times, serif;
+            font-size: 12pt;
+            line-height: 2; /* Double space */
+            text-align: justify; /* Justified text */
+            margin: 0;
+            padding: 0;
+            background-color: white;
+            color: black;
+        }
+        .container {
+            width: 100%;
+            /* max-width not needed for print, but helpful for screen view */
+            margin: 0 auto;
+            text-align: center; /* Center alignment for cover page elements generally, though body is justified */
+            padding: 0; 
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            min-height: 90vh; /* approximate height for A4 like view on screen */
+        }
+        
+        /* Typography Rules Implementation */
+        .topic-name {
+            font-size: 14pt;
+            text-transform: uppercase;
+            font-weight: normal; /* "Capital" usually implies uppercase, not necessarily bold unless specified */
+            margin-bottom: 1rem;
+        }
+        .section-heading {
+            font-size: 12pt;
+            font-weight: bold;
+            text-transform: uppercase;
+            margin-bottom: 1rem;
+        }
+        .subsection-heading {
+            font-size: 12pt;
+            font-weight: bold;
+            margin-bottom: 1rem;
+        }
+        .normal-text {
+            font-size: 12pt;
+            font-weight: normal;
+        }
+
+        /* Specific Elements */
+        .header {
+            margin-bottom: 20px;
+        }
+        .project-title {
+            /* Using Topic Name style */
+            font-size: 14pt; 
+            text-transform: uppercase;
+            font-weight: bold; /* Often titles are bold */
+            margin: 20px 0;
+        }
+        
+        .student-list {
+            margin: 20px auto;
+            width: 90%;
+            text-align: left;
+        }
+        .student-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0; /* Let line-height handle spacing */
+        }
+        .student-name {
+            flex: 2;
+        }
+        .enrollment {
+            flex: 1;
+            text-align: right;
+        }
+        
+        .signatures {
+            margin-top: 40px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            text-align: center;
+        }
+        .sig-block {
+            margin-bottom: 30px;
+        }
+
+        .footer {
+            margin-top: 20px;
+        }
+
+        /* Helper for screen viewing */
+        .screen-wrapper {
+            max-width: 210mm;
+            margin: 20px auto;
+            padding: 20px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            background: white;
+        }
+        
+        /* Download Buttons */
+        .controls {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .btn {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            text-decoration: none;
+            text-align: center;
+            font-family: sans-serif;
+            font-size: 14px;
+        }
+        .btn:hover {
+            background-color: #0056b3;
+        }
+        .btn-doc {
+            background-color: #28a745;
+        }
+        .btn-doc:hover {
+            background-color: #218838;
+        }
+
+        @media print {
+            .controls, .screen-wrapper {
+                box-shadow: none;
+                margin: 0;
+                padding: 0;
+                width: 100%;
+                max-width: none;
+            }
+            .controls {
+                display: none;
+            }
+            body {
+                background: white;
+            }
+            /* Ensure the page box model is strictly A4 in print */
+            @page {
+                size: A4;
+                margin-top: 2.5cm;
+                margin-bottom: 1.25cm;
+                margin-left: 3.5cm;
+                margin-right: 1.25cm;
+            }
+        }
+    </style>
+    <script>
+        function downloadDoc() {
+            var header = "<html xmlns:o='urn:schemas-microsoft-com:office:office' "+
+                 "xmlns:w='urn:schemas-microsoft-com:office:word' "+
+                 "xmlns='http://www.w3.org/TR/REC-html40'>"+
+                 "<head><meta charset='utf-8'><title>Export HTML to Word Document with JavaScript</title></head><body>";
+            var footer = "</body></html>";
+            var sourceHTML = header+document.querySelector('.container').innerHTML+footer;
+            
+            var source = 'data:application/vnd.ms-word;charset=utf-8,' + encodeURIComponent(sourceHTML);
+            var fileDownload = document.createElement("a");
+            document.body.appendChild(fileDownload);
+            fileDownload.href = source;
+            fileDownload.download = 'Cover_Page.doc';
+            fileDownload.click();
+            document.body.removeChild(fileDownload);
+        }
+    </script>
+</head>
+<body>
+
+    <div class="controls">
+        <button onclick="window.print()" class="btn">Download / Print PDF</button>
+        <button onclick="downloadDoc()" class="btn btn-doc">Download DOC</button>
+    </div>
+
+    <div class="screen-wrapper">
+        <div class="container">
+            
+            <div class="header">
+                <div class="topic-name"><strong>Project Report</strong></div>
+                <br>
+                <!-- Project Title -->
+                <div class="project-title">
+                    “Attendro: A Portable, Session-Controlled Biometric Attendance System with Centralized Fingerprint”
+                </div>
+                
+                <div class="normal-text">as a partial fulfilment of requirement of the</div>
+                
+                <!-- Section Heading style -->
+                <div class="section-heading">THIRD YEAR DIPLOMA IN</div>
+                
+                <div class="section-heading">-------------------------------------------------</div>
+                <div class="normal-text">Submitted by</div>
+            </div>
+
+            <div class="content">
+                <div class="student-list">
+                    <div class="student-row">
+                        <span class="student-name">1) Atharv Shyam Ghandat</span>
+                        <span class="enrollment">Enrollment No. 23212840055</span>
+                    </div>
+                    <div class="student-row">
+                        <span class="student-name">2) Sanika Pandurang Desai</span>
+                        <span class="enrollment">Enrollment No. 23212840048</span>
+                    </div>
+                    <div class="student-row">
+                        <span class="student-name">3) Tanisha Hanumant Chavan</span>
+                        <span class="enrollment">Enrollment No. 23212840032</span>
+                    </div>
+                    <div class="student-row">
+                        <span class="student-name">4) Kunal Shankar Mahalunge</span>
+                        <span class="enrollment">Enrollment No. 23212840021</span>
+                    </div>
+                </div>
+
+                <div class="normal-text" style="margin: 20px 0;">
+                    <em>Are the bonafide on</em>
+                </div>
+                
+                <div class="section-heading">FOR THE ACADEMIC YEAR</div>
+                <div class="section-heading">2025-26</div>
+            </div>
+
+            <div class="signatures">
+                <div class="sig-block">
+                    _______________________<br>
+                    <strong>(H.O.D)</strong>
+                </div>
+                <div class="sig-block">
+                    _______________________<br>
+                    <strong>(Principal)</strong>
+                </div>
+                <div class="sig-block">
+                    _______________________<br>
+                    <strong>(Internal Guide)</strong>
+                </div>
+                <div class="sig-block">
+                    _______________________<br>
+                    <strong>(External Examiner)</strong>
+                </div>
+            </div>
+
+            <div class="footer">
+                <div class="topic-name">Artificial Intelligence and Machine Learning Department</div>
+                <!-- Institute Name -->
+                <div class="topic-name">K.E. Society's Rajarambapu Institute of Technology Polytechnic</div>
+                <div class="normal-text">(An Affiliated Institute of Maharashtra State Board of Technical Education)</div>
+            </div>
+
+        </div>
+    </div>
+
+</body>
+</html>

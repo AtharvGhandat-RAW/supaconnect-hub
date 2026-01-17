@@ -232,10 +232,10 @@ const AdminDashboardPage: React.FC = () => {
                 <Activity className="w-5 h-5 text-destructive" />
                 Top 5 Defaulters
               </h2>
-              <div className="flex gap-2">
-                <div className="w-40">
+              <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+                <div className="w-full sm:w-40">
                   <Select value={selectedClass} onValueChange={setSelectedClass}>
-                    <SelectTrigger className="h-8">
+                    <SelectTrigger className="h-8 w-full">
                       <SelectValue placeholder="All Classes" />
                     </SelectTrigger>
                     <SelectContent>
@@ -246,9 +246,9 @@ const AdminDashboardPage: React.FC = () => {
                     </SelectContent>
                   </Select>
                 </div>
-                <div className="w-40">
+                <div className="w-full sm:w-40">
                   <Select value={selectedSubject} onValueChange={setSelectedSubject}>
-                    <SelectTrigger className="h-8">
+                    <SelectTrigger className="h-8 w-full">
                       <SelectValue placeholder="All Subjects" />
                     </SelectTrigger>
                     <SelectContent>
