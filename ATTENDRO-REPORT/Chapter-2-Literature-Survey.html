@@ -8,7 +8,6 @@
         import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
         mermaid.initialize({ startOnLoad: true, theme: 'neutral' });
     </script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <style>
         @page {
             size: A4;
@@ -72,24 +71,22 @@
             margin-bottom: 12pt;
             padding-left: 1cm;
         }
-        
+
+        /* Table Styles */
         table {
             width: 100%;
             border-collapse: collapse;
-            margin: 24pt 0;
-            font-size: 11pt; /* Slightly smaller for tables */
-            line-height: 1.5;
+            margin: 20px 0;
+            font-size: 11pt; /* Slightly smaller for table to fit */
         }
         th, td {
             border: 1px solid black;
             padding: 8px;
-            text-align: left;
             vertical-align: top;
         }
         th {
             background-color: #f2f2f2;
             font-weight: bold;
-            text-align: center;
         }
 
         /* Diagram Styles */
@@ -117,10 +114,10 @@
             border: none;
         }
         .mermaid {
-            background: white; /* Ensure background for PNG export */
+            background: white; 
         }
 
-        /* Helper for screen viewing */
+        /* Screen Wrapper */
         .screen-wrapper {
             max-width: 210mm;
             margin: 20px auto;
@@ -130,7 +127,7 @@
             box-sizing: border-box; 
         }
         
-        /* Main Download Buttons */
+        /* Controls */
         .controls {
             position: fixed;
             top: 20px;
@@ -167,209 +164,205 @@
                 margin: 0;
                 padding: 0;
                 width: 100%;
+                max-width: none;
+            }
+            body { background: white; }
+            @page {
+                size: A4;
+                margin-top: 2.5cm;
+                margin-bottom: 1.25cm;
+                margin-left: 3.5cm;
+                margin-right: 1.25cm;
             }
         }
     </style>
+    <script>
+        function downloadDoc() {
+            var content = document.querySelector('.container').innerHTML;
+            content = content.replace(/<button class="download-btn-sm".*?<\/button>/g, "");
+            
+            var header = "<html xmlns:o='urn:schemas-microsoft-com:office:office' "+
+                 "xmlns:w='urn:schemas-microsoft-com:office:word' "+
+                 "xmlns='http://www.w3.org/TR/REC-html40'>"+
+                 "<head><meta charset='utf-8'><title>Chapter 2</title></head><body>";
+            var footer = "</body></html>";
+            
+            var source = 'data:application/vnd.ms-word;charset=utf-8,' + encodeURIComponent(header + content + footer);
+            var fileDownload = document.createElement("a");
+            document.body.appendChild(fileDownload);
+            fileDownload.href = source;
+            fileDownload.download = 'Chapter-2-Literature-Survey.doc';
+            fileDownload.click();
+            document.body.removeChild(fileDownload);
+        }
+
+        async function downloadDiagram(id, filename) {
+            const element = document.getElementById(id);
+            if(!element.querySelector('svg')) {
+                alert("Please wait for diagram to render.");
+                return;
+            }
+            const svgData = new XMLSerializer().serializeToString(element.querySelector('svg'));
+            const canvas = document.createElement("canvas");
+            const ctx = canvas.getContext("2d");
+            const img = new Image();
+            
+            const svgSize = element.querySelector('svg').getBoundingClientRect();
+            canvas.width = svgSize.width * 2; 
+            canvas.height = svgSize.height * 2;
+            
+            img.onload = function() {
+                ctx.fillStyle = "white";
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                const pngFile = canvas.toDataURL("image/png");
+                
+                const downloadLink = document.createElement("a");
+                downloadLink.download = filename;
+                downloadLink.href = pngFile;
+                downloadLink.click();
+            };
+            img.src = "data:image/svg+xml;base64," + btoa(unescape(encodeURIComponent(svgData)));
+        }
+    </script>
 </head>
 <body>
+
     <div class="controls">
-        <button onclick="window.print()" class="btn">Print / Save as PDF</button>
-        <a href="../index.html" class="btn btn-doc">Back to Index</a>
+        <button onclick="window.print()" class="btn">Download / Print PDF</button>
+        <button onclick="downloadDoc()" class="btn btn-doc">Download DOC</button>
     </div>
 
     <div class="screen-wrapper">
         <div class="container">
-            <!-- Chapter Title -->
-            <h1 class="chapter-title">CHAPTER 2<br>LITERATURE SURVEY</h1>
-
-            <h2 class="section-heading">2.1 Introduction</h2>
+            
+            <h1 class="chapter-title">CHAPTER–2 LITERATURE SURVEY</h1>
+            
+            <h2 class="section-heading">2.1 INTRODUCTION</h2>
             <p>
-                A comprehensive literature survey is the cornerstone of any technical project, ensuring that the proposed solution is grounded in existing knowledge while addressing genuine deficiencies in current technologies. For the "Attendro" project, this survey explores the historical and technological trajectory of attendance management systems in educational institutions.
+                The primary purpose of this literature survey is to investigate the evolution of attendance management technologies and to identify the specific shortcomings that persist in modern educational institutes. Attendance is not merely a record of physical presence; it is a fundamental metric of student engagement and academic discipline. As institutes like the Rajarambapu Institute of Technology transition towards outcome-based education (OBE), the integrity of attendance data becomes paramount.
             </p>
             <p>
-                Attendance monitoring is not merely an administrative formality; it is a critical metric for student engagement and academic integrity. Traditionally, this process has been manual, consuming valuable instructional time and remaining susceptible to manipulation. As institutions move towards "Smart Campus" paradigms, the demand for automated, secure, and real-time attendance solutions has surged. This chapter analyses the evolution of these systems, examines the specific technologies underpinning modern IoT solutions (such as the ESP32 microcontroller and optical biometrics), and critiques prior academic implementations. By identifying the limitations of existing manual, RFID, and fixed biometric systems, we define the precise "Research Gap" that Attendro aims to fill—specifically, the need for a system that combines the high security of biometrics with the portability and context-awareness required for dynamic classroom environments.
-            </p>
-
-            <h2 class="section-heading">2.2 Evolution of Attendance Systems</h2>
-            <p>
-                The progression of attendance tracking technology can be characterized by a constant struggle between two opposing factors: <strong>Ease of Use</strong> and <strong>Security (Integrity)</strong>.
+                This chapter reviews the progression from traditional manual registers to sophisticated IoT-based solutions. It analyses existing systems based on parameters such as security (prevention of proxy), efficiency (time taken), and infrastructure requirements. By studying related works and technical papers, this survey aims to define the precise "Research Gap" that the <strong>Attendro</strong> project seeks to address.
             </p>
 
-            <h3 class="subsection-heading">2.2.1 Manual Systems (Paper-based)</h3>
+            <h2 class="section-heading">2.2 EVOLUTION OF ATTENDANCE SYSTEMS</h2>
             <p>
-                The most primitive and enduring form of attendance tracking is the manual register. This method, deeply ingrained in academic tradition, typically involves the lecturer verbally calling out names ("Roll Call") or circulating a sheet of paper for signatures.
+                The domain of attendance automation has witnessed several generations of technological intervention. These can be broadly categorised into four phases:
             </p>
-            <ul>
-                <li><strong>Mechanism:</strong> A physical ledger or loose sheet is physically passed from student to student, or the instructor marks presence against a printed list.</li>
-                <li><strong>Pros:</strong> The primary advantage is low barrier to entry—it costs nothing and requires no technical infrastructure or electricity. Educational psychologists also argue that verbal roll calls can foster a brief moment of teacher-student connection, helping instructors memorize faces.</li>
-                <li><strong>Cons:</strong> The inefficiencies, however, are glaring. In a class of 60 students, a roll call can consume 5-10 minutes of prime instructional time—accumulating to over 5 hours of lost education per course per semester. The "Sign-up Sheet" method, while faster, is notoriously insecure. It invites "Proxy Attendance," where peers forge signatures for absent friends. Furthermore, manual registers create "Data Silos"; attendance data remains trapped on paper in a faculty office, making it impossible for university administrators to generate real-time alerts for students falling below mandatory attendance thresholds.</li>
-            </ul>
 
-            <h3 class="subsection-heading">2.2.2 RFID and ID Card-based Systems</h3>
+            <div class="figure-container" id="fig2_1">
+                <div class="mermaid">
+                    graph LR
+                    A[Generation 1<br>Manual Registers] -->|High Time cost| B[Generation 2<br>RFID/ID Cards]
+                    B -->|Proxy Issue| C[Generation 3<br>Fixed Biometric]
+                    C -->|Infrastructure Cost| D[Generation 4<br>Portable IoT]
+                    style D stroke:#333,stroke-width:4px
+                </div>
+                <div class="figure-caption">Figure 2.1: Evolution of Attendance Technologies</div>
+                <button class="download-btn-sm" onclick="downloadDiagram('fig2_1', 'Figure_2_1.png')">Download PNG</button>
+            </div>
+
+            <h3 class="subsection-heading">2.2.1 Paper-Based Manual Systems</h3>
             <p>
-                To address the time inefficiency of manual systems, Radio Frequency Identification (RFID) was widely adopted.
+                The traditional method involves faculty calling out rollout numbers or students signing a muster sheet. While this requires zero technological investment, it is highly prone to human error and manipulation. "Buddy signing"—where one student forges signatures for absent friends—is a common phenomenon. Furthermore, the subsequent data entry of these physical records into computer systems is laborious and delayed.
             </p>
-            <ul>
-                <li><strong>Mechanism:</strong> Students tap a passive RFID tag (ID card) against a reader.</li>
-                <li><strong>Pros:</strong> Extremely fast (milliseconds per student).</li>
-                <li><strong>Cons:</strong> The "Buddy Punching" problem. RFID systems verify the presence of the <em>card</em>, not the <em>student</em>. It is trivial for a truant student to hand their card to a peer. Thus, while efficiency increased, integrity remained compromised.</li>
-            </ul>
+
+            <h3 class="subsection-heading">2.2.2 Radio Frequency Identification (RFID)</h3>
+            <p>
+                In the early 2000s, many institutes adopted RFID card-based systems. Students would tap their ID cards on a reader to enter the campus. While much faster than manual rolls, RFID systems failed to verify identity. Possession of the card was equated with the presence of the student. Consequently, students could simply carry multiple cards to punch in for their friends, rendering the system ineffective for strict attendance control.
+            </p>
 
             <h3 class="subsection-heading">2.2.3 Fixed Biometric Systems</h3>
             <p>
-                Biometrics (fingerprint/face recognition) were introduced to solve the identity crisis of RFID.
-            </p>
-            <ul>
-                <li><strong>Mechanism:</strong> Wall-mounted scanners (often at the entrance) usually based on optical fingerprint sensors or facial recognition.</li>
-                <li><strong>Pros:</strong> High integrity; practically eliminates proxy attendance.</li>
-                <li><strong>Cons:</strong> These systems introduced new bottlenecks. "Queuing" at a single door scanner creates congestion. Furthermore, fixed systems often lack "Session Context"—they record that a student entered the building at 09:00, but cannot easily distinguish if they attended the specific lecture in Room 302 or wandered the hallways. Installation is also expensive and rigid.</li>
-            </ul>
-
-            <h3 class="subsection-heading">2.2.4 Mobile and QR-based Systems</h3>
-            <p>
-                Modern attempts leverage the student's own smartphone (BYOD - Bring Your Own Device).
-            </p>
-            <ul>
-                <li><strong>Mechanism:</strong> Apps that use GPS/Bluetooth or scan a QR code projected by the teacher.</li>
-                <li><strong>Pros:</strong> Zero hardware cost for the institution; highly portable.</li>
-                <li><strong>Cons:</strong> Paradoxically, this returned to low integrity. GPS is imprecise indoors (room-level accuracy is difficult), and QR codes can be photographed and shared via messaging apps to students outside the class, enabling "Remote Proxy."</li>
-            </ul>
-
-            <div class="figure-container">
-                <div class="mermaid">
-                    graph LR
-                        A[Manual Register] -->|Too Slow| B[RFID Cards]
-                        B -->|Buddy Punching| C[Fixed Biometrics]
-                        C -->|Queues & Cost| D[Mobile Apps]
-                        D -->|Cheating/Spoofing| E[Attendro System]
-                        style E fill:#f9f,stroke:#333,stroke-width:4px
-                </div>
-                <div class="figure-caption">Figure 2.1: Evolutionary Timeline of Attendance Technologies</div>
-            </div>
-
-            <h2 class="section-heading">2.3 Review of Related Technologies</h2>
-            <p>
-                To design a solution that transcends these limitations, we examined the core technologies available for IoT development.
+                Biometrics (fingerprint and face recognition) solved the issue of identity verification. However, standard implementations involve wall-mounted devices at the institute entrance or in specific labs. This creates a "Queuing Bottleneck," where students waste time standing in line. More critically, these systems lack "Session Context". A student might punch in at the main gate but skip the actual lecture, creating a discrepancy between 'campus data' and 'classroom data'.
             </p>
 
-            <h3 class="subsection-heading">2.3.1 IoT in Education: The ESP32 Platform</h3>
+            <h2 class="section-heading">2.3 REVIEW OF RELATED TECHNOLOGIES</h2>
             <p>
-                 The choice of microcontroller is pivotal in IoT system design. While early academic projects often utilized the Arduino Uno (based on the 8-bit ATmega328P), modern localized attendance systems require inherent connectivity and parallel processing capabilities that legacy boards cannot provide. The <strong>ESP32-WROOM-32</strong> by Espressif Systems has emerged as the industry standard for such high-performance IoT applications.
+                To build a solution that is both portable and secure, an analysis of enabling technologies was conducted.
             </p>
-            <p>
-                <strong>Architecture & Performance:</strong> The ESP32 boasts a dual-core Xtensa® 32-bit LX6 microprocessor, clockable up to 240 MHz. This creates a significant advantage over the single-core Arduino: using FreeRTOS, the application can dedicate "Core 0" to maintaining the Wi-Fi/Bluetooth stack and encryption protocols, while "Core 1" handles the time-sensitive biometric sensor interactions and user interface (OLED display). This prevents the common "blocking delay" issue where a device freezes while trying to connect to the internet.
-            </p>
-            <p>
-                <strong>Connectivity & Portability:</strong> Unlike the Raspberry Pi, which is a full Single Board Computer (SBC) requiring an OS and significant power (often >2.5W), the ESP32 is a low-power microcontroller (approx. 0.5W active) with integrated 802.11 b/g/n Wi-Fi and Bluetooth 4.2 / BLE. This high integration eliminates the need for bulky external "shields" (like the Ethernet Shield for Arduino), allowing the entire sophisticated system to be compacted into a handheld, battery-operated enclosure suitable for passing around a classroom.
-            </p>
-
-            <h3 class="subsection-heading">2.3.2 Biometric Sensing: Optical vs. Capacitive</h3>
-            <p>
-                <strong>Optical Sensors (e.g., R307, R305):</strong> These capture an image of the fingerprint ridges using visible light and a prism. They are physically durable and cost-effective but can struggle with direct sunlight or dirty fingers. <br>
-                <strong>Capacitive Sensors:</strong> Common in smartphones, these use electrical current to map the finger. While faster, the larger surface area required for standalone units makes them prohibitively expensive for student projects. <br>
-                <em>Conclusion:</em> The R307 Optical Sensor offers the optimal balance of surface area, library support (Adafruit Fingerprint Library), and durability for a device that will be passed around a classroom.
-            </p>
-
-            <h3 class="subsection-heading">2.3.3 Cloud Synchronization and Data Handling</h3>
-            <p>
-                Legacy embedded systems often stored data on local SD cards, requiring physical retrieval and manual Excel compilation—a process known as "Sneaker-net." Modern IoT architecture demands real-time synchronization. Services like Google Firebase and Supabase (PostgreSQL) offer RESTful APIs or WebSocket connections that allow the ESP32 to push attendance data instantly. This shift allows for "Live Dashboards" where administrators can see attendance as it happens, a feature absent in SD-card based solutions.
-            </p>
-
-            <h2 class="section-heading">2.4 Literature Review Case Studies</h2>
-            <p>
-                We analyzed several proposed systems in academic literature to understand common pitfalls.
-            </p>
-
-            <table id="literature-review-table">
-                <thead>
-                    <tr>
-                        <th style="width: 20%;">Study / Reference</th>
-                        <th style="width: 25%;">Methodology</th>
-                        <th style="width: 25%;">Key Findings</th>
-                        <th style="width: 30%;">Limitations / Failure Point</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td><strong>Sainz et al. [1]</strong><br><em>"RFID based Automatic Attendance System"</em></td>
-                        <td>Used passive RFID tags and an Arduino-based reader at the classroom door.</td>
-                        <td>Reduced attendance time from 10 mins to 2 mins for a class of 60.</td>
-                        <td><strong>Zero Identity Verification.</strong> The system could not detect when one student scanned multiple cards.</td>
-                    </tr>
-                    <tr>
-                        <td><strong>Kumar & Jangir [2]</strong><br><em>"Biometric Attendance System using Zigbee"</em></td>
-                        <td>Fingerprint sensors at desks communicating via Zigbee mesh network.</td>
-                        <td>High accuracy and verified presence.</td>
-                        <td><strong>High Cost & Complexity.</strong> Installing hardware directly at every desk is financially unfeasible for most institutions.</td>
-                    </tr>
-                    <tr>
-                        <td><strong>Lodha et al. [3]</strong><br><em>"Bluetooth Smart Attendance"</em></td>
-                        <td>Teacher's phone acts as a BLE beacon; students' apps detect it to mark presence.</td>
-                        <td>Extremely convenient; no custom hardware.</td>
-                        <td><strong>Context Failure.</strong> Students could detect the beacon from the hallway or cafeteria (signal bleed) without entering the class.</td>
-                    </tr>
-                    <tr>
-                        <td><strong>Attendro (Proposed)</strong><br><em>"Portable Session-Controlled Biometric System"</em></td>
-                        <td>Portable ESP32 unit passed around class; Session specific; Cloud Sync.</td>
-                        <td>Combines biometric security with the flexibility of manual registers.</td>
-                        <td><strong>N/A</strong> (Designed to address above gaps)</td>
-                    </tr>
-                </tbody>
-            </table>
-            <div class="figure-caption">Table 2.1: Summary of Related Literature</div>
             
-            <h2 class="section-heading">2.5 Research Gap and Problem Definition</h2>
+            <h3 class="subsection-heading">2.3.1 Microcontroller Platforms: ESP32 vs. Arduino</h3>
             <p>
-                The literature reveals a distinct "Quadrant Gap." Existing systems tend to occupy one of two extremes:
-            </p>
-            <ul>
-                <li><strong>High Portability / Low Security:</strong> Mobile Apps, QR codes, Manual Sheets.</li>
-                <li><strong>High Security / Low Portability:</strong> Wall-mounted Biometrics, Iris Scanners.</li>
-            </ul>
-            <p>
-                <strong>The Missing Link:</strong> There is a lack of systems that are <em>both</em> highly secure (Biometric) and highly portable (can be handed to students in their seats), while maintaining "Session Awareness" (knowing <em>which</em> class is currently happening).
-            </p>
-            <p>
-                <strong>Problem Statement:</strong>
-                <em>"Current attendance systems force a compromise between data integrity and operational efficiency. There exists no unified, low-cost framework that provides the irrefutable identity verification of biometrics while accommodating the dynamic, session-based nature of academic schedules without creating physical bottlenecks."</em>
-            </p>
-            <p>
-                This gap defines the scope for <strong>Attendro</strong>: A portable, session-aware, biometric IoT device.
+                Early IoT projects relied on the Arduino Uno (ATmega328P). However, literature suggests that the <strong>ESP32</strong> is superior for connected applications. It features a dual-core Tensilica Xtensa LX6 microprocessor and integrated Wi-Fi/Bluetooth. This integration allows the Attendro device to communicate directly with cloud servers without external modules, significantly reducing the form factor and power consumption crucial for a portable device.
             </p>
 
-            <div class="figure-container">
+            <h3 class="subsection-heading">2.3.2 Biometric Sensors</h3>
+            <p>
+                The survey compared Optical (R307) and Capacitive sensors. Optical sensors capture an image of the fingerprint ridges using visible light. Research indicates that while capacitive sensors are slimmer (used in phones), optical sensors like the R307 are more durable for high-volume scanning (hundreds of students) and are less susceptible to damage from static electricity or rough usage in a classroom environment.
+            </p>
+
+            <h2 class="section-heading">2.4 COMPARATIVE ANALYSIS OF EXISTING METHODS</h2>
+            <p>
+                A comparative study of various methodologies proposed in recent years highlights the trade-offs between security, cost, and usability.
+            </p>
+
+            <table>
+                <tr>
+                    <th>Methodology</th>
+                    <th>Technology Used</th>
+                    <th>Major Drawback Identified</th>
+                </tr>
+                <tr>
+                    <td>Automated Roll Call</td>
+                    <td>Paper / Excel</td>
+                    <td>High time consumption (10-15 mins); No digital verification.</td>
+                </tr>
+                <tr>
+                    <td>Smart Card Entry</td>
+                    <td>RFID / NFC</td>
+                    <td>"Buddy Punching" (Card swapping); No biometric proof.</td>
+                </tr>
+                <tr>
+                    <td>Mobile GPS/QR</td>
+                    <td>Android App</td>
+                    <td>GPS spoofing apps allow fake locations; QR codes can be shared via WhatsApp.</td>
+                </tr>
+                <tr>
+                    <td>Fixed Biometric</td>
+                    <td>Wall-mounted Terminals</td>
+                    <td>Expensive wiring; No distinction between Lecture A and Lecture B.</td>
+                </tr>
+            </table>
+
+            <h2 class="section-heading">2.5 RESEARCH GAP AND DEFINITION OF PROBLEM STATEMENT</h2>
+            <p>
+                The literature reveals a clear dichotomy: systems are either highly secure but rigid (Wall Biometrics) or highly flexible but insecure (Mobile Apps/QR).
+            </p>
+            <p>
+                <strong>The Gap:</strong> There is a lack of a low-cost system that combines <strong>Biometric Security</strong> with <strong>Portability</strong> and <strong>Session-Specific Control</strong>. Most portable solutions rely on smartphones (which have privacy concerns for students) rather than dedicated institutional hardware.
+            </p>
+            <p>
+                Therefore, the defined problem statement for this project is: <em>"To eliminate proxy attendance and automate data collection by designing a portable, teacher-controlled biometric device that validates student presence specifically for the duration of a lecture session."</em>
+            </p>
+
+            <div class="figure-container" id="fig2_2">
                 <div class="mermaid">
-                    quadrantChart
-                        title Security vs Portability
-                        x-axis Low Portability --> High Portability
-                        y-axis Low Security --> High Security
-                        quadrant-1 High Security / High Portability (Attendro Goal)
-                        quadrant-2 High Security / Low Portability
-                        quadrant-3 Low Security / Low Portability
-                        quadrant-4 Low Security / High Portability
-                        "Manual Register": [0.8, 0.1]
-                        "RFID Cards": [0.7, 0.3]
-                        "Mobile Apps": [0.9, 0.2]
-                        "Wall Biometrics": [0.1, 0.9]
-                        "Desktop Scanners": [0.2, 0.8]
-                        "Attendro": [0.85, 0.85]
+                    graph TB
+                    subgraph High_Security [High Security]
+                        direction LR
+                        Q2(Fixed Biometric<br>High Security, Low Portability) --- Q1(<b>ATTENDRO</b><br>High Security, High Portability)
+                    end
+                    subgraph Low_Security [Low Security]
+                        direction LR
+                        Q3(Manual Registers<br>Low Security, Low Portability) --- Q4(Mobile QR/GPS<br>Low Security, High Portability)
+                    end
+                    style Q1 fill:#90EE90,stroke:#333,stroke-width:2px
+                    style Q2 fill:#ffcccc,stroke:#333
+                    style Q3 fill:#ffcccc,stroke:#333
+                    style Q4 fill:#ffcccc,stroke:#333
                 </div>
-                <div class="figure-caption">Figure 2.2: Gap Analysis - Positioning Attendro</div>
+                <div class="figure-caption">Figure 2.2: Positioning of Attendro (High Security + High Portability)</div>
+                <button class="download-btn-sm" onclick="downloadDiagram('fig2_2', 'Figure_2_2.png')">Download PNG</button>
             </div>
+
+            <h2 class="section-heading">2.6 CHAPTER SUMMARY</h2>
+            <p>
+                This chapter surveyed the landscape of attendance management systems. It established that while biometrics offer the best security against proxy attendance, current fixed implementations are ill-suited for the dynamic schedule of a polytechnic institute. The synthesis of this literature confirms that employing an ESP32-based portable unit with session-logic is a novel and necessary intervention. The next chapter will detail the System Design and Architecture derived from these findings.
+            </p>
 
         </div>
     </div>
-
-    <script>
-        function downloadTable() {
-            const table = document.getElementById('comparison-table');
-            html2canvas(table).then(canvas => {
-                const link = document.createElement('a');
-                link.download = 'table-2-1-comparison.png';
-                link.href = canvas.toDataURL();
-                link.click();
-            });
-        }
-    </script>
 </body>
 </html>

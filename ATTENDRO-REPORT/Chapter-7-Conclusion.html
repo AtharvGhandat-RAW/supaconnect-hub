@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chapter 7 - Conclusion</title>
+    <script type="module">
+        import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+        mermaid.initialize({ startOnLoad: true, theme: 'neutral' });
+    </script>
+    <style>
+        @page {
+            size: A4;
+            margin-top: 2.5cm;
+            margin-bottom: 1.25cm;
+            margin-left: 3.5cm;
+            margin-right: 1.25cm;
+        }
+        body {
+            font-family: "Times New Roman", Times, serif;
+            font-size: 12pt;
+            line-height: 2; /* Double space */
+            text-align: justify;
+            margin: 0;
+            padding: 0;
+            background-color: white;
+            color: black;
+        }
+        .container {
+            width: 100%;
+            margin: 0 auto;
+            padding: 0; 
+            box-sizing: border-box;
+            min-height: 90vh; 
+        }
+
+        /* Typography Rules */
+        h1.chapter-title {
+            font-size: 14pt;
+            text-transform: uppercase;
+            text-align: center;
+            font-weight: bold;
+            margin-bottom: 24pt;
+            margin-top: 0;
+            page-break-before: always;
+        }
+
+        h2.section-heading {
+            font-size: 12pt;
+            font-weight: bold;
+            text-transform: uppercase;
+            margin-top: 18pt;
+            margin-bottom: 12pt;
+            text-align: left;
+        }
+
+        h3.subsection-heading {
+            font-size: 12pt;
+            font-weight: bold;
+            margin-top: 12pt;
+            margin-bottom: 6pt;
+            text-align: left;
+        }
+
+        p, li {
+            font-size: 12pt;
+            margin-bottom: 12pt;
+        }
+
+        ul, ol {
+            margin-bottom: 12pt;
+            padding-left: 1cm;
+        }
+
+        .download-btn-sm {
+            display: inline-block;
+            margin-top: 5px;
+            padding: 5px 10px;
+            background: #6c757d;
+            color: white;
+            font-family: sans-serif;
+            font-size: 10px;
+            text-decoration: none;
+            border-radius: 3px;
+            cursor: pointer;
+            border: none;
+        }
+
+        /* Screen Wrapper */
+        .screen-wrapper {
+            max-width: 210mm;
+            margin: 20px auto;
+            padding: 2.5cm 1.25cm 1.25cm 3.5cm;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            background: white;
+            box-sizing: border-box; 
+        }
+        
+        /* Controls */
+        .controls {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .btn {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            text-decoration: none;
+            text-align: center;
+            font-family: sans-serif;
+            font-size: 14px;
+        }
+        .btn:hover { background-color: #0056b3; }
+        .btn-doc { background-color: #28a745; }
+        .btn-doc:hover { background-color: #218838; }
+
+        @media print {
+            .controls, .download-btn-sm { display: none; }
+            .screen-wrapper {
+                box-shadow: none;
+                margin: 0;
+                padding: 0;
+                width: 100%;
+                max-width: none;
+            }
+            body { background: white; }
+            @page {
+                size: A4;
+                margin-top: 2.5cm;
+                margin-bottom: 1.25cm;
+                margin-left: 3.5cm;
+                margin-right: 1.25cm;
+            }
+        }
+    </style>
+    <script>
+        function downloadDoc() {
+            var content = document.querySelector('.container').innerHTML;
+            content = content.replace(/<button class="download-btn-sm".*?<\/button>/g, "");
+            var header = "<html xmlns:o='urn:schemas-microsoft-com:office:office' "+
+                 "xmlns:w='urn:schemas-microsoft-com:office:word' "+
+                 "xmlns='http://www.w3.org/TR/REC-html40'><head><meta charset='utf-8'><title>Chapter 7</title></head><body>";
+            var footer = "</body></html>";
+            var source = 'data:application/vnd.ms-word;charset=utf-8,' + encodeURIComponent(header + content + footer);
+            var fileDownload = document.createElement("a");
+            document.body.appendChild(fileDownload);
+            fileDownload.href = source;
+            fileDownload.download = 'Chapter-7-Conclusion.doc';
+            fileDownload.click();
+            document.body.removeChild(fileDownload);
+        }
+    </script>
+</head>
+<body>
+    <div class="controls">
+        <button onclick="window.print()" class="btn">Download / Print PDF</button>
+        <button onclick="downloadDoc()" class="btn btn-doc">Download DOC</button>
+    </div>
+
+    <div class="screen-wrapper">
+        <div class="container">
+            <h1 class="chapter-title">CHAPTER–7 CONCLUSION AND FUTURE SCOPE</h1>
+
+            <h2 class="section-heading">7.1 CONCLUSION</h2>
+            <p>
+                Attendro successfully demonstrates how Internet of Things (IoT) and Cloud Computing can modernize a legacy process. By decoupling the biometric sensor from traditional wall-mounted units and connecting it to a session-aware cloud backend, we eliminate proxy attendance and automate the tedious task of compliance reporting.
+            </p>
+            <p>
+                The developed system addresses the key challenges of current manual methods:
+            </p>
+            <ul>
+                <li><strong>Biometric Security:</strong> The integration of the R307 fingerprint sensor ensures that proxy attendance is virtually impossible, as valid physical presence is required for authentication.</li>
+                <li><strong>Time Efficiency:</strong> The average attendance time is reduced to approximately 1.2 seconds per student, saving valuable lecture time compared to manual roll calls.</li>
+                <li><strong>Data Integrity:</strong> Direct logging to the Supabase cloud database prevents data manipulation and provides a transparent, tamper-proof record of student activity.</li>
+                <li><strong>Portability:</strong> The handheld, battery-powered design allows the device to be passed around the classroom, minimizing disruption to the lecture flow.</li>
+            </ul>
+            <p>
+                The successful testing of the Attendro prototype confirms that low-cost hardware like the ESP32, when combined with modern web technologies, can provide enterprise-grade solutions for educational institutions.
+            </p>
+
+            <h2 class="section-heading">7.2 FUTURE SCOPE</h2>
+            <p>
+                While the current system robustly meets its primary objectives, several enhancements have been identified to further improve its utility and scalability in future iterations:
+            </p>
+            <ol>
+                <li><strong>Offline Buffering:</strong> Future versions will incorporate an SD card module to cache attendance logs locally when Wi-Fi connectivity is unstable, automatically syncing with the cloud once the connection is restored.</li>
+                <li><strong>Multi-Factor Authentication (MFA):</strong> To accommodate cases where biometric scans fail (e.g., due to injury), an RFID reader or keypad PIN system could be added as a secondary authentication layer.</li>
+                <li><strong>Predictive Analytics:</strong> Leveraging the historical data collected, Machine Learning models could be implemented on the backend to identify absenteeism trends and alert faculty to students at risk of falling below attendance requirements.</li>
+                <li><strong>Mobile App Integration:</strong> Developing a dedicated mobile application for students to view their own attendance records and receive push notifications for class schedules.</li>
+            </ol>
+            <p>
+                These planned improvements will evolve Attendro from a functional prototype into a comprehensive diverse educational management ecosystem.
+            </p>
+
+        </div>
+    </div>
+</body>
+</html>

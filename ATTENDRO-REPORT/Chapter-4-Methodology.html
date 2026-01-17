@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chapter 4 - Methodology</title>
+    <script type="module">
+        import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+        mermaid.initialize({ startOnLoad: true, theme: 'neutral' });
+    </script>
+    <style>
+        @page {
+            size: A4;
+            margin-top: 2.5cm;
+            margin-bottom: 1.25cm;
+            margin-left: 3.5cm;
+            margin-right: 1.25cm;
+        }
+        body {
+            font-family: "Times New Roman", Times, serif;
+            font-size: 12pt;
+            line-height: 2; /* Double space */
+            text-align: justify;
+            margin: 0;
+            padding: 0;
+            background-color: white;
+            color: black;
+        }
+        .container {
+            width: 100%;
+            margin: 0 auto;
+            padding: 0; 
+            box-sizing: border-box;
+            min-height: 90vh; 
+        }
+
+        /* Typography Rules */
+        h1.chapter-title {
+            font-size: 14pt;
+            text-transform: uppercase;
+            text-align: center;
+            font-weight: bold;
+            margin-bottom: 24pt;
+            margin-top: 0;
+            page-break-before: always;
+        }
+
+        h2.section-heading {
+            font-size: 12pt;
+            font-weight: bold;
+            text-transform: uppercase;
+            margin-top: 18pt;
+            margin-bottom: 12pt;
+            text-align: left;
+        }
+
+        h3.subsection-heading {
+            font-size: 12pt;
+            font-weight: bold;
+            margin-top: 12pt;
+            margin-bottom: 6pt;
+            text-align: left;
+        }
+
+        p, li {
+            font-size: 12pt;
+            margin-bottom: 12pt;
+        }
+
+        ul, ol {
+            margin-bottom: 12pt;
+            padding-left: 1cm;
+        }
+
+        .figure-container {
+            text-align: center;
+            margin: 24pt 0;
+            page-break-inside: avoid;
+        }
+        .figure-caption {
+            font-weight: bold;
+            margin-top: 10pt;
+            font-style: italic;
+        }
+        .download-btn-sm {
+            display: inline-block;
+            margin-top: 5px;
+            padding: 5px 10px;
+            background: #6c757d;
+            color: white;
+            font-family: sans-serif;
+            font-size: 10px;
+            text-decoration: none;
+            border-radius: 3px;
+            cursor: pointer;
+            border: none;
+        }
+        .mermaid { background: white; }
+
+        /* Screen Wrapper */
+        .screen-wrapper {
+            max-width: 210mm;
+            margin: 20px auto;
+            padding: 2.5cm 1.25cm 1.25cm 3.5cm;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            background: white;
+            box-sizing: border-box; 
+        }
+        
+        /* Controls */
+        .controls {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .btn {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            text-decoration: none;
+            text-align: center;
+            font-family: sans-serif;
+            font-size: 14px;
+        }
+        .btn:hover { background-color: #0056b3; }
+        .btn-doc { background-color: #28a745; }
+        .btn-doc:hover { background-color: #218838; }
+
+        @media print {
+            .controls, .download-btn-sm { display: none; }
+            .screen-wrapper {
+                box-shadow: none;
+                margin: 0;
+                padding: 0;
+                width: 100%;
+                max-width: none;
+            }
+            body { background: white; }
+            @page {
+                size: A4;
+                margin-top: 2.5cm;
+                margin-bottom: 1.25cm;
+                margin-left: 3.5cm;
+                margin-right: 1.25cm;
+            }
+        }
+    </style>
+    <script>
+        function downloadDoc() {
+            var content = document.querySelector('.container').innerHTML;
+            content = content.replace(/<button class="download-btn-sm".*?<\/button>/g, "");
+            var header = "<html xmlns:o='urn:schemas-microsoft-com:office:office' "+
+                 "xmlns:w='urn:schemas-microsoft-com:office:word' "+
+                 "xmlns='http://www.w3.org/TR/REC-html40'><head><meta charset='utf-8'><title>Chapter 4</title></head><body>";
+            var footer = "</body></html>";
+            var source = 'data:application/vnd.ms-word;charset=utf-8,' + encodeURIComponent(header + content + footer);
+            var fileDownload = document.createElement("a");
+            document.body.appendChild(fileDownload);
+            fileDownload.href = source;
+            fileDownload.download = 'Chapter-4-Methodology.doc';
+            fileDownload.click();
+            document.body.removeChild(fileDownload);
+        }
+
+        async function downloadDiagram(id, filename) {
+            const element = document.getElementById(id);
+            if(!element.querySelector('svg')) {
+                alert("Please wait for diagram to render.");
+                return;
+            }
+            const svgData = new XMLSerializer().serializeToString(element.querySelector('svg'));
+            const canvas = document.createElement("canvas");
+            const ctx = canvas.getContext("2d");
+            const img = new Image();
+            const svgSize = element.querySelector('svg').getBoundingClientRect();
+            canvas.width = svgSize.width * 2; 
+            canvas.height = svgSize.height * 2;
+            img.onload = function() {
+                ctx.fillStyle = "white";
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                const pngFile = canvas.toDataURL("image/png");
+                const downloadLink = document.createElement("a");
+                downloadLink.download = filename;
+                downloadLink.href = pngFile;
+                downloadLink.click();
+            };
+            img.src = "data:image/svg+xml;base64," + btoa(unescape(encodeURIComponent(svgData)));
+        }
+    </script>
+</head>
+<body>
+    <div class="controls">
+        <button onclick="window.print()" class="btn">Download / Print PDF</button>
+        <button onclick="downloadDoc()" class="btn btn-doc">Download DOC</button>
+    </div>
+
+    <div class="screen-wrapper">
+        <div class="container">
+            <h1 class="chapter-title">CHAPTER–4 METHODOLOGY</h1>
+
+            <h2 class="section-heading">4.1 INTRODUCTION</h2>
+            <p>
+                The efficacy of the Attendro system lies in its systematic workflow that ensures data integrity from the moment a student places their finger on the sensor. The methodology is divided into two distinct operational modes: the <strong>Enrollment Phase</strong> (one-time setup per student) and the <strong>Attendance Phase</strong> (recurring utilization).
+            </p>
+
+            <h2 class="section-heading">4.2 ENROLLMENT WORKFLOW</h2>
+            <p>
+                The enrollment process is the foundation of the biometric system. It involves converting a physical fingerprint into a digital template. This phase is typically supervised by a faculty or admin.
+            </p>
+            <ol>
+                <li><strong>Initialization:</strong> The device is set to 'Enroll Mode' via the web dashboard.</li>
+                <li><strong>Scanning:</strong> The R307 sensor captures the fingerprint image twice to ensure consistency and high quality. The internal algorithm checks for minutiae points.</li>
+                <li><strong>Template Generation:</strong> The image is not stored. Instead, it is processed into a proprietary hexadecimal character string (Template).</li>
+                <li><strong>Storage:</strong> This template is uploaded to the Supabase Cloud Database along with the student's Roll Number. It is then synced to local device memory for fast offline matching.</li>
+            </ol>
+
+            <div class="figure-container" id="fig4_1">
+                <div class="mermaid">
+                    graph TD
+                    Start([Start Enrollment]) --> Input[Enter Roll Number]
+                    Input --> Scan1[Scan Finger Attempt 1]
+                    Scan1 --> Process{Quality Good?}
+                    Process -- No --> Scan1
+                    Process -- Yes --> Scan2[Scan Finger Attempt 2]
+                    Scan2 --> Compare{Match First Scan?}
+                    Compare -- No --> Scan1
+                    Compare -- Yes --> Gen[Generate Digital Template]
+                    Gen --> UP[Upload to Cloud Database]
+                    UP --> End([Enrollment Complete])
+                </div>
+                <div class="figure-caption">Figure 4.1: Flowchart of Enrollment Process</div>
+                <button class="download-btn-sm" onclick="downloadDiagram('fig4_1', 'Figure_4_1.png')">Download PNG</button>
+            </div>
+
+            <h2 class="section-heading">4.3 ATTENDANCE WORKFLOW</h2>
+            <p>
+                The core functionality mechanism involves verifying identity within a restricted time window. The algorithm running on the ESP32 ensures that attendance is not just about matching a finger, but about matching it <em>at the right time</em>.
+            </p>
+            <ol>
+                <li><strong>Session Check:</strong> The ESP32 periodically (every 5 seconds) queries the cloud for an 'Active Session Token'. If no session is active, the device remains locked.</li>
+                <li><strong>Biometric Input:</strong> A student places their finger. The device searches its local library (1:N matching).</li>
+                <li><strong>Validation:</strong> If a match is found, the system retrieves the associated Roll Number.</li>
+                <li><strong>Logging:</strong> The Roll Number, current Timestamp, and Session ID are bundled into a JSON packet and sent to the `attendance_logs` table in Supabase via secure HTTPS POST request.</li>
+                <li><strong>Visual Feedback:</strong> The OLED displays the student's name and status ("Present").</li>
+            </ol>
+
+            <div class="figure-container" id="fig4_2">
+                <div class="mermaid">
+                    graph TD
+                    Idle([Device Idle]) --> Poll{Check Active Session}
+                    Poll -- No Session --> Idle
+                    Poll -- Yes --> Ready[Display: 'Place Finger']
+                    Ready --> Input[/Finger Placed/]
+                    Input --> Search{Match Found?}
+                    Search -- No --> Error[Display: 'Not Found'] --> Ready
+                    Search -- Yes --> GetID[Retrieve Student ID]
+                    GetID --> Send[Send to Cloud API]
+                    Send --> Log[(Database Log)]
+                    Log --> Success[Display 'Marked Present']
+                    Success --> Ready
+                </div>
+                <div class="figure-caption">Figure 4.2: Flowchart of Attendance Marking Process</div>
+                <button class="download-btn-sm" onclick="downloadDiagram('fig4_2', 'Figure_4_2.png')">Download PNG</button>
+            </div>
+
+            <h2 class="section-heading">4.4 HARDWARE ASSEMBLY</h2>
+            <p>
+                The hardware integration follows a modular approach.
+            </p>
+            <ul>
+                <li><strong>Controller:</strong> The ESP32 acts as the master.</li>
+                <li><strong>Sensor Interface:</strong> The R307 fingerprint sensor communicates via UART (Serial2) on pins 16 (RX) and 17 (TX).</li>
+                <li><strong>Display Interface:</strong> The OLED display uses the I2C protocol, connected to pins 21 (SDA) and 22 (SCL).</li>
+                <li><strong>Power:</strong> A TP4056 charging module manages the Li-ion battery, providing a regulated 5V boost to the sensor and 3.3V to the ESP32.</li>
+            </ul>
+
+        </div>
+    </div>
+</body>
+</html>

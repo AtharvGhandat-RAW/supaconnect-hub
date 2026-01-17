@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chapter 5 - Design Details</title>
+    <script type="module">
+        import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+        mermaid.initialize({ startOnLoad: true, theme: 'neutral' });
+    </script>
+    <style>
+        @page {
+            size: A4;
+            margin-top: 2.5cm;
+            margin-bottom: 1.25cm;
+            margin-left: 3.5cm;
+            margin-right: 1.25cm;
+        }
+        body {
+            font-family: "Times New Roman", Times, serif;
+            font-size: 12pt;
+            line-height: 2; /* Double space */
+            text-align: justify;
+            margin: 0;
+            padding: 0;
+            background-color: white;
+            color: black;
+        }
+        .container {
+            width: 100%;
+            margin: 0 auto;
+            padding: 0; 
+            box-sizing: border-box;
+            min-height: 90vh; 
+        }
+
+        /* Typography Rules */
+        h1.chapter-title {
+            font-size: 14pt;
+            text-transform: uppercase;
+            text-align: center;
+            font-weight: bold;
+            margin-bottom: 24pt;
+            margin-top: 0;
+            page-break-before: always;
+        }
+
+        h2.section-heading {
+            font-size: 12pt;
+            font-weight: bold;
+            text-transform: uppercase;
+            margin-top: 18pt;
+            margin-bottom: 12pt;
+            text-align: left;
+        }
+
+        h3.subsection-heading {
+            font-size: 12pt;
+            font-weight: bold;
+            margin-top: 12pt;
+            margin-bottom: 6pt;
+            text-align: left;
+        }
+
+        p, li {
+            font-size: 12pt;
+            margin-bottom: 12pt;
+        }
+
+        ul, ol {
+            margin-bottom: 12pt;
+            padding-left: 1cm;
+        }
+
+        .figure-container {
+            text-align: center;
+            margin: 24pt 0;
+            page-break-inside: avoid;
+        }
+        .figure-caption {
+            font-weight: bold;
+            margin-top: 10pt;
+            font-style: italic;
+        }
+        .download-btn-sm {
+            display: inline-block;
+            margin-top: 5px;
+            padding: 5px 10px;
+            background: #6c757d;
+            color: white;
+            font-family: sans-serif;
+            font-size: 10px;
+            text-decoration: none;
+            border-radius: 3px;
+            cursor: pointer;
+            border: none;
+            width: auto;
+        }
+        .mermaid { background: white; }
+
+        /* Screen Wrapper */
+        .screen-wrapper {
+            max-width: 210mm;
+            margin: 20px auto;
+            padding: 2.5cm 1.25cm 1.25cm 3.5cm;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            background: white;
+            box-sizing: border-box; 
+        }
+        
+        /* Controls */
+        .controls {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .btn {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            text-decoration: none;
+            text-align: center;
+            font-family: sans-serif;
+            font-size: 14px;
+        }
+        .btn:hover { background-color: #0056b3; }
+        .btn-doc { background-color: #28a745; }
+        .btn-doc:hover { background-color: #218838; }
+
+        @media print {
+            .controls, .download-btn-sm { display: none; }
+            .screen-wrapper {
+                box-shadow: none;
+                margin: 0;
+                padding: 0;
+                width: 100%;
+                max-width: none;
+            }
+            body { background: white; }
+            @page {
+                size: A4;
+                margin-top: 2.5cm;
+                margin-bottom: 1.25cm;
+                margin-left: 3.5cm;
+                margin-right: 1.25cm;
+            }
+        }
+    </style>
+    <script>
+        function downloadDoc() {
+            var content = document.querySelector('.container').innerHTML;
+            content = content.replace(/<button class="download-btn-sm".*?<\/button>/g, "");
+            var header = "<html xmlns:o='urn:schemas-microsoft-com:office:office' "+
+                 "xmlns:w='urn:schemas-microsoft-com:office:word' "+
+                 "xmlns='http://www.w3.org/TR/REC-html40'><head><meta charset='utf-8'><title>Chapter 5</title></head><body>";
+            var footer = "</body></html>";
+            var source = 'data:application/vnd.ms-word;charset=utf-8,' + encodeURIComponent(header + content + footer);
+            var fileDownload = document.createElement("a");
+            document.body.appendChild(fileDownload);
+            fileDownload.href = source;
+            fileDownload.download = 'Chapter-5-Design-Details.doc';
+            fileDownload.click();
+            document.body.removeChild(fileDownload);
+        }
+
+        async function downloadDiagram(id, filename) {
+            const element = document.getElementById(id);
+            if(!element.querySelector('svg')) {
+                alert("Please wait for diagram to render.");
+                return;
+            }
+            const svgData = new XMLSerializer().serializeToString(element.querySelector('svg'));
+            const canvas = document.createElement("canvas");
+            const ctx = canvas.getContext("2d");
+            const img = new Image();
+            const svgSize = element.querySelector('svg').getBoundingClientRect();
+            canvas.width = svgSize.width * 2; 
+            canvas.height = svgSize.height * 2;
+            img.onload = function() {
+                ctx.fillStyle = "white";
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                const pngFile = canvas.toDataURL("image/png");
+                const downloadLink = document.createElement("a");
+                downloadLink.download = filename;
+                downloadLink.href = pngFile;
+                downloadLink.click();
+            };
+            img.src = "data:image/svg+xml;base64," + btoa(unescape(encodeURIComponent(svgData)));
+        }
+    </script>
+</head>
+<body>
+    <div class="controls">
+        <button onclick="window.print()" class="btn">Download / Print PDF</button>
+        <button onclick="downloadDoc()" class="btn btn-doc">Download DOC</button>
+    </div>
+
+    <div class="screen-wrapper">
+        <div class="container">
+            <h1 class="chapter-title">CHAPTER–5 DESIGN DETAILS</h1>
+
+            <h2 class="section-heading">5.1 DATABASE ARCHITECTURE</h2>
+            <p>
+                The backend infrastructure is built on Supabase (PostgreSQL). The data model is designed to be relational, ensuring referential integrity between students, sessions, and attendance records. An Entity-Relationship (ER) diagram visualizes these connections.
+            </p>
+            <p>
+                The `logs` table is the central fact table where records accumulate. It references the `profiles` table to fetch student details dynamically. Row Level Security (RLS) policies are implemented to ensure that only authorized faculty can read sensitive logs.
+            </p>
+
+            <div class="figure-container" id="fig5_1">
+                <div class="mermaid">
+                    erDiagram
+    PROFILES ||--o{ LOGS : "generates"
+    PROFILES {
+        uuid id PK
+        string full_name
+        string roll_number
+        text avatar_url
+    }
+    LOGS {
+        uuid id PK
+        uuid student_id FK
+        timestamp created_at
+        text session_type
+        json metadata
+    }
+    ADMINS ||--|{ SESSIONS : "manages"
+    SESSIONS {
+        uuid session_id PK
+        timestamp start_time
+        timestamp end_time
+        boolean is_active
+    }
+                </div>
+                <div class="figure-caption">Figure 5.1: Entity-Relationship Diagram of the Database</div>
+                <button class="download-btn-sm" onclick="downloadDiagram('fig5_1', 'Figure_5_1.png')">Download PNG</button>
+            </div>
+
+            <h2 class="section-heading">5.2 HARDWARE INTERFACE DESIGN</h2>
+            <p>
+                The physical design is compact and handheld. The circuit schematic illustrates the interconnections between the Microcontroller (ESP32) and peripheries.
+            </p>
+            <ul>
+                <li><strong>Voltage Regulation:</strong> The system accepts 5V input via USB-C or Li-ion. The AMS1117 regulator on the ESP32 dev board drops this to 3.3V for the logic level.</li>
+                <li><strong>Communication Bus:</strong> To avoid signal collision, the Fingerprint Sensor uses dedicated Hardware Serial (UART2), while the OLED display uses the I2C bus.</li>
+            </ul>
+
+            <div class="figure-container" id="fig5_2">
+                <div class="mermaid">
+                    graph LR
+    subgraph Power_Supply ["Power Management"]
+        BAT[Li-Ion Battery 3.7V] --> BOOST[TP4056 + 5V Booster]
+        USB[USB-C Input] --> BOOST
+    end
+
+    subgraph MCU ["Microcontroller"]
+        ESP32[ESP32-WROOM-32]
+    end
+
+    subgraph Peripherals ["Peripherals"]
+        OLED[OLED Display 0.96'']
+        FP[R307 Fingerprint Sensor]
+        LED[Status LED]
+    end
+
+    BOOST -- 5V --> FP
+    BOOST -- 5V --> ESP32
+    ESP32 -- 3.3V --> OLED
+
+    ESP32 -- I2C (SDA/SCL) --> OLED
+    ESP32 -- UART2 (TX/RX) --> FP
+    ESP32 -- GPIO --> LED
+                </div>
+                <div class="figure-caption">Figure 5.2: Block Diagram of Hardware Connections</div>
+                <button class="download-btn-sm" onclick="downloadDiagram('fig5_2', 'Figure_5_2.png')">Download PNG</button>
+            </div>
+
+            <h2 class="section-heading">5.3 USER INTERFACE (DASHBOARD) DESIGN</h2>
+            <p>
+                The web interface is built using React.js and Tailwind CSS. It is designed to be responsive, working seamlessly on mobile and desktop browsers.
+            </p>
+            <ul>
+                <li><strong>Live Feed:</strong> A WebSocket subscription to the database allows the dashboard to update in real-time as soon as a student marks attendance.</li>
+                <li><strong>Export Panel:</strong> Administrators can filter records by date and download them as CSV or PDF reports for official documentation.</li>
+                <li><strong>Student Profile:</strong> Clicking on a student record reveals a detailed history of their attendance percentage.</li>
+            </ul>
+
+        </div>
+    </div>
+</body>
+</html>

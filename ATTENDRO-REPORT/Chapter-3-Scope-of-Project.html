@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chapter 3 - Scope of Project</title>
+    <script type="module">
+        import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+        mermaid.initialize({ startOnLoad: true, theme: 'neutral' });
+    </script>
+    <style>
+        @page {
+            size: A4;
+            margin-top: 2.5cm;
+            margin-bottom: 1.25cm;
+            margin-left: 3.5cm;
+            margin-right: 1.25cm;
+        }
+        body {
+            font-family: "Times New Roman", Times, serif;
+            font-size: 12pt;
+            line-height: 2; /* Double space */
+            text-align: justify;
+            margin: 0;
+            padding: 0;
+            background-color: white;
+            color: black;
+        }
+        .container {
+            width: 100%;
+            margin: 0 auto;
+            padding: 0; 
+            box-sizing: border-box;
+            min-height: 90vh; 
+        }
+
+        /* Typography Rules */
+        h1.chapter-title {
+            font-size: 14pt;
+            text-transform: uppercase;
+            text-align: center;
+            font-weight: bold;
+            margin-bottom: 24pt;
+            margin-top: 0;
+            page-break-before: always;
+        }
+
+        h2.section-heading {
+            font-size: 12pt;
+            font-weight: bold;
+            text-transform: uppercase;
+            margin-top: 18pt;
+            margin-bottom: 12pt;
+            text-align: left;
+        }
+
+        h3.subsection-heading {
+            font-size: 12pt;
+            font-weight: bold;
+            margin-top: 12pt;
+            margin-bottom: 6pt;
+            text-align: left;
+        }
+
+        p, li {
+            font-size: 12pt;
+            margin-bottom: 12pt;
+        }
+
+        ul, ol {
+            margin-bottom: 12pt;
+            padding-left: 1cm;
+        }
+
+        /* Table Styles and Diagram Styles match Ch 2 */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            font-size: 11pt;
+        }
+        th, td {
+            border: 1px solid black;
+            padding: 8px;
+            vertical-align: top;
+        }
+        th {
+            background-color: #f2f2f2;
+            font-weight: bold;
+        }
+
+        .figure-container {
+            text-align: center;
+            margin: 24pt 0;
+            page-break-inside: avoid;
+        }
+        .figure-caption {
+            font-weight: bold;
+            margin-top: 10pt;
+            font-style: italic;
+        }
+        .download-btn-sm {
+            display: inline-block;
+            margin-top: 5px;
+            padding: 5px 10px;
+            background: #6c757d;
+            color: white;
+            font-family: sans-serif;
+            font-size: 10px;
+            text-decoration: none;
+            border-radius: 3px;
+            cursor: pointer;
+            border: none;
+        }
+        .mermaid { background: white; }
+
+        /* Screen Wrapper */
+        .screen-wrapper {
+            max-width: 210mm;
+            margin: 20px auto;
+            padding: 2.5cm 1.25cm 1.25cm 3.5cm;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            background: white;
+            box-sizing: border-box; 
+        }
+        
+        /* Controls */
+        .controls {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .btn {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            text-decoration: none;
+            text-align: center;
+            font-family: sans-serif;
+            font-size: 14px;
+        }
+        .btn:hover { background-color: #0056b3; }
+        .btn-doc { background-color: #28a745; }
+        .btn-doc:hover { background-color: #218838; }
+
+        @media print {
+            .controls, .download-btn-sm { display: none; }
+            .screen-wrapper {
+                box-shadow: none;
+                margin: 0;
+                padding: 0;
+                width: 100%;
+                max-width: none;
+            }
+            body { background: white; }
+            @page {
+                size: A4;
+                margin-top: 2.5cm;
+                margin-bottom: 1.25cm;
+                margin-left: 3.5cm;
+                margin-right: 1.25cm;
+            }
+        }
+    </style>
+    <script>
+        function downloadDoc() {
+            var content = document.querySelector('.container').innerHTML;
+            content = content.replace(/<button class="download-btn-sm".*?<\/button>/g, "");
+            
+            var header = "<html xmlns:o='urn:schemas-microsoft-com:office:office' "+
+                 "xmlns:w='urn:schemas-microsoft-com:office:word' "+
+                 "xmlns='http://www.w3.org/TR/REC-html40'>"+
+                 "<head><meta charset='utf-8'><title>Chapter 3</title></head><body>";
+            var footer = "</body></html>";
+            
+            var source = 'data:application/vnd.ms-word;charset=utf-8,' + encodeURIComponent(header + content + footer);
+            var fileDownload = document.createElement("a");
+            document.body.appendChild(fileDownload);
+            fileDownload.href = source;
+            fileDownload.download = 'Chapter-3-Scope-of-Project.doc';
+            fileDownload.click();
+            document.body.removeChild(fileDownload);
+        }
+
+        async function downloadDiagram(id, filename) {
+            const element = document.getElementById(id);
+            if(!element.querySelector('svg')) {
+                alert("Please wait for diagram to render.");
+                return;
+            }
+            const svgData = new XMLSerializer().serializeToString(element.querySelector('svg'));
+            const canvas = document.createElement("canvas");
+            const ctx = canvas.getContext("2d");
+            const img = new Image();
+            
+            const svgSize = element.querySelector('svg').getBoundingClientRect();
+            canvas.width = svgSize.width * 2; 
+            canvas.height = svgSize.height * 2;
+            
+            img.onload = function() {
+                ctx.fillStyle = "white";
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                const pngFile = canvas.toDataURL("image/png");
+                
+                const downloadLink = document.createElement("a");
+                downloadLink.download = filename;
+                downloadLink.href = pngFile;
+                downloadLink.click();
+            };
+            img.src = "data:image/svg+xml;base64," + btoa(unescape(encodeURIComponent(svgData)));
+        }
+    </script>
+</head>
+<body>
+
+    <div class="controls">
+        <button onclick="window.print()" class="btn">Download / Print PDF</button>
+        <button onclick="downloadDoc()" class="btn btn-doc">Download DOC</button>
+    </div>
+
+    <div class="screen-wrapper">
+        <div class="container">
+            
+            <h1 class="chapter-title">CHAPTER 3<br>SCOPE OF PROJECT</h1>
+
+            <h2 class="section-heading">3.1 INTRODUCTION</h2>
+            <p>
+                The scope of the <strong>Attendro</strong> project defines the boundaries of the system, outlining what the solution will deliver in terms of functionalities, constraints, and operational capabilities. This project aims to design and develop a comprehensive <strong>Portable Wireless Biometric Attendance System</strong> that bridges the gap between hardware-based biometric acquisition and cloud-based data management.
+            </p>
+            <p>
+                The core objective is to eliminate the inefficiencies of manual paper-based attendance and the immobility of traditional wall-mounted biometric systems. The scope encompasses the development of a handheld IoT device based on the <strong>ESP32 microcontroller</strong>, a robust <strong>optical fingerprint sensor (R307)</strong>, and a modern <strong>React.js web dashboard</strong> for administration. By leveraging <strong>Supabase</strong> for real-time database synchronisation, the system ensures that attendance data is instantly available to faculty and administrators, thereby streamlining academic record-keeping processes.
+            </p>
+
+            <h2 class="section-heading">3.2 FUNCTIONAL SCOPE</h2>
+            <p>
+                The functional scope details the specific features and interactions that the system functions will support. The Attendro system is divided into three primary functional modules: the Hardware Device, the Web Interface, and the Database layer.
+            </p>
+
+            <h3 class="subsection-heading">3.2.1 The Portable Biometric Device</h3>
+            <p>
+                The hardware unit is the primary interface for students. Its functional scope includes:
+            </p>
+            <ul>
+                <li>
+                    <strong>Biometric Acquisition:</strong> The device must capture fingerprint minutiae using the R307 optical sensor. It is responsible for verifying the captured print against stored templates on-board or via cloud verification.
+                </li>
+                <li>
+                    <strong>Wireless Connectivity:</strong> Utilising the ESP32’s Wi-Fi capabilities, the device must connect to the institution's network to transmit attendance logs to the server in real-time.
+                </li>
+                <li>
+                    <strong>User Feedback:</strong> A 0.96-inch OLED display provides visual feedback (e.g., "Attendance Marked", "Try Again", "Connecting..."), ensuring the user is aware of the system state.
+                </li>
+                <li>
+                    <strong>Portability & Power Management:</strong> The system runs on a 3.7V Li-ion battery, allowing it to be passed around the classroom. It includes power-management routines to sleep when inactive.
+                </li>
+            </ul>
+
+            <h3 class="subsection-heading">3.2.2 The Web Interface (Dashboard)</h3>
+            <p>
+                The web application serves as the control centre for faculty and administrators. Its key functions include:
+            </p>
+            <ul>
+                <li>
+                    <strong>Faculty Authentication:</strong> Secure login functionality for professors to access their specific courses and student lists.
+                </li>
+                <li>
+                    <strong>Session Control:</strong> Faculty can remotely "Start" or "Stop" an attendance session for a specific class. The hardware device will only accept inputs when a session is active.
+                </li>
+                <li>
+                    <strong>Student Registration:</strong> A module to enrol new students, associating their metadata (Name, Roll No.) with their biometric ID.
+                </li>
+                <li>
+                    <strong>Reporting & Analytics:</strong> Generation of attendance reports, identifying absentees, and visualising attendance trends over time.
+                </li>
+            </ul>
+
+            <h3 class="subsection-heading">3.2.3 The Centralized Database</h3>
+            <p>
+                The backend scope involves the management of persistent data:
+            </p>
+            <ul>
+                <li>
+                    <strong>Real-time Synchronisation:</strong> The database captures events sent by the ESP32 device immediately.
+                </li>
+                <li>
+                    <strong>Data Integrity:</strong> Ensuring that student records and attendance logs are linked correctly via foreign keys.
+                </li>
+                <li>
+                    <strong>Storage:</strong> Secure storage of user credentials, student profiles, and timestamped attendance logs.
+                </li>
+            </ul>
+
+            <h2 class="section-heading">3.3 NON-FUNCTIONAL SCOPE</h2>
+            <p>
+                The non-functional scope defines the quality attributes and constraints under which the system operates.
+            </p>
+
+            <h3 class="subsection-heading">3.3.1 Reliability</h3>
+            <p>
+                The system is designed to handle temporary network failures. In the event of Wi-Fi disconnection, the device should hold the state or notify the user, ensuring no false positives are recorded. The fingerprint sensor is selected for its high durability and resistance to scratches.
+            </p>
+
+            <h3 class="subsection-heading">3.3.2 Security</h3>
+            <p>
+                Security is paramount in handling biometric data and student records. The system employs <strong>Token-based Authentication</strong> (via Supabase Auth) for the web dashboard. Communication between the ESP32 and the cloud is secured over HTTPS/TLS to prevent data interception. Furthermore, fingerprint data is processed as templates rather than raw images, adding a layer of privacy.
+            </p>
+
+            <h3 class="subsection-heading">3.3.3 Performance</h3>
+            <p>
+                Performance metrics are critical for user acceptance:
+            </p>
+            <ul>
+                <li><strong>Matching Speed:</strong> The fingerprint identification process is optimised to complete within <strong>1 second</strong>.</li>
+                <li><strong>Boot Time:</strong> The device boots and connects to Wi-Fi within 5–10 seconds.</li>
+                <li><strong>Dashboard Latency:</strong> Updates from the device appear on the faculty dashboard with minimal latency (typically under 2 seconds), facilitated by WebSocket subscriptions.</li>
+            </ul>
+
+            <div style="page-break-after: always;"></div>
+
+            <h2 class="section-heading">3.4 HARDWARE & SOFTWARE REQUIREMENTS</h2>
+            <p>
+                To achieve the defined scope, specific hardware and software components have been selected.
+            </p>
+
+            <p><strong>Table 3.1: Hardware Requirements</strong></p>
+            <table border="1" style="width:100%; border-collapse: collapse; text-align: left; margin-bottom: 20px;">
+                <thead>
+                    <tr>
+                        <th style="padding: 8px;">Component</th>
+                        <th style="padding: 8px;">Specification / Role</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td style="padding: 8px;">Microcontroller</td>
+                        <td style="padding: 8px;">ESP32 Dev Kit V1 (Dual-core, Wi-Fi+BT)</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 8px;">Biometric Sensor</td>
+                        <td style="padding: 8px;">R307 Optical Fingerprint Module</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 8px;">Display Unit</td>
+                        <td style="padding: 8px;">0.96 inch I2C OLED Display (128x64 px)</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 8px;">Power Source</td>
+                        <td style="padding: 8px;">3.7V Li-ion Battery (18650 or Polymer)</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 8px;">Connectivity</td>
+                        <td style="padding: 8px;">Micro-USB cable for programming/charging</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <p><strong>Table 3.2: Software Requirements</strong></p>
+            <table border="1" style="width:100%; border-collapse: collapse; text-align: left; margin-bottom: 20px;">
+                <thead>
+                    <tr>
+                        <th style="padding: 8px;">Category</th>
+                        <th style="padding: 8px;">Technology Stack</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td style="padding: 8px;">Firmware Development</td>
+                        <td style="padding: 8px;">C++ via Arduino IDE</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 8px;">Frontend Interface</td>
+                        <td style="padding: 8px;">React.js, Tailwind CSS, Vite</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 8px;">Backend Services</td>
+                        <td style="padding: 8px;">Supabase (PostgreSQL, Auth, Realtime)</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 8px;">Testing Tools</td>
+                        <td style="padding: 8px;">Postman, Serial Monitor</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h2 class="section-heading">3.5 FEASIBILITY STUDY</h2>
+            
+            <h3 class="subsection-heading">3.5.1 Technical Feasibility</h3>
+            <p>
+                The project is technically feasible as it utilises the ESP32, a mature and widely supported platform in the IoT domain. The R307 sensor communicates via standard UART protocols, and libraries for interface are readily available.
+            </p>
+
+            <h3 class="subsection-heading">3.5.2 Operational Feasibility</h3>
+            <p>
+                Operationally, the system is intuitive. Faculty members require no coding knowledge. For students, the interaction is limited to placing a finger on the sensor. The device's portability ensures it fits into existing classroom workflows.
+            </p>
+
+            <h3 class="subsection-heading">3.5.3 Economic Feasibility</h3>
+            <p>
+                Attendro utilises open-source software libraries and affordable off-the-shelf hardware components (approx. total cost < ₹1500), making it a significantly more cost-effective solution than commercial alternatives for educational institutions.
+            </p>
+
+
+            <h2 class="section-heading">3.6 SYSTEM DESIGN DIAGRAMS</h2>
+            <p>
+                The following diagrams illustrate the functional interactions and the system boundaries.
+            </p>
+
+            <div class="figure-container" id="fig3_1">
+                <div class="mermaid">
+                    graph LR
+                    S(Student) 
+                    F(Faculty) 
+                    A(Admin)
+
+                    subgraph Attendro_System [Attendro System]
+                        UC1([Place Finger])
+                        UC2([View Feedback OLED])
+                        UC3([Login to Dashboard])
+                        UC4([Start/Stop Session])
+                        UC5([Register Student])
+                        UC6([View Reports])
+                        UC7([Manage Users])
+                    end
+
+                    S --> UC1
+                    S --> UC2
+                    F --> UC3
+                    F --> UC4
+                    F --> UC6
+                    F --> UC5
+                    A --> UC7
+                    A --> UC6
+                    
+                    style Attendro_System fill:#fff,stroke:#333,stroke-dasharray: 5 5
+                </div>
+                <div class="figure-caption">Figure 3.1: Use Case Diagram</div>
+                <button class="download-btn-sm" onclick="downloadDiagram('fig3_1', 'Figure_3_1.png')">Download PNG</button>
+            </div>
+
+            <div class="figure-container" id="fig3_2">
+                <div class="mermaid">
+                    graph TD
+                    subgraph Hardware_Boundary [Hardware Boundary - Classroom]
+                        direction TB
+                        ESP[ESP32 Controller]
+                        R307[Fingerprint Sensor]
+                        OLED[OLED Display]
+                        BAT[Battery / Power]
+                        
+                        BAT --> ESP
+                        ESP --UART--> R307
+                        ESP --I2C--> OLED
+                    end
+
+                    subgraph Network_Boundary [Network Boundary]
+                        direction TB
+                        WIFI((Wi-Fi Router))
+                    end
+
+                    subgraph Cloud_Boundary [Cloud Boundary]
+                        direction TB
+                        SUPA[Supabase Cloud]
+                        DB[(PostgreSQL DB)]
+                        AUTH[Auth Service]
+                        
+                        SUPA --> DB
+                        SUPA --> AUTH
+                    end
+
+                    subgraph User_Boundary [User Boundary]
+                        direction TB
+                        LAP[Faculty Laptop]
+                        MOB[Mobile Device]
+                    end
+
+                    ESP -. HTTPS/WebSocket .-> WIFI
+                    WIFI -.-> SUPA
+                    LAP --> SUPA
+                    MOB --> SUPA
+                    
+                    style Hardware_Boundary fill:#f9f9f9,stroke:#333
+                    style Cloud_Boundary fill:#e1f5fe,stroke:#333
+                </div>
+                <div class="figure-caption">Figure 3.2: System Boundary Block Diagram</div>
+                <button class="download-btn-sm" onclick="downloadDiagram('fig3_2', 'Figure_3_2.png')">Download PNG</button>
+            </div>
+
+        </div>
+    </div>
+</body>
+</html>
