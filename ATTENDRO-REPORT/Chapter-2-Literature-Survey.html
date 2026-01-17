@@ -187,7 +187,7 @@
                 A comprehensive literature survey is the cornerstone of any technical project, ensuring that the proposed solution is grounded in existing knowledge while addressing genuine deficiencies in current technologies. For the "Attendro" project, this survey explores the historical and technological trajectory of attendance management systems in educational institutions.
             </p>
             <p>
-                Attendance monitoring is not merely an administrative formality; it is a critical metric for student engagement and academic integrity. Traditionally, this process has been manual, consuming valuable instructional time and remaining susceptible to manipulation. As institutions move towards "Smart Campus" paradigms, the demand for automated, secure, and real-time attendance solutions has surged. This chapter analyzes the evolution of these systems, examines the specific technologies underpinning modern IoT solutions (such as the ESP32 microcontroller and optical biometrics), and critiques prior academic implementations. By identifying the limitations of existing manual, RFID, and fixed biometric systems, we define the precise "Research Gap" that Attendro aims to fill—specifically, the need for a system that combines the high security of biometrics with the portability and context-awareness required for dynamic classroom environments.
+                Attendance monitoring is not merely an administrative formality; it is a critical metric for student engagement and academic integrity. Traditionally, this process has been manual, consuming valuable instructional time and remaining susceptible to manipulation. As institutions move towards "Smart Campus" paradigms, the demand for automated, secure, and real-time attendance solutions has surged. This chapter analyses the evolution of these systems, examines the specific technologies underpinning modern IoT solutions (such as the ESP32 microcontroller and optical biometrics), and critiques prior academic implementations. By identifying the limitations of existing manual, RFID, and fixed biometric systems, we define the precise "Research Gap" that Attendro aims to fill—specifically, the need for a system that combines the high security of biometrics with the portability and context-awareness required for dynamic classroom environments.
             </p>
 
             <h2 class="section-heading">2.2 Evolution of Attendance Systems</h2>
@@ -197,12 +197,12 @@
 
             <h3 class="subsection-heading">2.2.1 Manual Systems (Paper-based)</h3>
             <p>
-                The most primitive form of attendance tracking, the manual register, relies on the lecturer calling out names or passing a sheet for signatures.
+                The most primitive and enduring form of attendance tracking is the manual register. This method, deeply ingrained in academic tradition, typically involves the lecturer verbally calling out names ("Roll Call") or circulating a sheet of paper for signatures.
             </p>
             <ul>
-                <li><strong>Mechanism:</strong> Physical paper logs signed by students.</li>
-                <li><strong>Pros:</strong> Zero implementation cost; no technical infrastructure required.</li>
-                <li><strong>Cons:</strong> Highly inefficient, consuming 5-10 minutes of class time. It is fraught with "proxy" attendance (one student signing for another) and results in data silos where attendance records are physically stored in binders, making aggregate analysis or real-time alerts impossible.</li>
+                <li><strong>Mechanism:</strong> A physical ledger or loose sheet is physically passed from student to student, or the instructor marks presence against a printed list.</li>
+                <li><strong>Pros:</strong> The primary advantage is low barrier to entry—it costs nothing and requires no technical infrastructure or electricity. Educational psychologists also argue that verbal roll calls can foster a brief moment of teacher-student connection, helping instructors memorize faces.</li>
+                <li><strong>Cons:</strong> The inefficiencies, however, are glaring. In a class of 60 students, a roll call can consume 5-10 minutes of prime instructional time—accumulating to over 5 hours of lost education per course per semester. The "Sign-up Sheet" method, while faster, is notoriously insecure. It invites "Proxy Attendance," where peers forge signatures for absent friends. Furthermore, manual registers create "Data Silos"; attendance data remains trapped on paper in a faculty office, making it impossible for university administrators to generate real-time alerts for students falling below mandatory attendance thresholds.</li>
             </ul>
 
             <h3 class="subsection-heading">2.2.2 RFID and ID Card-based Systems</h3>
@@ -254,7 +254,13 @@
 
             <h3 class="subsection-heading">2.3.1 IoT in Education: The ESP32 Platform</h3>
             <p>
-                 While early smart systems utilized the Arduino Uno (ATmega328P), modern localized attendance systems require inherent connectivity. The <strong>ESP32-WROOM-32</strong> has emerged as the standard for such applications. Its dual-core processor (running at up to 240 MHz) provides sufficient power to handle biometric image processing and encrypted communication simultaneously. Crucially, its integrated Wi-Fi and Bluetooth capabilities allow the device to act as a standalone web server or cloud client, removing the need for auxiliary shields or wiring. This enables the creation of truly "portable" hardware.
+                 The choice of microcontroller is pivotal in IoT system design. While early academic projects often utilized the Arduino Uno (based on the 8-bit ATmega328P), modern localized attendance systems require inherent connectivity and parallel processing capabilities that legacy boards cannot provide. The <strong>ESP32-WROOM-32</strong> by Espressif Systems has emerged as the industry standard for such high-performance IoT applications.
+            </p>
+            <p>
+                <strong>Architecture & Performance:</strong> The ESP32 boasts a dual-core Xtensa® 32-bit LX6 microprocessor, clockable up to 240 MHz. This creates a significant advantage over the single-core Arduino: using FreeRTOS, the application can dedicate "Core 0" to maintaining the Wi-Fi/Bluetooth stack and encryption protocols, while "Core 1" handles the time-sensitive biometric sensor interactions and user interface (OLED display). This prevents the common "blocking delay" issue where a device freezes while trying to connect to the internet.
+            </p>
+            <p>
+                <strong>Connectivity & Portability:</strong> Unlike the Raspberry Pi, which is a full Single Board Computer (SBC) requiring an OS and significant power (often >2.5W), the ESP32 is a low-power microcontroller (approx. 0.5W active) with integrated 802.11 b/g/n Wi-Fi and Bluetooth 4.2 / BLE. This high integration eliminates the need for bulky external "shields" (like the Ethernet Shield for Arduino), allowing the entire sophisticated system to be compacted into a handheld, battery-operated enclosure suitable for passing around a classroom.
             </p>
 
             <h3 class="subsection-heading">2.3.2 Biometric Sensing: Optical vs. Capacitive</h3>
