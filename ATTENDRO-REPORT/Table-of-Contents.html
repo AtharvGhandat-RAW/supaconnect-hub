@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Table of Contents - Attendro Report</title>
+    <style>
+        /* Screen-specific styles for the UI */
+        body {
+            background-color: #f0f2f5;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            font-family: sans-serif;
+        }
+
+        .controls {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+            display: flex;
+            gap: 15px;
+            position: sticky;
+            top: 20px;
+            z-index: 100;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+        }
+
+        .btn-pdf {
+            background-color: #e11d48;
+            color: white;
+        }
+        .btn-pdf:hover { background-color: #be123c; }
+
+        .btn-doc {
+            background-color: #2563eb;
+            color: white;
+        }
+        .btn-doc:hover { background-color: #1d4ed8; }
+
+        /* Paper simulation */
+        .paper {
+            background: white;
+            width: 21cm; /* A4 width */
+            min-height: 29.7cm; /* A4 height */
+            padding-top: 2.5cm;
+            padding-bottom: 1.25cm;
+            padding-left: 3.5cm;
+            padding-right: 1.25cm;
+            box-sizing: border-box;
+            box-shadow: 0 0 15px rgba(0,0,0,0.1);
+            position: relative;
+        }
+
+        /* Actual Report Content Styles */
+        .report-content {
+            font-family: "Times New Roman", Times, serif;
+            font-size: 12pt;
+            line-height: 1.5;
+            color: black;
+        }
+
+        h1.chapter-title {
+            font-family: "Times New Roman", Times, serif;
+            font-size: 14pt;
+            text-transform: uppercase;
+            text-align: center;
+            font-weight: bold;
+            margin-bottom: 24pt;
+            margin-top: 0;
+        }
+
+        /* TOC Styles */
+        .toc-entry {
+            display: flex;
+            align-items: baseline;
+            margin-bottom: 6pt;
+        }
+        .toc-chapter-main {
+            font-weight: bold;
+            margin-top: 12pt;
+            margin-bottom: 6pt;
+        }
+        .title { flex: 1; position: relative; overflow: hidden; }
+        .title::after {
+            content: "....................................................................................................................................................................................";
+            position: absolute;
+            margin-left: 5px;
+            color: #999;
+        }
+        .page { background: white; padding-left: 5px; z-index: 1; }
+        .indent-1 { padding-left: 0; }
+        .indent-2 { padding-left: 1cm; font-size: 12pt; }
+
+        @media print {
+            body { background: white; margin: 0; padding: 0; display: block; }
+            .controls { display: none; }
+            .paper { box-shadow: none; margin: 0; padding: 2.5cm 1.25cm 1.25cm 3.5cm; width: 100%; min-height: auto; }
+        }
+    </style>
+    <script>
+        function downloadDoc() {
+            var content = document.querySelector('.report-content').innerHTML;
+            var header = "<html xmlns:o='urn:schemas-microsoft-com:office:office' " +
+                 "xmlns:w='urn:schemas-microsoft-com:office:word' " +
+                 "xmlns='http://www.w3.org/TR/REC-html40'>" +
+                 "<head><meta charset='utf-8'><title>Table of Contents</title></head><body>";
+            var footer = "</body></html>";
+            var source = 'data:application/vnd.ms-word;charset=utf-8,' + encodeURIComponent(header + content + footer);
+            var fileDownload = document.createElement("a");
+            document.body.appendChild(fileDownload);
+            fileDownload.href = source;
+            fileDownload.download = 'Table_of_Contents.doc';
+            fileDownload.click();
+            document.body.removeChild(fileDownload);
+        }
+    </script>
+</head>
+<body>
+
+    <div class="controls">
+        <button onclick="window.print()" class="btn btn-pdf">Download / Print PDF</button>
+        <button onclick="downloadDoc()" class="btn btn-doc">Download Word</button>
+    </div>
+
+    <div class="paper">
+        <div class="report-content">
+            <h1 class="chapter-title">TABLE OF CONTENTS</h1>
+            
+            <div class="toc-entry indent-1"><span class="title">ABSTRACT</span><span class="page">iii</span></div>
+            <div class="toc-entry indent-1"><span class="title">ACKNOWLEDGMENT</span><span class="page">iv</span></div>
+            
+            <div class="toc-entry indent-1 toc-chapter-main"><span class="title">CHAPTER 1: INTRODUCTION</span><span class="page">1</span></div>
+            <div class="toc-entry indent-2"><span class="title">1.1 Introduction</span><span class="page">1</span></div>
+            <div class="toc-entry indent-2"><span class="title">1.2 Problem Statement</span><span class="page">2</span></div>
+            <div class="toc-entry indent-2"><span class="title">1.3 Proposed Solution: Attendro</span><span class="page">2</span></div>
+            <div class="toc-entry indent-2"><span class="title">1.4 Aims and Objectives</span><span class="page">3</span></div>
+            <div class="toc-entry indent-2"><span class="title">1.5 Significance of the Project</span><span class="page">3</span></div>
+            <div class="toc-entry indent-2"><span class="title">1.6 Report Organization</span><span class="page">4</span></div>
+
+            <div class="toc-entry indent-1 toc-chapter-main"><span class="title">CHAPTER 2: LITERATURE SURVEY</span><span class="page">5</span></div>
+            <div class="toc-entry indent-2"><span class="title">2.1 Introduction</span><span class="page">5</span></div>
+            <div class="toc-entry indent-2"><span class="title">2.2 Evolution of Attendance Systems</span><span class="page">5</span></div>
+            <div class="toc-entry indent-2"><span class="title">2.3 Review of Related Technologies</span><span class="page">6</span></div>
+            <div class="toc-entry indent-2"><span class="title">2.4 Review of Key Research Papers</span><span class="page">7</span></div>
+            <div class="toc-entry indent-2"><span class="title">2.5 Comparative Analysis</span><span class="page">8</span></div>
+            <div class="toc-entry indent-2"><span class="title">2.6 Research Gap</span><span class="page">8</span></div>
+            <div class="toc-entry indent-2"><span class="title">2.7 Chapter Summary</span><span class="page">9</span></div>
+
+            <div class="toc-entry indent-1 toc-chapter-main"><span class="title">CHAPTER 3: SCOPE OF PROJECT</span><span class="page">10</span></div>
+            <div class="toc-entry indent-2"><span class="title">3.1 Introduction</span><span class="page">10</span></div>
+            <div class="toc-entry indent-2"><span class="title">3.2 Functional Scope</span><span class="page">10</span></div>
+            <div class="toc-entry indent-2"><span class="title">3.3 Non-Functional Scope</span><span class="page">11</span></div>
+            <div class="toc-entry indent-2"><span class="title">3.4 Requirements</span><span class="page">12</span></div>
+            <div class="toc-entry indent-2"><span class="title">3.5 Feasibility Study</span><span class="page">13</span></div>
+            <div class="toc-entry indent-2"><span class="title">3.6 System Design Diagrams</span><span class="page">14</span></div>
+
+            <div class="toc-entry indent-1 toc-chapter-main"><span class="title">CHAPTER 4: METHODOLOGY</span><span class="page">15</span></div>
+            <div class="toc-entry indent-2"><span class="title">4.1 System Components</span><span class="page">15</span></div>
+            <div class="toc-entry indent-2"><span class="title">4.2 Main Innovation: Session Control</span><span class="page">16</span></div>
+            <div class="toc-entry indent-2"><span class="title">4.3 Operational Workflow</span><span class="page">17</span></div>
+            <div class="toc-entry indent-2"><span class="title">4.4 Firmware Logic</span><span class="page">18</span></div>
+
+            <div class="toc-entry indent-1 toc-chapter-main"><span class="title">CHAPTER 5: DESIGN DETAILS</span><span class="page">20</span></div>
+            <div class="toc-entry indent-2"><span class="title">5.1 Database Design</span><span class="page">20</span></div>
+            <div class="toc-entry indent-2"><span class="title">5.2 Hardware Interface Design</span><span class="page">22</span></div>
+            <div class="toc-entry indent-2"><span class="title">5.3 Software Architecture</span><span class="page">23</span></div>
+
+            <div class="toc-entry indent-1 toc-chapter-main"><span class="title">CHAPTER 6: RESULTS AND APPLICATIONS</span><span class="page">24</span></div>
+            <div class="toc-entry indent-2"><span class="title">6.1 Results</span><span class="page">24</span></div>
+            <div class="toc-entry indent-2"><span class="title">6.2 Applications</span><span class="page">25</span></div>
+
+            <div class="toc-entry indent-1 toc-chapter-main"><span class="title">CHAPTER 7: CONCLUSION AND SCOPE</span><span class="page">26</span></div>
+            <div class="toc-entry indent-2"><span class="title">7.1 Conclusion</span><span class="page">26</span></div>
+            <div class="toc-entry indent-2"><span class="title">7.2 Future Scope</span><span class="page">27</span></div>
+            
+            <div class="toc-entry indent-1 toc-chapter-main"><span class="title">REFERENCES</span><span class="page">28</span></div>
+        </div>
+    </div>
+</body>
+</html>

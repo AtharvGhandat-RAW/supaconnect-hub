@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Abstract - Attendro Report</title>
+    <style>
+        /* Screen-specific styles for the UI */
+        body {
+            background-color: #f0f2f5;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            font-family: sans-serif;
+        }
+
+        .controls {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+            display: flex;
+            gap: 15px;
+            position: sticky;
+            top: 20px;
+            z-index: 100;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+        }
+
+        .btn-pdf {
+            background-color: #e11d48;
+            color: white;
+        }
+        .btn-pdf:hover { background-color: #be123c; }
+
+        .btn-doc {
+            background-color: #2563eb;
+            color: white;
+        }
+        .btn-doc:hover { background-color: #1d4ed8; }
+
+        /* Paper simulation */
+        .paper {
+            background: white;
+            width: 21cm; /* A4 width */
+            min-height: 29.7cm; /* A4 height */
+            padding-top: 2.5cm;
+            padding-bottom: 1.25cm;
+            padding-left: 3.5cm;
+            padding-right: 1.25cm;
+            box-sizing: border-box;
+            box-shadow: 0 0 15px rgba(0,0,0,0.1);
+            position: relative;
+        }
+
+        /* Actual Report Content Styles */
+        .report-content {
+            font-family: "Times New Roman", Times, serif;
+            font-size: 12pt;
+            line-height: 2;
+            text-align: justify;
+            color: black;
+        }
+
+        h1.chapter-title {
+            font-family: "Times New Roman", Times, serif;
+            font-size: 14pt;
+            text-transform: uppercase;
+            text-align: center;
+            font-weight: bold;
+            margin-bottom: 24pt;
+            margin-top: 0;
+        }
+
+        h2.section-heading {
+            font-family: "Times New Roman", Times, serif;
+            font-size: 12pt;
+            text-transform: uppercase;
+            font-weight: bold;
+            display: block;
+        }
+
+        p {
+            margin: 0;
+            margin-bottom: 12pt;
+            text-indent: 1cm;
+        }
+
+        /* Print Media Query */
+        @media print {
+            body {
+                background: none;
+                margin: 0;
+                padding: 0;
+                display: block;
+            }
+            .controls {
+                display: none;
+            }
+            .paper {
+                width: 100%;
+                height: auto;
+                box-shadow: none;
+                padding-top: 2.5cm;
+                padding-bottom: 1.25cm;
+                padding-left: 3.5cm;
+                padding-right: 1.25cm;
+                margin: 0;
+            }
+            @page {
+                size: A4;
+                margin: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="controls">
+        <button class="btn btn-pdf" onclick="window.print()">
+            <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
+            Print / Save as PDF
+        </button>
+        <button class="btn btn-doc" onclick="exportToWord()">
+            <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+            Download Word Doc
+        </button>
+    </div>
+
+    <div class="paper" id="report-content">
+        <div class="report-content">
+            <h1 class="chapter-title">ABSTRACT</h1>
+            
+            <p>In the contemporary academic landscape, maintaining accurate attendance records is paramount for ensuring academic discipline and regulatory compliance. Traditional manual attendance systems are time-consuming and prone to manipulations such as proxy attendance. While fixed biometric systems offer a partial solution, they often lack the flexibility required for a dynamic classroom environment and fail to validate the context of a specific lecture session. This project, titled "Attendro," addresses these challenges by developing a portable, session-controlled biometric attendance system designed for the efficient management of student attendance.</p>
+
+            <p>The primary purpose of this study is to eliminate the loopholes associated with existing attendance monitoring methods by integrating IoT (Internet of Things) hardware with cloud-based mobile technology. The objective is to create a secure, decentralized system where attendance is validated not just by biometric identity, but also by the specific time and session context initiated by the faculty.</p>
+
+            <p>The methodology employed in this project involves the design and development of a portable biometric device capable of Wi-Fi connectivity, paired with a dedicated Android application for faculty members. The system operates on a session-control model wherein the faculty initiates a lecture session via the app, which in turn activates the biometric device for a permissible time window. This ensures that attendance is marked only during the actual lecture hours and in the physical presence of the portable unit. The data is instantly synchronized with a cloud database, providing real-time analytics and reporting capabilities.</p>
+
+            <p>The implementation of Attendro significantly reduces the administrative burden on faculty, eradicates the possibility of proxy attendance, and provides a cost-effective, scalable alternative to fixed infrastructure. The result is a streamlined, transparent, and highly reliable attendance management ecosystem suitable for modern educational institutes.</p>
+        </div>
+    </div>
+
+    <script>
+        function exportToWord() {
+            var content = document.getElementById('report-content').innerHTML;
+            
+            var header = "<html xmlns:o='urn:schemas-microsoft-com:office:office' " +
+                         "xmlns:w='urn:schemas-microsoft-com:office:word' " +
+                         "xmlns='http://www.w3.org/TR/REC-html40'>" +
+                         "<head><meta charset='utf-8'><title>Export HTML to Word Document with JavaScript</title>" +
+                         "<style>body{font-family:'Times New Roman', serif; font-size:12pt; line-height:2;}</style>" +
+                         "</head><body>";
+            
+            var footer = "</body></html>";
+            var sourceHTML = header + content + footer;
+            
+            var source = 'data:application/vnd.ms-word;charset=utf-8,' + encodeURIComponent(sourceHTML);
+            var fileDownload = document.createElement("a");
+            document.body.appendChild(fileDownload);
+            fileDownload.href = source;
+            fileDownload.download = 'Abstract.doc';
+            fileDownload.click();
+            document.body.removeChild(fileDownload);
+        }
+    </script>
+</body>
+</html>

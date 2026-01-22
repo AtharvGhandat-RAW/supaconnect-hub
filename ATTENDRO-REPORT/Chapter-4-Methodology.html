@@ -3,37 +3,65 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Chapter 4 - Methodology</title>
+    <title>Chapter 4 - Methodology - Attendro Report</title>
+    <!-- Imports -->
     <script type="module">
         import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
         mermaid.initialize({ startOnLoad: true, theme: 'neutral' });
     </script>
     <style>
+        /* Base Print Settings */
         @page {
             size: A4;
-            margin-top: 2.5cm;
-            margin-bottom: 1.25cm;
-            margin-left: 3.5cm;
-            margin-right: 1.25cm;
+            margin: 2.5cm 1.25cm 1.25cm 3.5cm; /* Top, Right, Bottom, Left */
         }
+
+        /* Screen Preview Mode */
         body {
             font-family: "Times New Roman", Times, serif;
             font-size: 12pt;
             line-height: 2; /* Double space */
             text-align: justify;
             margin: 0;
-            padding: 0;
-            background-color: white;
+            padding: 20px;
+            background-color: #f0f2f5; /* Light grey application background */
             color: black;
-        }
-        .container {
-            width: 100%;
-            margin: 0 auto;
-            padding: 0; 
-            box-sizing: border-box;
-            min-height: 90vh; 
+            display: flex;
+            flex-direction: column;
+            align-items: center;
         }
 
+        /* The Paper Sheet */
+        .paper {
+            background-color: white;
+            width: 210mm; /* A4 Width */
+            min-height: 297mm; /* A4 Height */
+            padding: 2.5cm 1.25cm 1.25cm 3.5cm; /* Match Print Margins */
+            box-sizing: border-box;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+            position: relative;
+        }
+
+        /* Print Mode Overrides */
+        @media print {
+            body {
+                background: none;
+                padding: 0;
+                display: block;
+            }
+            .paper {
+                box-shadow: none;
+                margin: 0;
+                width: auto;
+                min-height: auto;
+                padding: 0; /* Margins handled by @page */
+            }
+            .controls, .btn {
+                display: none !important;
+            }
+        }
+    
         /* Typography Rules */
         h1.chapter-title {
             font-size: 14pt;
@@ -47,11 +75,10 @@
 
         h2.section-heading {
             font-size: 12pt;
-            font-weight: bold;
             text-transform: uppercase;
+            font-weight: bold;
             margin-top: 18pt;
             margin-bottom: 12pt;
-            text-align: left;
         }
 
         h3.subsection-heading {
@@ -59,68 +86,23 @@
             font-weight: bold;
             margin-top: 12pt;
             margin-bottom: 6pt;
-            text-align: left;
-        }
-
-        p, li {
-            font-size: 12pt;
-            margin-bottom: 12pt;
-        }
-
-        ul, ol {
-            margin-bottom: 12pt;
-            padding-left: 1cm;
-        }
-
-        .figure-container {
-            text-align: center;
-            margin: 24pt 0;
-            page-break-inside: avoid;
-        }
-        .figure-caption {
-            font-weight: bold;
-            margin-top: 10pt;
-            font-style: italic;
-        }
-        .download-btn-sm {
-            display: inline-block;
-            margin-top: 5px;
-            padding: 5px 10px;
-            background: #6c757d;
-            color: white;
-            font-family: sans-serif;
-            font-size: 10px;
-            text-decoration: none;
-            border-radius: 3px;
-            cursor: pointer;
-            border: none;
-        }
-        .mermaid { background: white; }
-
-        /* Screen Wrapper */
-        .screen-wrapper {
-            max-width: 210mm;
-            margin: 20px auto;
-            padding: 2.5cm 1.25cm 1.25cm 3.5cm;
-            box-shadow: 0 0 10px rgba(0,0,0,0.1);
-            background: white;
-            box-sizing: border-box; 
         }
         
+        p { margin-bottom: 12pt; text-indent: 1cm; }
+        ul, ol { margin-bottom: 12pt; padding-left: 1.5cm; }
+        
+        /* Mermaid */
+        .mermaid { text-align: center; margin: 24pt 0; }
+        
         /* Controls */
-        .controls {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            z-index: 1000;
-            background: #f8f9fa;
-            padding: 15px;
-            border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
+        .controls { position: fixed; top: 10px; right: 10px; background: #eee; padding: 10px; border-radius: 5px; z-index: 1000; display: flex; gap: 10px; }
+        .controls button { cursor: pointer; padding: 5px 10px; font-weight: bold; }
+
+        @media print {
+            body { padding: 0; margin: 0; }
+            .controls { display: none; }
         }
+        
         .btn {
             background-color: #007bff;
             color: white;
@@ -136,34 +118,17 @@
         .btn:hover { background-color: #0056b3; }
         .btn-doc { background-color: #28a745; }
         .btn-doc:hover { background-color: #218838; }
-
-        @media print {
-            .controls, .download-btn-sm { display: none; }
-            .screen-wrapper {
-                box-shadow: none;
-                margin: 0;
-                padding: 0;
-                width: 100%;
-                max-width: none;
-            }
-            body { background: white; }
-            @page {
-                size: A4;
-                margin-top: 2.5cm;
-                margin-bottom: 1.25cm;
-                margin-left: 3.5cm;
-                margin-right: 1.25cm;
-            }
-        }
     </style>
     <script>
         function downloadDoc() {
-            var content = document.querySelector('.container').innerHTML;
-            content = content.replace(/<button class="download-btn-sm".*?<\/button>/g, "");
+            var content = document.querySelector('.content').innerHTML;
+            
             var header = "<html xmlns:o='urn:schemas-microsoft-com:office:office' "+
                  "xmlns:w='urn:schemas-microsoft-com:office:word' "+
-                 "xmlns='http://www.w3.org/TR/REC-html40'><head><meta charset='utf-8'><title>Chapter 4</title></head><body>";
+                 "xmlns='http://www.w3.org/TR/REC-html40'>"+
+                 "<head><meta charset='utf-8'><title>Chapter 4</title></head><body>";
             var footer = "</body></html>";
+            
             var source = 'data:application/vnd.ms-word;charset=utf-8,' + encodeURIComponent(header + content + footer);
             var fileDownload = document.createElement("a");
             document.body.appendChild(fileDownload);
@@ -172,32 +137,6 @@
             fileDownload.click();
             document.body.removeChild(fileDownload);
         }
-
-        async function downloadDiagram(id, filename) {
-            const element = document.getElementById(id);
-            if(!element.querySelector('svg')) {
-                alert("Please wait for diagram to render.");
-                return;
-            }
-            const svgData = new XMLSerializer().serializeToString(element.querySelector('svg'));
-            const canvas = document.createElement("canvas");
-            const ctx = canvas.getContext("2d");
-            const img = new Image();
-            const svgSize = element.querySelector('svg').getBoundingClientRect();
-            canvas.width = svgSize.width * 2; 
-            canvas.height = svgSize.height * 2;
-            img.onload = function() {
-                ctx.fillStyle = "white";
-                ctx.fillRect(0, 0, canvas.width, canvas.height);
-                ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-                const pngFile = canvas.toDataURL("image/png");
-                const downloadLink = document.createElement("a");
-                downloadLink.download = filename;
-                downloadLink.href = pngFile;
-                downloadLink.click();
-            };
-            img.src = "data:image/svg+xml;base64," + btoa(unescape(encodeURIComponent(svgData)));
-        }
     </script>
 </head>
 <body>
@@ -205,87 +144,99 @@
         <button onclick="window.print()" class="btn">Download / Print PDF</button>
         <button onclick="downloadDoc()" class="btn btn-doc">Download DOC</button>
     </div>
-
-    <div class="screen-wrapper">
-        <div class="container">
+    
+    <div class="paper">
+        <div class="content">
             <h1 class="chapter-title">CHAPTER–4 METHODOLOGY</h1>
-
-            <h2 class="section-heading">4.1 INTRODUCTION</h2>
-            <p>
-                The efficacy of the Attendro system lies in its systematic workflow that ensures data integrity from the moment a student places their finger on the sensor. The methodology is divided into two distinct operational modes: the <strong>Enrollment Phase</strong> (one-time setup per student) and the <strong>Attendance Phase</strong> (recurring utilization).
-            </p>
-
-            <h2 class="section-heading">4.2 ENROLLMENT WORKFLOW</h2>
-            <p>
-                The enrollment process is the foundation of the biometric system. It involves converting a physical fingerprint into a digital template. This phase is typically supervised by a faculty or admin.
-            </p>
-            <ol>
-                <li><strong>Initialization:</strong> The device is set to 'Enroll Mode' via the web dashboard.</li>
-                <li><strong>Scanning:</strong> The R307 sensor captures the fingerprint image twice to ensure consistency and high quality. The internal algorithm checks for minutiae points.</li>
-                <li><strong>Template Generation:</strong> The image is not stored. Instead, it is processed into a proprietary hexadecimal character string (Template).</li>
-                <li><strong>Storage:</strong> This template is uploaded to the Supabase Cloud Database along with the student's Roll Number. It is then synced to local device memory for fast offline matching.</li>
-            </ol>
-
-            <div class="figure-container" id="fig4_1">
-                <div class="mermaid">
-                    graph TD
-                    Start([Start Enrollment]) --> Input[Enter Roll Number]
-                    Input --> Scan1[Scan Finger Attempt 1]
-                    Scan1 --> Process{Quality Good?}
-                    Process -- No --> Scan1
-                    Process -- Yes --> Scan2[Scan Finger Attempt 2]
-                    Scan2 --> Compare{Match First Scan?}
-                    Compare -- No --> Scan1
-                    Compare -- Yes --> Gen[Generate Digital Template]
-                    Gen --> UP[Upload to Cloud Database]
-                    UP --> End([Enrollment Complete])
-                </div>
-                <div class="figure-caption">Figure 4.1: Flowchart of Enrollment Process</div>
-                <button class="download-btn-sm" onclick="downloadDiagram('fig4_1', 'Figure_4_1.png')">Download PNG</button>
+            
+            <p>This chapter details the architectural framework and operational workflow of the "Attendro" system. Unlike traditional biometric systems discussed in literature, Attendro employs a decentralized, session-controlled model to ensure presence verification within a specific academic context. The methodology prioritises security, portability, and ease of use for faculty members.</p>
+    
+            <h2 class="section-heading">4.1 SYSTEM COMPONENTS</h2>
+            <p>The system architecture comprises three distinct yet interconnected components, each serving a specific role in the attendance lifecycle:</p>
+            
+            <h3 class="subsection-heading">4.1.1 Portable Device (ESP32)</h3>
+            <p>The core hardware unit is a portable, battery-powered device built around the ESP32 microcontroller [1]. It features an R307 optical fingerprint sensor for biometric acquisition and a 0.93-inch OLED display for real-time user feedback. Wi-Fi connectivity enables communication with the backend. The device is designed to be carried by the faculty to the classroom, eliminating the need for fixed wall-mounted installations.</p>
+            
+            <h3 class="subsection-heading">4.1.2 Faculty Dashboard (App)</h3>
+            <p>The administrative interface is a responsive web application built using React. This dashboard serves as the command centre for faculty members. It allows them to log in, select the specific subject, class (division), and batch, and initiate a "Lecture Session." The dashboard also provides real-time visualization of attendance data and generates reports.</p>
+            
+            <h3 class="subsection-heading">4.1.3 Cloud Backend (Supabase)</h3>
+            <p>Supabase acts as the backend-as-a-service (BaaS), hosting the PostgreSQL database and executing server-side logic via Edge Functions [5]. It manages authentication, device registry, session tokens, and attendance records, ensuring data integrity and security.</p>
+            
+            <div class="mermaid">
+                graph LR
+                    A[Faculty Dashboard] --Start Session--> B(Supabase Cloud)
+                    B --Session Token--> C[Portable Device ESP32]
+                    D[Student] --Fingerprint--> C
+                    C --Mark Present--> B
+                    B --Live Update--> A
             </div>
-
-            <h2 class="section-heading">4.3 ATTENDANCE WORKFLOW</h2>
-            <p>
-                The core functionality mechanism involves verifying identity within a restricted time window. The algorithm running on the ESP32 ensures that attendance is not just about matching a finger, but about matching it <em>at the right time</em>.
-            </p>
-            <ol>
-                <li><strong>Session Check:</strong> The ESP32 periodically (every 5 seconds) queries the cloud for an 'Active Session Token'. If no session is active, the device remains locked.</li>
-                <li><strong>Biometric Input:</strong> A student places their finger. The device searches its local library (1:N matching).</li>
-                <li><strong>Validation:</strong> If a match is found, the system retrieves the associated Roll Number.</li>
-                <li><strong>Logging:</strong> The Roll Number, current Timestamp, and Session ID are bundled into a JSON packet and sent to the `attendance_logs` table in Supabase via secure HTTPS POST request.</li>
-                <li><strong>Visual Feedback:</strong> The OLED displays the student's name and status ("Present").</li>
-            </ol>
-
-            <div class="figure-container" id="fig4_2">
-                <div class="mermaid">
-                    graph TD
-                    Idle([Device Idle]) --> Poll{Check Active Session}
-                    Poll -- No Session --> Idle
-                    Poll -- Yes --> Ready[Display: 'Place Finger']
-                    Ready --> Input[/Finger Placed/]
-                    Input --> Search{Match Found?}
-                    Search -- No --> Error[Display: 'Not Found'] --> Ready
-                    Search -- Yes --> GetID[Retrieve Student ID]
-                    GetID --> Send[Send to Cloud API]
-                    Send --> Log[(Database Log)]
-                    Log --> Success[Display 'Marked Present']
-                    Success --> Ready
-                </div>
-                <div class="figure-caption">Figure 4.2: Flowchart of Attendance Marking Process</div>
-                <button class="download-btn-sm" onclick="downloadDiagram('fig4_2', 'Figure_4_2.png')">Download PNG</button>
-            </div>
-
-            <h2 class="section-heading">4.4 HARDWARE ASSEMBLY</h2>
-            <p>
-                The hardware integration follows a modular approach.
-            </p>
+    
+            <h2 class="section-heading">4.2 MAIN INNOVATION: SESSION CONTROL</h2>
+            <p>The defining feature of Attendro is its session-controlled attendance logic. Attendance is not permanently "open." It becomes valid only when a faculty member explicitly starts a session. This session is cryptographically tied to:</p>
             <ul>
-                <li><strong>Controller:</strong> The ESP32 acts as the master.</li>
-                <li><strong>Sensor Interface:</strong> The R307 fingerprint sensor communicates via UART (Serial2) on pins 16 (RX) and 17 (TX).</li>
-                <li><strong>Display Interface:</strong> The OLED display uses the I2C protocol, connected to pins 21 (SDA) and 22 (SCL).</li>
-                <li><strong>Power:</strong> A TP4056 charging module manages the Li-ion battery, providing a regulated 5V boost to the sensor and 3.3V to the ESP32.</li>
+                <li>Subject ID and Class/Division ID</li>
+                <li>Batch (A/B/All)</li>
+                <li>Time Window (Start and End Time)</li>
+                <li>Unique Device Code</li>
             </ul>
-
+            <p>This ensures that a student can only mark attendance if they are physically present with the device during the authorised time window, significantly reducing the risk of proxy attendance.</p>
+            
+            <h2 class="section-heading">4.3 OPERATIONAL WORKFLOW</h2>
+            <p>The operational flow follows a strict sequence to validate presence:</p>
+            
+            <h3 class="subsection-heading">4.3.1 Session Initiation</h3>
+            <p>The faculty logs into the app and selects the lecture details. Upon clicking "Start Session," the app requests the Supabase backend to generate a secure session token linked to the specific portable device's ID (e.g., ATTENDRO-0001). The backend ensures only one active session exists per device.</p>
+            
+            <h3 class="subsection-heading">4.3.2 Device Synchronization</h3>
+            <p>The portable device actively polls the backend (API: get-active-session) every 3-5 seconds. Once it detects an ACTIVE session, it downloads the session token and configuration (batch, subject). The OLED screen updates to show the subject name and time remaining, signaling that it is ready to accept fingerprints.</p>
+            
+            <h3 class="subsection-heading">4.3.3 Attendance Marking</h3>
+            <p>When a student places their finger on the sensor, the R307 module matches it against stored templates to retrieve a unique Fingerprint ID. The ESP32 sends this ID along with the current Session Token to the Supabase Cloud. The Cloud (Edge Function) performs the critical validation: identifying the student, checking if they belong to the current batch, and ensuring no duplicate entry exists. On success, the cloud responds to the device to trigger a success beep.</p>
+    
+            <div class="mermaid">
+                sequenceDiagram
+                    participant DASH as Faculty Dashboard
+                    participant CLOUD as Supabase Cloud
+                    participant ESP as ESP32 Device
+                    participant STUD as Student
+                    
+                    DASH->>CLOUD: Start Session (Sub: AMI, Batch: B1)
+                    CLOUD-->>DASH: Session Active (Token: XYZ)
+                    
+                    loop Polling
+                        ESP->>CLOUD: GET /active-session?
+                        CLOUD-->>ESP: {Status: Active, Token: XYZ}
+                    end
+                    
+                    ESP->>ESP: Display "Ready"
+                    
+                    STUD->>ESP: Scan Finger
+                    ESP->>ESP: Match Fingerprint (ID: 15)
+                    ESP->>CLOUD: POST /mark-attendance {ID: 15, Token: XYZ}
+                    
+                    alt Validation Success
+                        CLOUD->>CLOUD: Check Batch & Time
+                        CLOUD->>CLOUD: Insert Record
+                        CLOUD-->>ESP: 200 OK (Success)
+                        ESP->>ESP: Beep (Success)
+                        CLOUD-->>DASH: Realtime Update (+1)
+                    else Validation Failed
+                        CLOUD-->>ESP: 400 Error (Wrong Batch/Duplicate)
+                        ESP->>ESP: Long Beep (Error)
+                    end
+            </div>
+            
+            <h2 class="section-heading">4.4 FIRMWARE LOGIC</h2>
+            <p>The ESP32 firmware manages the device states:</p>
+            <ul>
+                <li><strong>Boot State:</strong> Displays device identity (e.g., ATTENDRO-0001) and connects to Wi-Fi.</li>
+                <li><strong>Idle State:</strong> Polls for a session. The sensor is inactive to save power and prevent unauthorised scans.</li>
+                <li><strong>Active State:</strong> Enables the sensor. On a successful match, it triggers the buzzer and sends data.</li>
+                <li><strong>Sync State:</strong> Background process to push offline records to the server via the "sync-offline" edge function.</li>
+            </ul>
+            
+            <p>This robust methodology ensures that Attendro meets the rigorous demands of academic attendance tracking.</p>
         </div>
     </div>
 </body>

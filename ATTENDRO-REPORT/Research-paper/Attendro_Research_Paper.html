@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Attendro Research Paper - IRJMETS Format</title>
+    <style>
+        @page {
+            size: A4;
+            margin: 2.5cm 2cm 2cm 2cm;
+        }
+        
+        body {
+            font-family: "Times New Roman", Times, serif;
+            font-size: 10pt;
+            line-height: 1.5;
+            margin: 0;
+            padding: 20px;
+            background-color: #f0f2f5;
+            color: black;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        
+        .paper {
+            background-color: white;
+            width: 210mm;
+            min-height: 297mm;
+            padding: 2.5cm 2cm 2cm 2cm;
+            box-sizing: border-box;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+        }
+        
+        @media print {
+            body { background: none; padding: 0; display: block; }
+            .paper { box-shadow: none; margin: 0; width: auto; min-height: auto; padding: 0; }
+            .controls { display: none !important; }
+        }
+        
+        /* Title */
+        h1.paper-title {
+            font-family: Cambria, serif;
+            font-size: 14pt;
+            font-weight: bold;
+            text-align: center;
+            text-transform: uppercase;
+            margin-bottom: 12pt;
+            line-height: 1.4;
+        }
+        
+        /* Authors */
+        .authors {
+            font-family: Cambria, serif;
+            font-size: 12pt;
+            font-weight: bold;
+            text-align: center;
+            margin-bottom: 8pt;
+        }
+        
+        .affiliations {
+            font-family: Cambria, serif;
+            font-size: 11pt;
+            text-align: center;
+            margin-bottom: 20pt;
+            font-style: italic;
+        }
+        
+        /* Section Headings */
+        h2.section-heading {
+            font-family: Cambria, serif;
+            font-size: 12pt;
+            font-weight: bold;
+            text-transform: uppercase;
+            margin-top: 18pt;
+            margin-bottom: 10pt;
+            text-align: left;
+        }
+        
+        h3.subsection-heading {
+            font-family: Cambria, serif;
+            font-size: 10pt;
+            font-weight: bold;
+            margin-top: 12pt;
+            margin-bottom: 6pt;
+        }
+        
+        /* Body Text */
+        p {
+            font-family: "Times New Roman", Times, serif;
+            font-size: 10pt;
+            text-align: justify;
+            margin-bottom: 10pt;
+            text-indent: 0.5cm;
+        }
+        
+        p.no-indent { text-indent: 0; }
+        
+        /* Keywords */
+        .keywords {
+            font-family: Cambria, serif;
+            font-size: 10pt;
+            margin-bottom: 18pt;
+        }
+        .keywords strong { font-weight: bold; }
+        
+        /* Abstract Box */
+        .abstract-section {
+            margin-bottom: 18pt;
+        }
+        .abstract-section h2 {
+            font-family: Cambria, serif;
+            font-size: 12pt;
+            font-weight: bold;
+            margin-bottom: 8pt;
+        }
+        
+        /* Lists */
+        ul, ol {
+            margin-bottom: 10pt;
+            padding-left: 1.5cm;
+            font-size: 10pt;
+        }
+        li { margin-bottom: 4pt; }
+        
+        /* Tables */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 12pt 0;
+            font-size: 10pt;
+        }
+        th, td {
+            border: 1px solid black;
+            padding: 6px 8px;
+            text-align: left;
+            vertical-align: top;
+        }
+        th { background-color: #f2f2f2; font-weight: bold; }
+        
+        .table-caption {
+            font-weight: bold;
+            text-align: center;
+            margin-bottom: 6pt;
+            font-size: 10pt;
+        }
+        
+        /* Figures */
+        .figure-container {
+            text-align: center;
+            margin: 18pt 0;
+        }
+        .figure-caption {
+            font-size: 10pt;
+            font-style: italic;
+            margin-top: 6pt;
+        }
+        .figure-box {
+            border: 1px solid #ccc;
+            padding: 15px;
+            display: inline-block;
+            background: #fafafa;
+        }
+        
+        /* References */
+        .reference-item {
+            font-size: 10pt;
+            margin-bottom: 8pt;
+            text-align: justify;
+            padding-left: 30px;
+            text-indent: -30px;
+        }
+        
+        /* Controls */
+        .controls {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            display: flex;
+            gap: 10px;
+        }
+        .btn {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-family: sans-serif;
+            font-size: 14px;
+        }
+        .btn:hover { background-color: #0056b3; }
+        .btn-doc { background-color: #28a745; }
+        .btn-doc:hover { background-color: #218838; }
+        
+        hr.section-break {
+            border: none;
+            border-top: 1px solid #ccc;
+            margin: 20pt 0;
+        }
+    </style>
+    <script>
+        function downloadDoc() {
+            var content = document.getElementById('paper-content').innerHTML;
+            var header = "<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'><head><meta charset='utf-8'><title>Attendro Research Paper</title><style>body{font-family:'Times New Roman',serif;font-size:10pt;line-height:1.5;}h1{font-size:14pt;text-align:center;}h2{font-size:12pt;}table{border-collapse:collapse;width:100%;}th,td{border:1px solid black;padding:5px;}</style></head><body>";
+            var footer = "</body></html>";
+            var source = 'data:application/vnd.ms-word;charset=utf-8,' + encodeURIComponent(header + content + footer);
+            var a = document.createElement("a");
+            document.body.appendChild(a);
+            a.href = source;
+            a.download = 'Attendro_Research_Paper_IRJMETS.doc';
+            a.click();
+            document.body.removeChild(a);
+        }
+    </script>
+</head>
+<body>
+    <div class="controls">
+        <button onclick="window.print()" class="btn">Print / Save PDF</button>
+        <button onclick="downloadDoc()" class="btn btn-doc">Download DOC</button>
+    </div>
+
+    <div class="paper" id="paper-content">
+        
+        <!-- TITLE -->
+        <h1 class="paper-title">Attendro: A Portable, Session-Controlled Biometric Attendance System with Centralized Fingerprint Database for Educational Institutions</h1>
+        
+        <!-- AUTHORS -->
+        <div class="authors">
+            Atharv S. Ghandat<sup>*1</sup>, Sanika P. Desai<sup>*2</sup>, Tanisha H. Chavan<sup>*3</sup>, Kunal S. Mahalunge<sup>*4</sup>
+        </div>
+        
+        <!-- AFFILIATIONS -->
+        <div class="affiliations">
+            <sup>*1,2,3,4</sup>Department of Computer Engineering, Polytechnic Institute, Pune, Maharashtra, India
+        </div>
+        
+        <hr class="section-break">
+        
+        <!-- ABSTRACT -->
+        <div class="abstract-section">
+            <h2 class="section-heading">ABSTRACT</h2>
+            <p class="no-indent">
+                The attendance management is one of the areas that have stayed to be one of the major challenges in schools where the manual system of tracking attendance is both time consuming and liable to manipulation. This paper describes the design and construction of Attendro, a biometric attendance system on top of an enhanced fingerprint system, providing the session-based synchronization of clouds with high portability. The system design focuses on an ESP32 microcontroller in combination with an optical fingerprint sensor R307 and it is connected to Supabase backends based on secure REST APIs. The one differentiating factor between this method and traditional fixed-installation biometric systems, though, is the faculty control of the session, where the facilities are unlikely to record attendance until specifically authorized lecture time. Controlled test results showed a False Acceptance of less than 0.001, an average authentication time of 1.2 seconds as well as an operating time of more than eight hours under battery power. The results indicate that a combination of the low-cost embedded devices and state of the art cloud-based infrastructure could provide enterprise-class attendance systems that could be used in resource-starved academic institutions.
+            </p>
+        </div>
+        
+        <!-- KEYWORDS -->
+        <div class="keywords">
+            <strong>Keywords:</strong> Authentication by fingerprints, Fingerprint sensor, ESP32, Cloud computing, IoT, Attendance management, Sessions Control.
+        </div>
+        
+        <!-- I. INTRODUCTION -->
+        <h2 class="section-heading">I. INTRODUCTION</h2>
+        
+        <p>
+            The task of recording student attendance has accompanied formal education since its earliest days. Teachers calling names from paper registers, students signing sheets passed around lecture halls, and faculty members manually tallying columns at month-end represent scenes still common across institutions worldwide. These traditional approaches, while familiar, carry inherent limitations that become increasingly problematic as class sizes grow and administrative expectations rise.
+        </p>
+        <p>
+            Manual roll calls consume precious lecture time. A faculty member handling a class of sixty students might spend five to seven minutes simply confirming presence, time that accumulates across multiple daily sessions. Paper registers deteriorate, entries become illegible, and the possibility of transcription errors during digitization introduces data integrity concerns. Perhaps most significantly, signature-based systems offer no meaningful protection against proxy attendance, where one student signs on behalf of an absent peer.
+        </p>
+        <p>
+            Biometric systems emerged as a response to these shortcomings. By requiring a unique physiological characteristic for identification, such systems eliminate the possibility of one individual impersonating another. Fingerprint recognition has proven particularly suitable for institutional deployment, offering a balance between accuracy, cost, and user acceptance that alternatives like iris scanning or facial recognition struggle to match in educational settings.
+        </p>
+        <p>
+            Existing biometric attendance solutions, however, typically assume a fixed installation paradigm. Wall-mounted units positioned near classroom entrances require students to queue before or after lectures, creating congestion during peak periods. The infrastructure demands of wired power and network connectivity limit deployment flexibility. Most critically, these systems operate in a continuous recording mode, accepting authentication attempts at any hour, which fails to capture the temporal specificity inherent in scheduled academic sessions.
+        </p>
+        <p>
+            This research introduces Attendro, a system designed around portability and session awareness. Rather than mounting hardware permanently, the proposed device travels with the faculty member, who activates attendance recording only for specific lecture periods. The result is a tighter coupling between physical presence, temporal context, and authenticated identity than traditional approaches provide.
+        </p>
+        
+        <!-- II. LITERATURE SURVEY -->
+        <h2 class="section-heading">II. LITERATURE SURVEY</h2>
+        
+        <p>
+            Research into automated attendance tracking spans several decades, with approaches ranging from barcode scanning to sophisticated multi-modal biometric systems. Understanding this landscape helps position the current work within the broader trajectory of technological development.
+        </p>
+        
+        <h3 class="subsection-heading">A. Radio Frequency Identification Systems</h3>
+        <p>
+            Radio Frequency Identification (RFID) represented an early departure from manual methods. Students carry cards embedded with passive transponders, which readers detect when brought within proximity. Implementation costs remain relatively modest, and the technology integrates readily with existing identity card infrastructure. However, RFID systems share a fundamental weakness with signature sheets: the card, not the student, receives verification. A forgotten card means absence regardless of physical presence, while a shared card enables unauthorized attendance marking.
+        </p>
+        
+        <h3 class="subsection-heading">B. Fingerprint-Based Systems</h3>
+        <p>
+            Fingerprint recognition has achieved widespread deployment in attendance contexts due to favorable performance characteristics and declining sensor costs. Ghafoor's 2020 study explored real-time biometric systems utilizing wireless connectivity, demonstrating that Wi-Fi-enabled fingerprint modules could synchronize data with remote servers without requiring hardwired network infrastructure. Chatterjee's concurrent research examined IoT integration specifically within educational settings, emphasizing the benefits of centralized data management for generating compliance reports and identifying attendance patterns.
+        </p>
+        <p>
+            These investigations established the technical feasibility of networked biometric attendance but typically assumed permanent installations. The question of how to maintain session context, distinguishing between authorized and unauthorized marking periods, received less attention.
+        </p>
+        
+        <h3 class="subsection-heading">C. Portable and Embedded Solutions</h3>
+        <p>
+            More recent work has explored portable form factors leveraging modern microcontroller platforms. Research published in the International Journal of Scientific Research and Engineering Development examined ESP32-based portable systems, highlighting the platform's combination of processing capability, wireless connectivity, and power efficiency. The ESP32's dual-core architecture and integrated Wi-Fi stack make it particularly suitable for battery-powered devices requiring intermittent cloud communication.
+        </p>
+        <p>
+            Building upon these foundations, Attendro introduces explicit session control as a first-class architectural element, ensuring that fingerprint authentication carries meaning only within faculty-authorized temporal boundaries.
+        </p>
+        
+        <!-- III. METHODOLOGY -->
+        <h2 class="section-heading">III. METHODOLOGY</h2>
+        
+        <p>
+            The Attendro system comprises three interconnected components: a portable hardware device, a faculty-facing web dashboard, and a cloud backend managing data persistence and business logic. Their coordinated operation implements the session-controlled attendance paradigm central to this work.
+        </p>
+        
+        <h3 class="subsection-heading">A. Hardware Architecture</h3>
+        <p>
+            The portable device centers on an ESP32 microcontroller, selected for its integrated dual-band Wi-Fi, adequate processing power for embedded applications, and extensive community support. An R307 optical fingerprint sensor handles biometric acquisition, storing template data locally while returning numeric identifiers upon successful matching. A 0.93-inch OLED display provides real-time feedback to users, confirming authentication outcomes or indicating error conditions. Power comes from a 2000mAh lithium-ion battery, with charging facilitated through a standard USB interface.
+        </p>
+        <p>
+            The device footprint remains compact enough for faculty members to carry between classrooms, eliminating the infrastructure requirements of fixed installations. During lectures, the device can rest on a table or be passed among students as needed.
+        </p>
+        
+        <h3 class="subsection-heading">B. Session Control Mechanism</h3>
+        <p>
+            What distinguishes Attendro from conventional biometric systems is its session-controlled operation. Attendance marking is not perpetually available; rather, it becomes valid only when a faculty member explicitly initiates a lecture session through the web dashboard.
+        </p>
+        <p>
+            When starting a session, the faculty member specifies the subject, class division, and student batch (where applicable). The backend generates a cryptographically signed session token associated with these parameters and the specific device identifier. The portable device, polling the backend at regular intervals, detects the newly active session and transitions from idle to recording mode.
+        </p>
+        <p>
+            This architecture ensures that a fingerprint scan carries meaning only within its intended context. A student cannot mark attendance before the faculty member arrives, during a different lecture in the same room, or after the session concludes. The session boundary provides the temporal anchor missing from always-on biometric installations.
+        </p>
+        
+        <h3 class="subsection-heading">C. Cloud Backend Implementation</h3>
+        <p>
+            Supabase provides the backend infrastructure, offering managed PostgreSQL database services alongside serverless Edge Functions for custom logic execution. The database schema follows Third Normal Form principles, with core tables tracking devices, students, lecture sessions, and attendance records.
+        </p>
+        <p>
+            When the portable device submits an attendance marking request, an Edge Function validates multiple conditions: the session token must be valid and active, the fingerprint identifier must correspond to a registered student, the student must belong to the batch associated with the current session, and no duplicate entry may exist for the same student and session combination. Only upon satisfying all constraints does the function insert an attendance record and return a success response triggering the device's confirmation feedback.
+        </p>
+        
+        <!-- IV. SYSTEM DESIGN -->
+        <h2 class="section-heading">IV. SYSTEM DESIGN</h2>
+        
+        <h3 class="subsection-heading">A. Database Schema</h3>
+        <p>
+            The relational database organizes information across four primary tables. The devices table maintains a registry of hardware units, storing unique device codes and connection status. The students table holds enrollment information including name, roll number, batch assignment, and the fingerprint identifier returned by the R307 sensor. The lecture_sessions table tracks session metadata including start and end timestamps, status (active, paused, or completed), and foreign keys linking to the associated device and subject. Finally, the attendance_records table captures individual marking events, referencing both the student and the session while recording the precise timestamp.
+        </p>
+        
+        <div class="table-caption">Table I: Summary of Primary Database Tables</div>
+        <table>
+            <tr>
+                <th>Table</th>
+                <th>Key Columns</th>
+                <th>Purpose</th>
+            </tr>
+            <tr>
+                <td>devices</td>
+                <td>id, device_code, status, last_seen</td>
+                <td>Hardware registry and heartbeat tracking</td>
+            </tr>
+            <tr>
+                <td>students</td>
+                <td>id, name, roll_no, batch, fingerprint_id</td>
+                <td>Student enrollment and biometric mapping</td>
+            </tr>
+            <tr>
+                <td>lecture_sessions</td>
+                <td>id, subject_id, device_id, status, start_time, end_time</td>
+                <td>Temporal and contextual session binding</td>
+            </tr>
+            <tr>
+                <td>attendance_records</td>
+                <td>id, student_id, session_id, marked_at</td>
+                <td>Individual attendance events</td>
+            </tr>
+        </table>
+        
+        <h3 class="subsection-heading">B. Communication Protocol</h3>
+        <p>
+            The portable device communicates with the backend through HTTPS REST calls, ensuring encrypted data transmission even over shared Wi-Fi networks. Two primary API endpoints handle operational requirements. The get-active-session endpoint returns the current session configuration when polled, allowing the device to detect transitions between idle and active states. The mark-attendance endpoint accepts fingerprint identifier and session token, returning success or error codes that drive user feedback.
+        </p>
+        <p>
+            For resilience against network interruptions, the firmware implements local buffering. Should connectivity fail during an active session, attendance events queue locally and synchronize through a dedicated sync-offline endpoint once connection restores.
+        </p>
+        
+        <h3 class="subsection-heading">C. Firmware State Machine</h3>
+        <p>
+            The ESP32 firmware operates as a state machine with four primary states. In Boot state, the device initializes peripherals, displays its identifier, and establishes Wi-Fi connectivity. The Idle state polls for active sessions while keeping the fingerprint sensor disabled to conserve power and prevent unauthorized scans. Upon detecting an active session, transition to the Active state enables the sensor and processes authentication attempts. A background Sync state handles deferred transmission of buffered records when connectivity issues had previously prevented immediate submission.
+        </p>
+        
+        <!-- V. RESULTS AND DISCUSSION -->
+        <h2 class="section-heading">V. RESULTS AND DISCUSSION</h2>
+        
+        <p>
+            Prototype testing occurred over a two-week period under conditions simulating typical classroom operation. Multiple metrics were collected to evaluate system performance against design objectives.
+        </p>
+        
+        <h3 class="subsection-heading">A. Biometric Performance</h3>
+        <p>
+            The R307 optical sensor demonstrated a False Acceptance Rate (FAR) below 0.001% across test populations. The False Rejection Rate (FRR) measured approximately 1%, meaning roughly one in one hundred legitimate authentication attempts failed to produce a match. Failed attempts typically correlated with improper finger placement or excessively dry skin conditions. Users learned appropriate technique quickly, and rejection rates declined as familiarity increased.
+        </p>
+        
+        <h3 class="subsection-heading">B. Latency Measurements</h3>
+        <p>
+            End-to-end authentication latency, measured from finger placement to confirmation feedback, averaged 1.2 seconds under stable Wi-Fi conditions. This figure includes sensor processing, template matching, network round-trip to the cloud backend, database insertion, and response handling. The 1.2-second interval compares favorably with manual roll call, where individual student verification might require similar or greater time while lacking biometric certainty.
+        </p>
+        
+        <div class="table-caption">Table II: Performance Test Results Summary</div>
+        <table>
+            <tr>
+                <th>Metric</th>
+                <th>Measured Value</th>
+                <th>Test Conditions</th>
+            </tr>
+            <tr>
+                <td>False Acceptance Rate</td>
+                <td>&lt; 0.001%</td>
+                <td>Cross-matching between 50 enrolled users</td>
+            </tr>
+            <tr>
+                <td>False Rejection Rate</td>
+                <td>~1%</td>
+                <td>Repeated authentication by enrolled users</td>
+            </tr>
+            <tr>
+                <td>Average Latency</td>
+                <td>1.2 seconds</td>
+                <td>Stable Wi-Fi, normal server load</td>
+            </tr>
+            <tr>
+                <td>Battery Duration</td>
+                <td>&gt; 8 hours</td>
+                <td>Continuous active session operation</td>
+            </tr>
+            <tr>
+                <td>Stress Test (Consecutive Scans)</td>
+                <td>50 scans, 0 packet loss</td>
+                <td>Rapid sequential authentication attempts</td>
+            </tr>
+        </table>
+        
+        <h3 class="subsection-heading">C. Power Consumption</h3>
+        <p>
+            The 2000mAh battery sustained continuous active-session operation exceeding eight hours, sufficient for a full day of lectures without recharging. Power management optimizations, including sensor deactivation during idle periods and adaptive polling intervals, contributed to this endurance. Recharging through USB achieves full capacity within approximately three hours.
+        </p>
+        
+        <h3 class="subsection-heading">D. Observations on Session Control</h3>
+        <p>
+            The session-controlled paradigm achieved its intended goal of contextualizing attendance events. During testing, attempts to mark attendance outside authorized sessions returned appropriate error responses, and the device provided clear feedback distinguishing successful registrations from rejected attempts. Faculty members appreciated the explicit control over when recording occurred, noting that it eliminated concerns about unauthorized device access between lectures.
+        </p>
+        
+        <!-- VI. APPLICATIONS -->
+        <h2 class="section-heading">VI. APPLICATIONS</h2>
+        
+        <p>
+            While designed primarily for educational attendance tracking, the Attendro architecture supports adaptation to various contexts requiring authenticated presence verification.
+        </p>
+        <p>
+            Corporate environments might deploy similar devices for shift check-in, particularly in organizations where personnel rotate between locations. The portability eliminates the need for fixed hardware at each potential work site. Event management represents another application domain, where temporary registration stations require rapid deployment and teardown. Conference organizers could track session participation for continuing education credit verification. Healthcare facilities might adapt the technology for patient identification during treatment administration, ensuring documentation accuracy while reducing reliance on wristband systems susceptible to error.
+        </p>
+        
+        <!-- VII. CONCLUSION AND FUTURE SCOPE -->
+        <h2 class="section-heading">VII. CONCLUSION</h2>
+        
+        <p>
+            This research demonstrated that combining portable biometric hardware with session-aware cloud architecture addresses limitations inherent in both manual attendance methods and fixed biometric installations. The ESP32-based prototype achieved performance metrics suitable for educational deployment while maintaining hardware costs within reach of resource-constrained institutions.
+        </p>
+        <p>
+            The session control mechanism proved central to system utility, providing the temporal context that transforms raw biometric identification into meaningful attendance validation. Faculty members retain explicit authority over when recording occurs, while the cloud backend ensures data integrity and enables real-time visibility into attendance patterns.
+        </p>
+        <p>
+            Future development might explore multi-modal authentication, incorporating secondary verification methods such as RFID or PIN entry for situations where fingerprint capture proves unreliable. Machine learning analysis of accumulated attendance data could identify at-risk students exhibiting concerning absenteeism patterns before academic consequences materialize. Mobile applications for students, providing visibility into their own attendance records and automated alerts when percentages approach minimum thresholds, represent another valuable enhancement direction.
+        </p>
+        <p>
+            The fundamental insight underlying Attendro, that presence verification requires contextual awareness beyond simple identity confirmation, generalizes beyond attendance tracking. Any application requiring authenticated participation within defined temporal or spatial boundaries might benefit from similar architectural principles.
+        </p>
+        
+        <!-- ACKNOWLEDGEMENTS -->
+        <h2 class="section-heading">ACKNOWLEDGEMENTS</h2>
+        <p class="no-indent">
+            The authors extend gratitude to the faculty and administration of the Polytechnic Institute for providing resources and testing facilities. Appreciation is also due to the student volunteers who participated in prototype evaluation and offered valuable feedback on system usability.
+        </p>
+        
+        <!-- REFERENCES -->
+        <h2 class="section-heading">REFERENCES</h2>
+        
+        <div class="reference-item">
+            [1] Espressif Systems, "ESP32 Series Datasheet," Version 3.4, 2021. [Online]. Available: https://www.espressif.com/sites/default/files/documentation/esp32_datasheet_en.pdf
+        </div>
+        
+        <div class="reference-item">
+            [2] International Journal of Research in Publication and Reviews (IJRPR), "Review on Biometric Attendance System," Vol. 3, No. 6, pp. 2336-2339, 2022.
+        </div>
+        
+        <div class="reference-item">
+            [3] International Journal of Scientific Research and Engineering Development (IJSRED), "Portable Biometric Attendance Management System Using ESP32," Vol. 8, Issue 3, pp. 623-627, 2025.
+        </div>
+        
+        <div class="reference-item">
+            [4] K. Z. Ghafoor, "Real-Time Biometric Attendance System using Wi-Fi Module," in IEEE International Conference on Advanced Science and Engineering (ICOASE), 2020.
+        </div>
+        
+        <div class="reference-item">
+            [5] R. Chatterjee, "IoT Based Biometric Attendance System," International Journal of Engineering Research & Technology (IJERT), Vol. 9, Issue 05, 2020.
+        </div>
+        
+        <div class="reference-item">
+            [6] Supabase Inc., "Supabase Documentation - Database & Edge Functions," 2024. [Online]. Available: https://supabase.com/docs
+        </div>
+        
+    </div>
+</body>
+</html>

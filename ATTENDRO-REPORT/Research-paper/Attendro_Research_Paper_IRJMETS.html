@@ -1,0 +1,3457 @@
+<!DOCTYPE html>
+<html lang="en" data-qb-installed="true"><head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IRJMETS - Attendro Research Paper</title>
+    
+    <!-- Mermaid for Diagrams -->
+    <script type="module">
+        import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+        // We do NOT start on load automatically so we can preserve source code
+        mermaid.initialize({ startOnLoad: false, theme: 'neutral' });
+        
+        window.initMermaid = async function() {
+            // Backup source code before rendering
+            document.querySelectorAll('.mermaid').forEach(el => {
+                if (!el.getAttribute('data-uml')) {
+                    el.setAttribute('data-uml', el.innerText);
+                }
+            });
+            await mermaid.run();
+        };
+
+        // Initialize on load
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', window.initMermaid);
+        } else {
+            window.initMermaid();
+        }
+    </script>
+    
+    <style>
+        /* Wysiwyg Toolbar */
+        .wysiwyg-toolbar {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 10000;
+            background: #f8f9fa;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            padding: 5px 10px;
+            display: none; /* Shown when editing */
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            gap: 5px;
+        }
+        
+        body.editing-mode .wysiwyg-toolbar {
+            display: flex;
+        }
+
+        .tool-btn {
+            background: #fff;
+            border: 1px solid #ddd;
+            border-radius: 3px;
+            padding: 4px 8px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        .tool-btn:hover { background: #e9ecef; }
+        .separator { width: 1px; background: #ccc; margin: 0 5px; }
+
+        /* ============================================
+           IRJMETS JOURNAL TEMPLATE STYLES
+           ============================================ */
+        
+        @page {
+            size: A4;
+            /* Margins handled by the table structure for consistency */
+            margin: 1.5cm 2cm 1.5cm 2cm; 
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: "Cambria", serif;
+            font-size: 10pt;
+            line-height: 1.38;
+            background-color: #e8e8e8;
+            color: black;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+        }
+        
+        /* Control Panel */
+        .control-panel {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            z-index: 9999;
+            background: linear-gradient(135deg, #1e3a5f 0%, #2d5a87 100%);
+            padding: 15px 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            max-width: 180px;
+        }
+        
+        .control-panel h4 {
+            color: white;
+            font-family: Arial, sans-serif;
+            font-size: 11px;
+            margin-bottom: 5px;
+            text-align: center;
+        }
+        
+        .btn {
+            background-color: #00B050;
+            color: white;
+            border: none;
+            padding: 7px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-family: Arial, sans-serif;
+            font-size: 10px;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+        
+        .btn:hover { background-color: #008040; transform: scale(1.02); }
+        .btn-pdf { background-color: #dc3545; }
+        .btn-pdf:hover { background-color: #bb2d3b; }
+        .btn-edit { background-color: #fd7e14; }
+        
+        .edit-indicator {
+            color: #ffc107;
+            font-size: 9px;
+            text-align: center;
+            display: none;
+        }
+        
+        /* Paper Container */
+        .paper {
+            background-color: white;
+            width: 210mm;
+            min-height: 297mm;
+            /* Padding moved to table to allow header repetition logic */
+            padding: 10mm 20mm; 
+            box-shadow: 0 0 30px rgba(0,0,0,0.2);
+            margin-bottom: 20px;
+            position: relative;
+        }
+        
+        /* Table Structure for Print Headers */
+        table.report-container {
+            width: 100%;
+            border-collapse: collapse;
+            border: none;
+        }
+        
+        thead.report-header {
+            display: table-header-group; 
+        }
+        
+        tbody.report-content {
+            display: table-row-group;
+        }
+        
+        tr.report-row {
+            page-break-inside: auto;
+        }
+        
+        td.report-header-cell, td.report-content-cell {
+            padding: 0;
+            border: none;
+        }
+        
+        /* Header Styling */
+        .irjmets-header-wrapper {
+            border-bottom: 2px solid #000;
+            padding-bottom: 8px;
+            margin-bottom: 20px; /* Spacer after header */
+            width: 100%;
+        }
+
+        .header-top-row {
+            position: relative;
+            display: flex;
+            justify-content: center; /* CENTER LOGO */
+            align-items: center;
+            height: 70px;
+            margin-bottom: 5px;
+        }
+        
+        .logo-section img {
+            height: 60px;
+            width: auto;
+            display: block;
+        }
+        
+        .issn-section {
+            position: absolute;
+            right: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            text-align: right;
+        }
+        
+        .issn {
+            font-family: "Cambria", serif;
+            font-size: 11pt;
+            font-weight: bold;
+            color: #00B050;
+        }
+        
+        .journal-full-name {
+            font-family: "Cambria", serif;
+            font-size: 11pt;
+            font-weight: bold;
+            color: #00B050;
+            text-align: center;
+            text-transform: capitalize;
+            margin: 5px 0;
+        }
+        
+        .journal-subtitle {
+            font-family: "Cambria", serif;
+            font-size: 9pt;
+            font-weight: bold;
+            color: #1F497D;
+            text-align: center;
+            margin-bottom: 4px;
+        }
+        
+        .journal-meta {
+            font-family: "Cambria", serif;
+            font-size: 9pt;
+            font-weight: bold;
+            color: #1F497D;
+            display: flex;
+            justify-content: space-between;
+            padding: 0 5px;
+        }
+
+        /* Content Styles */
+        .paper-title {
+            font-family: "Cambria", serif;
+            font-size: 14pt;
+            font-weight: bold;
+            text-align: center;
+            text-transform: uppercase;
+            margin: 15px 0 12px 0;
+            color: #000;
+        }
+        
+        .authors {
+            font-family: "Cambria", serif;
+            font-size: 12pt;
+            font-weight: bold;
+            text-align: center;
+            margin-bottom: 6px;
+        }
+        
+        .affiliations {
+            font-family: "Cambria", serif;
+            font-size: 11pt;
+            text-align: center;
+            margin-bottom: 15px;
+            color: #000;
+            padding-bottom: 10px;
+        }
+        
+        h2.section-heading {
+            font-family: "Cambria", serif;
+            font-size: 12pt;
+            font-weight: bold;
+            text-transform: uppercase;
+            margin-top: 14pt;
+            margin-bottom: 8pt;
+            text-align: center;
+            color: #000;
+        }
+        
+        h3.subsection-heading {
+            font-family: "Cambria", serif;
+            font-size: 10pt;
+            font-weight: bold;
+            margin-top: 10pt;
+            margin-bottom: 5pt;
+        }
+        
+        p {
+            font-family: "Cambria", serif;
+            font-size: 10pt;
+            text-align: justify;
+            margin-bottom: 8pt;
+            line-height: 1.38;
+        }
+        
+        p.no-indent { text-indent: 0; }
+        
+        .abstract-section { margin: 10px 0; }
+        .abstract-section h2 { text-align: center; }
+        
+        .keywords {
+            font-family: "Cambria", serif;
+            font-size: 10pt;
+            margin: 8px 0 12px 0;
+            padding-bottom: 10px;
+        }
+        
+        .download-btn {
+            position: absolute;
+            bottom: 5px;
+            right: 5px;
+            background: #00B050;
+            color: white;
+            border: none;
+            padding: 4px 8px;
+            border-radius: 3px;
+            cursor: pointer;
+            z-index: 10;
+            font-size: 10px;
+            opacity: 0.8;
+        }
+        .download-btn:hover { opacity: 1; }
+        
+        /* Figures & Tables */
+        .figure-container { text-align: center; margin: 15pt 0; page-break-inside: avoid; }
+        .figure-box { 
+            display: inline-block; 
+            padding: 20px 20px 30px 20px; 
+            border: 1px solid #ccc; 
+            background: #fff; 
+            position: relative; 
+            min-width: 60%;
+        }
+        .figure-caption, .table-caption {
+            font-family: "Cambria", serif;
+            font-size: 10pt;
+            margin-top: 6pt;
+            text-align: center;
+            font-weight: bold;
+        }
+        
+        .table-container table {
+            width: auto;
+            border-collapse: collapse;
+            font-size: 10pt;
+            margin: 0 auto;
+        }
+        .table-container th, .table-container td {
+            border: 1px solid #000;
+            padding: 4px 8px;
+            text-align: left;
+        }
+        .table-container th { background-color: #f0f0f0; }
+        
+        ul, ol { padding-left: 1.2cm; font-size: 10pt; font-family: "Cambria", serif; margin: 8pt 0; }
+        
+        @media print {
+            body { background: none; padding: 0; margin: 0; }
+            .paper { box-shadow: none; width: 100%; min-height: 0; padding: 0; margin: 0; }
+            .control-panel, .download-btn, .diagram-controls { display: none !important; }
+            thead.report-header { display: table-header-group; }
+        }
+
+        /* Diagram Resizing Controls */
+        .diagram-controls {
+            position: absolute;
+            top: 5px;
+            left: 5px;
+            display: flex;
+            gap: 5px;
+            z-index: 100;
+            opacity: 0;
+            transition: opacity 0.3s;
+            background: rgba(255,255,255,0.9);
+            padding: 4px;
+            border-radius: 4px;
+            border: 1px solid #ccc;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .figure-box:hover .diagram-controls, body.editing-mode .diagram-controls {
+            opacity: 1;
+        }
+        .d-btn {
+            font-size: 14px;
+            width: 24px;
+            height: 24px;
+            padding: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            background: #fff;
+            border: 1px solid #999;
+            border-radius: 3px;
+            color: #333;
+        }
+        .d-btn:hover { background: #e0e0e0; }
+
+        /* Editable Header States */
+        body.editing-mode .journal-meta span, 
+        body.editing-mode .journal-full-name, 
+        body.editing-mode .issn,
+        body.editing-mode .journal-subtitle {
+            border: 1px dashed #ccc;
+            background-color: rgba(255, 255, 0, 0.05);
+            cursor: text;
+            padding: 0 2px;
+        }
+    </style>
+<style type="text/css">.lf-progress {
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  width: 100%;
+  /* margin: 0 10px; */
+  height: 4px;
+  border-radius: 3px;
+  cursor: pointer;
+}
+.lf-progress:focus {
+  outline: none;
+  border: none;
+}
+.lf-progress::-moz-range-track {
+  cursor: pointer;
+  background: none;
+  border: none;
+  outline: none;
+}
+.lf-progress::-webkit-slider-thumb {
+  -webkit-appearance: none !important;
+  height: 13px;
+  width: 13px;
+  border: 0;
+  border-radius: 50%;
+  background: #0fccce;
+  cursor: pointer;
+}
+.lf-progress::-moz-range-thumb {
+  -moz-appearance: none !important;
+  height: 13px;
+  width: 13px;
+  border: 0;
+  border-radius: 50%;
+  background: #0fccce;
+  cursor: pointer;
+}
+.lf-progress::-ms-track {
+  width: 100%;
+  height: 3px;
+  cursor: pointer;
+  background: transparent;
+  border-color: transparent;
+  color: transparent;
+}
+.lf-progress::-ms-fill-lower {
+  background: #ccc;
+  border-radius: 3px;
+}
+.lf-progress::-ms-fill-upper {
+  background: #ccc;
+  border-radius: 3px;
+}
+.lf-progress::-ms-thumb {
+  border: 0;
+  height: 15px;
+  width: 15px;
+  border-radius: 50%;
+  background: #0fccce;
+  cursor: pointer;
+}
+.lf-progress:focus::-ms-fill-lower {
+  background: #ccc;
+}
+.lf-progress:focus::-ms-fill-upper {
+  background: #ccc;
+}
+.lf-player-container :focus {
+  outline: 0;
+}
+.lf-popover {
+  position: relative;
+}
+
+.lf-popover-content {
+  display: inline-block;
+  position: absolute;
+  opacity: 1;
+  visibility: visible;
+  transform: translate(0, -10px);
+  box-shadow: 0 2px 5px 0 rgba(0, 0, 0, 0.26);
+  transition: all 0.3s cubic-bezier(0.75, -0.02, 0.2, 0.97);
+}
+
+.lf-popover-content.hidden {
+  opacity: 0;
+  visibility: hidden;
+  transform: translate(0, 0px);
+}
+
+.lf-player-btn-container {
+  display: flex;
+  align-items: center;
+}
+.lf-player-btn {
+  cursor: pointer;
+  fill: #999;
+  width: 14px;
+}
+
+.lf-player-btn.active {
+  fill: #555;
+}
+
+.lf-popover {
+  position: relative;
+}
+
+.lf-popover-content {
+  display: inline-block;
+  position: absolute;
+  background-color: #ffffff;
+  opacity: 1;
+
+  transform: translate(0, -10px);
+  box-shadow: 0 2px 5px 0 rgba(0, 0, 0, 0.26);
+  transition: all 0.3s cubic-bezier(0.75, -0.02, 0.2, 0.97);
+  padding: 10px;
+}
+
+.lf-popover-content.hidden {
+  opacity: 0;
+  visibility: hidden;
+  transform: translate(0, 0px);
+}
+
+.lf-arrow {
+  position: absolute;
+  z-index: -1;
+  content: '';
+  bottom: -9px;
+  border-style: solid;
+  border-width: 10px 10px 0px 10px;
+}
+
+.lf-left-align,
+.lf-left-align .lfarrow {
+  left: 0;
+  right: unset;
+}
+
+.lf-right-align,
+.lf-right-align .lf-arrow {
+  right: 0;
+  left: unset;
+}
+
+.lf-text-input {
+  border: 1px #ccc solid;
+  border-radius: 5px;
+  padding: 3px;
+  width: 60px;
+  margin: 0;
+}
+
+.lf-color-picker {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  height: 90px;
+}
+
+.lf-color-selectors {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.lf-color-component {
+  display: flex;
+  flex-direction: row;
+  font-size: 12px;
+  align-items: center;
+  justify-content: center;
+}
+
+.lf-color-component strong {
+  width: 40px;
+}
+
+.lf-color-component input[type='range'] {
+  margin: 0 0 0 10px;
+}
+
+.lf-color-component input[type='number'] {
+  width: 50px;
+  margin: 0 0 0 10px;
+}
+
+.lf-color-preview {
+  font-size: 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  padding-left: 5px;
+}
+
+.lf-preview {
+  height: 60px;
+  width: 60px;
+}
+
+.lf-popover-snapshot {
+  width: 150px;
+}
+.lf-popover-snapshot h5 {
+  margin: 5px 0 10px 0;
+  font-size: 0.75rem;
+}
+.lf-popover-snapshot a {
+  display: block;
+  text-decoration: none;
+}
+.lf-popover-snapshot a:before {
+  content: '⥼';
+  margin-right: 5px;
+}
+.lf-popover-snapshot .lf-note {
+  display: block;
+  margin-top: 10px;
+  color: #999;
+}
+.lf-player-controls > div {
+  margin-right: 5px;
+  margin-left: 5px;
+}
+.lf-player-controls > div:first-child {
+  margin-left: 0px;
+}
+.lf-player-controls > div:last-child {
+  margin-right: 0px;
+}
+</style><style type="text/css">.lf-progress {
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  width: 100%;
+  /* margin: 0 10px; */
+  height: 4px;
+  border-radius: 3px;
+  cursor: pointer;
+}
+.lf-progress:focus {
+  outline: none;
+  border: none;
+}
+.lf-progress::-moz-range-track {
+  cursor: pointer;
+  background: none;
+  border: none;
+  outline: none;
+}
+.lf-progress::-webkit-slider-thumb {
+  -webkit-appearance: none !important;
+  height: 13px;
+  width: 13px;
+  border: 0;
+  border-radius: 50%;
+  background: #0fccce;
+  cursor: pointer;
+}
+.lf-progress::-moz-range-thumb {
+  -moz-appearance: none !important;
+  height: 13px;
+  width: 13px;
+  border: 0;
+  border-radius: 50%;
+  background: #0fccce;
+  cursor: pointer;
+}
+.lf-progress::-ms-track {
+  width: 100%;
+  height: 3px;
+  cursor: pointer;
+  background: transparent;
+  border-color: transparent;
+  color: transparent;
+}
+.lf-progress::-ms-fill-lower {
+  background: #ccc;
+  border-radius: 3px;
+}
+.lf-progress::-ms-fill-upper {
+  background: #ccc;
+  border-radius: 3px;
+}
+.lf-progress::-ms-thumb {
+  border: 0;
+  height: 15px;
+  width: 15px;
+  border-radius: 50%;
+  background: #0fccce;
+  cursor: pointer;
+}
+.lf-progress:focus::-ms-fill-lower {
+  background: #ccc;
+}
+.lf-progress:focus::-ms-fill-upper {
+  background: #ccc;
+}
+.lf-player-container :focus {
+  outline: 0;
+}
+.lf-popover {
+  position: relative;
+}
+
+.lf-popover-content {
+  display: inline-block;
+  position: absolute;
+  opacity: 1;
+  visibility: visible;
+  transform: translate(0, -10px);
+  box-shadow: 0 2px 5px 0 rgba(0, 0, 0, 0.26);
+  transition: all 0.3s cubic-bezier(0.75, -0.02, 0.2, 0.97);
+}
+
+.lf-popover-content.hidden {
+  opacity: 0;
+  visibility: hidden;
+  transform: translate(0, 0px);
+}
+
+.lf-player-btn-container {
+  display: flex;
+  align-items: center;
+}
+.lf-player-btn {
+  cursor: pointer;
+  fill: #999;
+  width: 14px;
+}
+
+.lf-player-btn.active {
+  fill: #555;
+}
+
+.lf-popover {
+  position: relative;
+}
+
+.lf-popover-content {
+  display: inline-block;
+  position: absolute;
+  background-color: #ffffff;
+  opacity: 1;
+
+  transform: translate(0, -10px);
+  box-shadow: 0 2px 5px 0 rgba(0, 0, 0, 0.26);
+  transition: all 0.3s cubic-bezier(0.75, -0.02, 0.2, 0.97);
+  padding: 10px;
+}
+
+.lf-popover-content.hidden {
+  opacity: 0;
+  visibility: hidden;
+  transform: translate(0, 0px);
+}
+
+.lf-arrow {
+  position: absolute;
+  z-index: -1;
+  content: '';
+  bottom: -9px;
+  border-style: solid;
+  border-width: 10px 10px 0px 10px;
+}
+
+.lf-left-align,
+.lf-left-align .lfarrow {
+  left: 0;
+  right: unset;
+}
+
+.lf-right-align,
+.lf-right-align .lf-arrow {
+  right: 0;
+  left: unset;
+}
+
+.lf-text-input {
+  border: 1px #ccc solid;
+  border-radius: 5px;
+  padding: 3px;
+  width: 60px;
+  margin: 0;
+}
+
+.lf-color-picker {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  height: 90px;
+}
+
+.lf-color-selectors {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.lf-color-component {
+  display: flex;
+  flex-direction: row;
+  font-size: 12px;
+  align-items: center;
+  justify-content: center;
+}
+
+.lf-color-component strong {
+  width: 40px;
+}
+
+.lf-color-component input[type='range'] {
+  margin: 0 0 0 10px;
+}
+
+.lf-color-component input[type='number'] {
+  width: 50px;
+  margin: 0 0 0 10px;
+}
+
+.lf-color-preview {
+  font-size: 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  padding-left: 5px;
+}
+
+.lf-preview {
+  height: 60px;
+  width: 60px;
+}
+
+.lf-popover-snapshot {
+  width: 150px;
+}
+.lf-popover-snapshot h5 {
+  margin: 5px 0 10px 0;
+  font-size: 0.75rem;
+}
+.lf-popover-snapshot a {
+  display: block;
+  text-decoration: none;
+}
+.lf-popover-snapshot a:before {
+  content: '⥼';
+  margin-right: 5px;
+}
+.lf-popover-snapshot .lf-note {
+  display: block;
+  margin-top: 10px;
+  color: #999;
+}
+.lf-player-controls > div {
+  margin-right: 5px;
+  margin-left: 5px;
+}
+.lf-player-controls > div:first-child {
+  margin-left: 0px;
+}
+.lf-player-controls > div:last-child {
+  margin-right: 0px;
+}
+</style><style type="text/css">.lf-progress {
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  width: 100%;
+  /* margin: 0 10px; */
+  height: 4px;
+  border-radius: 3px;
+  cursor: pointer;
+}
+.lf-progress:focus {
+  outline: none;
+  border: none;
+}
+.lf-progress::-moz-range-track {
+  cursor: pointer;
+  background: none;
+  border: none;
+  outline: none;
+}
+.lf-progress::-webkit-slider-thumb {
+  -webkit-appearance: none !important;
+  height: 13px;
+  width: 13px;
+  border: 0;
+  border-radius: 50%;
+  background: #0fccce;
+  cursor: pointer;
+}
+.lf-progress::-moz-range-thumb {
+  -moz-appearance: none !important;
+  height: 13px;
+  width: 13px;
+  border: 0;
+  border-radius: 50%;
+  background: #0fccce;
+  cursor: pointer;
+}
+.lf-progress::-ms-track {
+  width: 100%;
+  height: 3px;
+  cursor: pointer;
+  background: transparent;
+  border-color: transparent;
+  color: transparent;
+}
+.lf-progress::-ms-fill-lower {
+  background: #ccc;
+  border-radius: 3px;
+}
+.lf-progress::-ms-fill-upper {
+  background: #ccc;
+  border-radius: 3px;
+}
+.lf-progress::-ms-thumb {
+  border: 0;
+  height: 15px;
+  width: 15px;
+  border-radius: 50%;
+  background: #0fccce;
+  cursor: pointer;
+}
+.lf-progress:focus::-ms-fill-lower {
+  background: #ccc;
+}
+.lf-progress:focus::-ms-fill-upper {
+  background: #ccc;
+}
+.lf-player-container :focus {
+  outline: 0;
+}
+.lf-popover {
+  position: relative;
+}
+
+.lf-popover-content {
+  display: inline-block;
+  position: absolute;
+  opacity: 1;
+  visibility: visible;
+  transform: translate(0, -10px);
+  box-shadow: 0 2px 5px 0 rgba(0, 0, 0, 0.26);
+  transition: all 0.3s cubic-bezier(0.75, -0.02, 0.2, 0.97);
+}
+
+.lf-popover-content.hidden {
+  opacity: 0;
+  visibility: hidden;
+  transform: translate(0, 0px);
+}
+
+.lf-player-btn-container {
+  display: flex;
+  align-items: center;
+}
+.lf-player-btn {
+  cursor: pointer;
+  fill: #999;
+  width: 14px;
+}
+
+.lf-player-btn.active {
+  fill: #555;
+}
+
+.lf-popover {
+  position: relative;
+}
+
+.lf-popover-content {
+  display: inline-block;
+  position: absolute;
+  background-color: #ffffff;
+  opacity: 1;
+
+  transform: translate(0, -10px);
+  box-shadow: 0 2px 5px 0 rgba(0, 0, 0, 0.26);
+  transition: all 0.3s cubic-bezier(0.75, -0.02, 0.2, 0.97);
+  padding: 10px;
+}
+
+.lf-popover-content.hidden {
+  opacity: 0;
+  visibility: hidden;
+  transform: translate(0, 0px);
+}
+
+.lf-arrow {
+  position: absolute;
+  z-index: -1;
+  content: '';
+  bottom: -9px;
+  border-style: solid;
+  border-width: 10px 10px 0px 10px;
+}
+
+.lf-left-align,
+.lf-left-align .lfarrow {
+  left: 0;
+  right: unset;
+}
+
+.lf-right-align,
+.lf-right-align .lf-arrow {
+  right: 0;
+  left: unset;
+}
+
+.lf-text-input {
+  border: 1px #ccc solid;
+  border-radius: 5px;
+  padding: 3px;
+  width: 60px;
+  margin: 0;
+}
+
+.lf-color-picker {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  height: 90px;
+}
+
+.lf-color-selectors {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.lf-color-component {
+  display: flex;
+  flex-direction: row;
+  font-size: 12px;
+  align-items: center;
+  justify-content: center;
+}
+
+.lf-color-component strong {
+  width: 40px;
+}
+
+.lf-color-component input[type='range'] {
+  margin: 0 0 0 10px;
+}
+
+.lf-color-component input[type='number'] {
+  width: 50px;
+  margin: 0 0 0 10px;
+}
+
+.lf-color-preview {
+  font-size: 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  padding-left: 5px;
+}
+
+.lf-preview {
+  height: 60px;
+  width: 60px;
+}
+
+.lf-popover-snapshot {
+  width: 150px;
+}
+.lf-popover-snapshot h5 {
+  margin: 5px 0 10px 0;
+  font-size: 0.75rem;
+}
+.lf-popover-snapshot a {
+  display: block;
+  text-decoration: none;
+}
+.lf-popover-snapshot a:before {
+  content: '⥼';
+  margin-right: 5px;
+}
+.lf-popover-snapshot .lf-note {
+  display: block;
+  margin-top: 10px;
+  color: #999;
+}
+.lf-player-controls > div {
+  margin-right: 5px;
+  margin-left: 5px;
+}
+.lf-player-controls > div:first-child {
+  margin-left: 0px;
+}
+.lf-player-controls > div:last-child {
+  margin-right: 0px;
+}
+</style><style type="text/css">.lf-progress {
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  width: 100%;
+  /* margin: 0 10px; */
+  height: 4px;
+  border-radius: 3px;
+  cursor: pointer;
+}
+.lf-progress:focus {
+  outline: none;
+  border: none;
+}
+.lf-progress::-moz-range-track {
+  cursor: pointer;
+  background: none;
+  border: none;
+  outline: none;
+}
+.lf-progress::-webkit-slider-thumb {
+  -webkit-appearance: none !important;
+  height: 13px;
+  width: 13px;
+  border: 0;
+  border-radius: 50%;
+  background: #0fccce;
+  cursor: pointer;
+}
+.lf-progress::-moz-range-thumb {
+  -moz-appearance: none !important;
+  height: 13px;
+  width: 13px;
+  border: 0;
+  border-radius: 50%;
+  background: #0fccce;
+  cursor: pointer;
+}
+.lf-progress::-ms-track {
+  width: 100%;
+  height: 3px;
+  cursor: pointer;
+  background: transparent;
+  border-color: transparent;
+  color: transparent;
+}
+.lf-progress::-ms-fill-lower {
+  background: #ccc;
+  border-radius: 3px;
+}
+.lf-progress::-ms-fill-upper {
+  background: #ccc;
+  border-radius: 3px;
+}
+.lf-progress::-ms-thumb {
+  border: 0;
+  height: 15px;
+  width: 15px;
+  border-radius: 50%;
+  background: #0fccce;
+  cursor: pointer;
+}
+.lf-progress:focus::-ms-fill-lower {
+  background: #ccc;
+}
+.lf-progress:focus::-ms-fill-upper {
+  background: #ccc;
+}
+.lf-player-container :focus {
+  outline: 0;
+}
+.lf-popover {
+  position: relative;
+}
+
+.lf-popover-content {
+  display: inline-block;
+  position: absolute;
+  opacity: 1;
+  visibility: visible;
+  transform: translate(0, -10px);
+  box-shadow: 0 2px 5px 0 rgba(0, 0, 0, 0.26);
+  transition: all 0.3s cubic-bezier(0.75, -0.02, 0.2, 0.97);
+}
+
+.lf-popover-content.hidden {
+  opacity: 0;
+  visibility: hidden;
+  transform: translate(0, 0px);
+}
+
+.lf-player-btn-container {
+  display: flex;
+  align-items: center;
+}
+.lf-player-btn {
+  cursor: pointer;
+  fill: #999;
+  width: 14px;
+}
+
+.lf-player-btn.active {
+  fill: #555;
+}
+
+.lf-popover {
+  position: relative;
+}
+
+.lf-popover-content {
+  display: inline-block;
+  position: absolute;
+  background-color: #ffffff;
+  opacity: 1;
+
+  transform: translate(0, -10px);
+  box-shadow: 0 2px 5px 0 rgba(0, 0, 0, 0.26);
+  transition: all 0.3s cubic-bezier(0.75, -0.02, 0.2, 0.97);
+  padding: 10px;
+}
+
+.lf-popover-content.hidden {
+  opacity: 0;
+  visibility: hidden;
+  transform: translate(0, 0px);
+}
+
+.lf-arrow {
+  position: absolute;
+  z-index: -1;
+  content: '';
+  bottom: -9px;
+  border-style: solid;
+  border-width: 10px 10px 0px 10px;
+}
+
+.lf-left-align,
+.lf-left-align .lfarrow {
+  left: 0;
+  right: unset;
+}
+
+.lf-right-align,
+.lf-right-align .lf-arrow {
+  right: 0;
+  left: unset;
+}
+
+.lf-text-input {
+  border: 1px #ccc solid;
+  border-radius: 5px;
+  padding: 3px;
+  width: 60px;
+  margin: 0;
+}
+
+.lf-color-picker {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  height: 90px;
+}
+
+.lf-color-selectors {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.lf-color-component {
+  display: flex;
+  flex-direction: row;
+  font-size: 12px;
+  align-items: center;
+  justify-content: center;
+}
+
+.lf-color-component strong {
+  width: 40px;
+}
+
+.lf-color-component input[type='range'] {
+  margin: 0 0 0 10px;
+}
+
+.lf-color-component input[type='number'] {
+  width: 50px;
+  margin: 0 0 0 10px;
+}
+
+.lf-color-preview {
+  font-size: 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  padding-left: 5px;
+}
+
+.lf-preview {
+  height: 60px;
+  width: 60px;
+}
+
+.lf-popover-snapshot {
+  width: 150px;
+}
+.lf-popover-snapshot h5 {
+  margin: 5px 0 10px 0;
+  font-size: 0.75rem;
+}
+.lf-popover-snapshot a {
+  display: block;
+  text-decoration: none;
+}
+.lf-popover-snapshot a:before {
+  content: '⥼';
+  margin-right: 5px;
+}
+.lf-popover-snapshot .lf-note {
+  display: block;
+  margin-top: 10px;
+  color: #999;
+}
+.lf-player-controls > div {
+  margin-right: 5px;
+  margin-left: 5px;
+}
+.lf-player-controls > div:first-child {
+  margin-left: 0px;
+}
+.lf-player-controls > div:last-child {
+  margin-right: 0px;
+}
+</style><style type="text/css">.lf-progress {
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  width: 100%;
+  /* margin: 0 10px; */
+  height: 4px;
+  border-radius: 3px;
+  cursor: pointer;
+}
+.lf-progress:focus {
+  outline: none;
+  border: none;
+}
+.lf-progress::-moz-range-track {
+  cursor: pointer;
+  background: none;
+  border: none;
+  outline: none;
+}
+.lf-progress::-webkit-slider-thumb {
+  -webkit-appearance: none !important;
+  height: 13px;
+  width: 13px;
+  border: 0;
+  border-radius: 50%;
+  background: #0fccce;
+  cursor: pointer;
+}
+.lf-progress::-moz-range-thumb {
+  -moz-appearance: none !important;
+  height: 13px;
+  width: 13px;
+  border: 0;
+  border-radius: 50%;
+  background: #0fccce;
+  cursor: pointer;
+}
+.lf-progress::-ms-track {
+  width: 100%;
+  height: 3px;
+  cursor: pointer;
+  background: transparent;
+  border-color: transparent;
+  color: transparent;
+}
+.lf-progress::-ms-fill-lower {
+  background: #ccc;
+  border-radius: 3px;
+}
+.lf-progress::-ms-fill-upper {
+  background: #ccc;
+  border-radius: 3px;
+}
+.lf-progress::-ms-thumb {
+  border: 0;
+  height: 15px;
+  width: 15px;
+  border-radius: 50%;
+  background: #0fccce;
+  cursor: pointer;
+}
+.lf-progress:focus::-ms-fill-lower {
+  background: #ccc;
+}
+.lf-progress:focus::-ms-fill-upper {
+  background: #ccc;
+}
+.lf-player-container :focus {
+  outline: 0;
+}
+.lf-popover {
+  position: relative;
+}
+
+.lf-popover-content {
+  display: inline-block;
+  position: absolute;
+  opacity: 1;
+  visibility: visible;
+  transform: translate(0, -10px);
+  box-shadow: 0 2px 5px 0 rgba(0, 0, 0, 0.26);
+  transition: all 0.3s cubic-bezier(0.75, -0.02, 0.2, 0.97);
+}
+
+.lf-popover-content.hidden {
+  opacity: 0;
+  visibility: hidden;
+  transform: translate(0, 0px);
+}
+
+.lf-player-btn-container {
+  display: flex;
+  align-items: center;
+}
+.lf-player-btn {
+  cursor: pointer;
+  fill: #999;
+  width: 14px;
+}
+
+.lf-player-btn.active {
+  fill: #555;
+}
+
+.lf-popover {
+  position: relative;
+}
+
+.lf-popover-content {
+  display: inline-block;
+  position: absolute;
+  background-color: #ffffff;
+  opacity: 1;
+
+  transform: translate(0, -10px);
+  box-shadow: 0 2px 5px 0 rgba(0, 0, 0, 0.26);
+  transition: all 0.3s cubic-bezier(0.75, -0.02, 0.2, 0.97);
+  padding: 10px;
+}
+
+.lf-popover-content.hidden {
+  opacity: 0;
+  visibility: hidden;
+  transform: translate(0, 0px);
+}
+
+.lf-arrow {
+  position: absolute;
+  z-index: -1;
+  content: '';
+  bottom: -9px;
+  border-style: solid;
+  border-width: 10px 10px 0px 10px;
+}
+
+.lf-left-align,
+.lf-left-align .lfarrow {
+  left: 0;
+  right: unset;
+}
+
+.lf-right-align,
+.lf-right-align .lf-arrow {
+  right: 0;
+  left: unset;
+}
+
+.lf-text-input {
+  border: 1px #ccc solid;
+  border-radius: 5px;
+  padding: 3px;
+  width: 60px;
+  margin: 0;
+}
+
+.lf-color-picker {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  height: 90px;
+}
+
+.lf-color-selectors {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.lf-color-component {
+  display: flex;
+  flex-direction: row;
+  font-size: 12px;
+  align-items: center;
+  justify-content: center;
+}
+
+.lf-color-component strong {
+  width: 40px;
+}
+
+.lf-color-component input[type='range'] {
+  margin: 0 0 0 10px;
+}
+
+.lf-color-component input[type='number'] {
+  width: 50px;
+  margin: 0 0 0 10px;
+}
+
+.lf-color-preview {
+  font-size: 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  padding-left: 5px;
+}
+
+.lf-preview {
+  height: 60px;
+  width: 60px;
+}
+
+.lf-popover-snapshot {
+  width: 150px;
+}
+.lf-popover-snapshot h5 {
+  margin: 5px 0 10px 0;
+  font-size: 0.75rem;
+}
+.lf-popover-snapshot a {
+  display: block;
+  text-decoration: none;
+}
+.lf-popover-snapshot a:before {
+  content: '⥼';
+  margin-right: 5px;
+}
+.lf-popover-snapshot .lf-note {
+  display: block;
+  margin-top: 10px;
+  color: #999;
+}
+.lf-player-controls > div {
+  margin-right: 5px;
+  margin-left: 5px;
+}
+.lf-player-controls > div:first-child {
+  margin-left: 0px;
+}
+.lf-player-controls > div:last-child {
+  margin-right: 0px;
+}
+</style><style type="text/css">.lf-progress {
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  width: 100%;
+  /* margin: 0 10px; */
+  height: 4px;
+  border-radius: 3px;
+  cursor: pointer;
+}
+.lf-progress:focus {
+  outline: none;
+  border: none;
+}
+.lf-progress::-moz-range-track {
+  cursor: pointer;
+  background: none;
+  border: none;
+  outline: none;
+}
+.lf-progress::-webkit-slider-thumb {
+  -webkit-appearance: none !important;
+  height: 13px;
+  width: 13px;
+  border: 0;
+  border-radius: 50%;
+  background: #0fccce;
+  cursor: pointer;
+}
+.lf-progress::-moz-range-thumb {
+  -moz-appearance: none !important;
+  height: 13px;
+  width: 13px;
+  border: 0;
+  border-radius: 50%;
+  background: #0fccce;
+  cursor: pointer;
+}
+.lf-progress::-ms-track {
+  width: 100%;
+  height: 3px;
+  cursor: pointer;
+  background: transparent;
+  border-color: transparent;
+  color: transparent;
+}
+.lf-progress::-ms-fill-lower {
+  background: #ccc;
+  border-radius: 3px;
+}
+.lf-progress::-ms-fill-upper {
+  background: #ccc;
+  border-radius: 3px;
+}
+.lf-progress::-ms-thumb {
+  border: 0;
+  height: 15px;
+  width: 15px;
+  border-radius: 50%;
+  background: #0fccce;
+  cursor: pointer;
+}
+.lf-progress:focus::-ms-fill-lower {
+  background: #ccc;
+}
+.lf-progress:focus::-ms-fill-upper {
+  background: #ccc;
+}
+.lf-player-container :focus {
+  outline: 0;
+}
+.lf-popover {
+  position: relative;
+}
+
+.lf-popover-content {
+  display: inline-block;
+  position: absolute;
+  opacity: 1;
+  visibility: visible;
+  transform: translate(0, -10px);
+  box-shadow: 0 2px 5px 0 rgba(0, 0, 0, 0.26);
+  transition: all 0.3s cubic-bezier(0.75, -0.02, 0.2, 0.97);
+}
+
+.lf-popover-content.hidden {
+  opacity: 0;
+  visibility: hidden;
+  transform: translate(0, 0px);
+}
+
+.lf-player-btn-container {
+  display: flex;
+  align-items: center;
+}
+.lf-player-btn {
+  cursor: pointer;
+  fill: #999;
+  width: 14px;
+}
+
+.lf-player-btn.active {
+  fill: #555;
+}
+
+.lf-popover {
+  position: relative;
+}
+
+.lf-popover-content {
+  display: inline-block;
+  position: absolute;
+  background-color: #ffffff;
+  opacity: 1;
+
+  transform: translate(0, -10px);
+  box-shadow: 0 2px 5px 0 rgba(0, 0, 0, 0.26);
+  transition: all 0.3s cubic-bezier(0.75, -0.02, 0.2, 0.97);
+  padding: 10px;
+}
+
+.lf-popover-content.hidden {
+  opacity: 0;
+  visibility: hidden;
+  transform: translate(0, 0px);
+}
+
+.lf-arrow {
+  position: absolute;
+  z-index: -1;
+  content: '';
+  bottom: -9px;
+  border-style: solid;
+  border-width: 10px 10px 0px 10px;
+}
+
+.lf-left-align,
+.lf-left-align .lfarrow {
+  left: 0;
+  right: unset;
+}
+
+.lf-right-align,
+.lf-right-align .lf-arrow {
+  right: 0;
+  left: unset;
+}
+
+.lf-text-input {
+  border: 1px #ccc solid;
+  border-radius: 5px;
+  padding: 3px;
+  width: 60px;
+  margin: 0;
+}
+
+.lf-color-picker {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  height: 90px;
+}
+
+.lf-color-selectors {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.lf-color-component {
+  display: flex;
+  flex-direction: row;
+  font-size: 12px;
+  align-items: center;
+  justify-content: center;
+}
+
+.lf-color-component strong {
+  width: 40px;
+}
+
+.lf-color-component input[type='range'] {
+  margin: 0 0 0 10px;
+}
+
+.lf-color-component input[type='number'] {
+  width: 50px;
+  margin: 0 0 0 10px;
+}
+
+.lf-color-preview {
+  font-size: 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  padding-left: 5px;
+}
+
+.lf-preview {
+  height: 60px;
+  width: 60px;
+}
+
+.lf-popover-snapshot {
+  width: 150px;
+}
+.lf-popover-snapshot h5 {
+  margin: 5px 0 10px 0;
+  font-size: 0.75rem;
+}
+.lf-popover-snapshot a {
+  display: block;
+  text-decoration: none;
+}
+.lf-popover-snapshot a:before {
+  content: '⥼';
+  margin-right: 5px;
+}
+.lf-popover-snapshot .lf-note {
+  display: block;
+  margin-top: 10px;
+  color: #999;
+}
+.lf-player-controls > div {
+  margin-right: 5px;
+  margin-left: 5px;
+}
+.lf-player-controls > div:first-child {
+  margin-left: 0px;
+}
+.lf-player-controls > div:last-child {
+  margin-right: 0px;
+}
+</style><style type="text/css">.lf-progress {
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  width: 100%;
+  /* margin: 0 10px; */
+  height: 4px;
+  border-radius: 3px;
+  cursor: pointer;
+}
+.lf-progress:focus {
+  outline: none;
+  border: none;
+}
+.lf-progress::-moz-range-track {
+  cursor: pointer;
+  background: none;
+  border: none;
+  outline: none;
+}
+.lf-progress::-webkit-slider-thumb {
+  -webkit-appearance: none !important;
+  height: 13px;
+  width: 13px;
+  border: 0;
+  border-radius: 50%;
+  background: #0fccce;
+  cursor: pointer;
+}
+.lf-progress::-moz-range-thumb {
+  -moz-appearance: none !important;
+  height: 13px;
+  width: 13px;
+  border: 0;
+  border-radius: 50%;
+  background: #0fccce;
+  cursor: pointer;
+}
+.lf-progress::-ms-track {
+  width: 100%;
+  height: 3px;
+  cursor: pointer;
+  background: transparent;
+  border-color: transparent;
+  color: transparent;
+}
+.lf-progress::-ms-fill-lower {
+  background: #ccc;
+  border-radius: 3px;
+}
+.lf-progress::-ms-fill-upper {
+  background: #ccc;
+  border-radius: 3px;
+}
+.lf-progress::-ms-thumb {
+  border: 0;
+  height: 15px;
+  width: 15px;
+  border-radius: 50%;
+  background: #0fccce;
+  cursor: pointer;
+}
+.lf-progress:focus::-ms-fill-lower {
+  background: #ccc;
+}
+.lf-progress:focus::-ms-fill-upper {
+  background: #ccc;
+}
+.lf-player-container :focus {
+  outline: 0;
+}
+.lf-popover {
+  position: relative;
+}
+
+.lf-popover-content {
+  display: inline-block;
+  position: absolute;
+  opacity: 1;
+  visibility: visible;
+  transform: translate(0, -10px);
+  box-shadow: 0 2px 5px 0 rgba(0, 0, 0, 0.26);
+  transition: all 0.3s cubic-bezier(0.75, -0.02, 0.2, 0.97);
+}
+
+.lf-popover-content.hidden {
+  opacity: 0;
+  visibility: hidden;
+  transform: translate(0, 0px);
+}
+
+.lf-player-btn-container {
+  display: flex;
+  align-items: center;
+}
+.lf-player-btn {
+  cursor: pointer;
+  fill: #999;
+  width: 14px;
+}
+
+.lf-player-btn.active {
+  fill: #555;
+}
+
+.lf-popover {
+  position: relative;
+}
+
+.lf-popover-content {
+  display: inline-block;
+  position: absolute;
+  background-color: #ffffff;
+  opacity: 1;
+
+  transform: translate(0, -10px);
+  box-shadow: 0 2px 5px 0 rgba(0, 0, 0, 0.26);
+  transition: all 0.3s cubic-bezier(0.75, -0.02, 0.2, 0.97);
+  padding: 10px;
+}
+
+.lf-popover-content.hidden {
+  opacity: 0;
+  visibility: hidden;
+  transform: translate(0, 0px);
+}
+
+.lf-arrow {
+  position: absolute;
+  z-index: -1;
+  content: '';
+  bottom: -9px;
+  border-style: solid;
+  border-width: 10px 10px 0px 10px;
+}
+
+.lf-left-align,
+.lf-left-align .lfarrow {
+  left: 0;
+  right: unset;
+}
+
+.lf-right-align,
+.lf-right-align .lf-arrow {
+  right: 0;
+  left: unset;
+}
+
+.lf-text-input {
+  border: 1px #ccc solid;
+  border-radius: 5px;
+  padding: 3px;
+  width: 60px;
+  margin: 0;
+}
+
+.lf-color-picker {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  height: 90px;
+}
+
+.lf-color-selectors {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.lf-color-component {
+  display: flex;
+  flex-direction: row;
+  font-size: 12px;
+  align-items: center;
+  justify-content: center;
+}
+
+.lf-color-component strong {
+  width: 40px;
+}
+
+.lf-color-component input[type='range'] {
+  margin: 0 0 0 10px;
+}
+
+.lf-color-component input[type='number'] {
+  width: 50px;
+  margin: 0 0 0 10px;
+}
+
+.lf-color-preview {
+  font-size: 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  padding-left: 5px;
+}
+
+.lf-preview {
+  height: 60px;
+  width: 60px;
+}
+
+.lf-popover-snapshot {
+  width: 150px;
+}
+.lf-popover-snapshot h5 {
+  margin: 5px 0 10px 0;
+  font-size: 0.75rem;
+}
+.lf-popover-snapshot a {
+  display: block;
+  text-decoration: none;
+}
+.lf-popover-snapshot a:before {
+  content: '⥼';
+  margin-right: 5px;
+}
+.lf-popover-snapshot .lf-note {
+  display: block;
+  margin-top: 10px;
+  color: #999;
+}
+.lf-player-controls > div {
+  margin-right: 5px;
+  margin-left: 5px;
+}
+.lf-player-controls > div:first-child {
+  margin-left: 0px;
+}
+.lf-player-controls > div:last-child {
+  margin-right: 0px;
+}
+</style><style type="text/css">.lf-progress {
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  width: 100%;
+  /* margin: 0 10px; */
+  height: 4px;
+  border-radius: 3px;
+  cursor: pointer;
+}
+.lf-progress:focus {
+  outline: none;
+  border: none;
+}
+.lf-progress::-moz-range-track {
+  cursor: pointer;
+  background: none;
+  border: none;
+  outline: none;
+}
+.lf-progress::-webkit-slider-thumb {
+  -webkit-appearance: none !important;
+  height: 13px;
+  width: 13px;
+  border: 0;
+  border-radius: 50%;
+  background: #0fccce;
+  cursor: pointer;
+}
+.lf-progress::-moz-range-thumb {
+  -moz-appearance: none !important;
+  height: 13px;
+  width: 13px;
+  border: 0;
+  border-radius: 50%;
+  background: #0fccce;
+  cursor: pointer;
+}
+.lf-progress::-ms-track {
+  width: 100%;
+  height: 3px;
+  cursor: pointer;
+  background: transparent;
+  border-color: transparent;
+  color: transparent;
+}
+.lf-progress::-ms-fill-lower {
+  background: #ccc;
+  border-radius: 3px;
+}
+.lf-progress::-ms-fill-upper {
+  background: #ccc;
+  border-radius: 3px;
+}
+.lf-progress::-ms-thumb {
+  border: 0;
+  height: 15px;
+  width: 15px;
+  border-radius: 50%;
+  background: #0fccce;
+  cursor: pointer;
+}
+.lf-progress:focus::-ms-fill-lower {
+  background: #ccc;
+}
+.lf-progress:focus::-ms-fill-upper {
+  background: #ccc;
+}
+.lf-player-container :focus {
+  outline: 0;
+}
+.lf-popover {
+  position: relative;
+}
+
+.lf-popover-content {
+  display: inline-block;
+  position: absolute;
+  opacity: 1;
+  visibility: visible;
+  transform: translate(0, -10px);
+  box-shadow: 0 2px 5px 0 rgba(0, 0, 0, 0.26);
+  transition: all 0.3s cubic-bezier(0.75, -0.02, 0.2, 0.97);
+}
+
+.lf-popover-content.hidden {
+  opacity: 0;
+  visibility: hidden;
+  transform: translate(0, 0px);
+}
+
+.lf-player-btn-container {
+  display: flex;
+  align-items: center;
+}
+.lf-player-btn {
+  cursor: pointer;
+  fill: #999;
+  width: 14px;
+}
+
+.lf-player-btn.active {
+  fill: #555;
+}
+
+.lf-popover {
+  position: relative;
+}
+
+.lf-popover-content {
+  display: inline-block;
+  position: absolute;
+  background-color: #ffffff;
+  opacity: 1;
+
+  transform: translate(0, -10px);
+  box-shadow: 0 2px 5px 0 rgba(0, 0, 0, 0.26);
+  transition: all 0.3s cubic-bezier(0.75, -0.02, 0.2, 0.97);
+  padding: 10px;
+}
+
+.lf-popover-content.hidden {
+  opacity: 0;
+  visibility: hidden;
+  transform: translate(0, 0px);
+}
+
+.lf-arrow {
+  position: absolute;
+  z-index: -1;
+  content: '';
+  bottom: -9px;
+  border-style: solid;
+  border-width: 10px 10px 0px 10px;
+}
+
+.lf-left-align,
+.lf-left-align .lfarrow {
+  left: 0;
+  right: unset;
+}
+
+.lf-right-align,
+.lf-right-align .lf-arrow {
+  right: 0;
+  left: unset;
+}
+
+.lf-text-input {
+  border: 1px #ccc solid;
+  border-radius: 5px;
+  padding: 3px;
+  width: 60px;
+  margin: 0;
+}
+
+.lf-color-picker {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  height: 90px;
+}
+
+.lf-color-selectors {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.lf-color-component {
+  display: flex;
+  flex-direction: row;
+  font-size: 12px;
+  align-items: center;
+  justify-content: center;
+}
+
+.lf-color-component strong {
+  width: 40px;
+}
+
+.lf-color-component input[type='range'] {
+  margin: 0 0 0 10px;
+}
+
+.lf-color-component input[type='number'] {
+  width: 50px;
+  margin: 0 0 0 10px;
+}
+
+.lf-color-preview {
+  font-size: 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  padding-left: 5px;
+}
+
+.lf-preview {
+  height: 60px;
+  width: 60px;
+}
+
+.lf-popover-snapshot {
+  width: 150px;
+}
+.lf-popover-snapshot h5 {
+  margin: 5px 0 10px 0;
+  font-size: 0.75rem;
+}
+.lf-popover-snapshot a {
+  display: block;
+  text-decoration: none;
+}
+.lf-popover-snapshot a:before {
+  content: '⥼';
+  margin-right: 5px;
+}
+.lf-popover-snapshot .lf-note {
+  display: block;
+  margin-top: 10px;
+  color: #999;
+}
+.lf-player-controls > div {
+  margin-right: 5px;
+  margin-left: 5px;
+}
+.lf-player-controls > div:first-child {
+  margin-left: 0px;
+}
+.lf-player-controls > div:last-child {
+  margin-right: 0px;
+}
+</style><style type="text/css">.lf-progress {
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  width: 100%;
+  /* margin: 0 10px; */
+  height: 4px;
+  border-radius: 3px;
+  cursor: pointer;
+}
+.lf-progress:focus {
+  outline: none;
+  border: none;
+}
+.lf-progress::-moz-range-track {
+  cursor: pointer;
+  background: none;
+  border: none;
+  outline: none;
+}
+.lf-progress::-webkit-slider-thumb {
+  -webkit-appearance: none !important;
+  height: 13px;
+  width: 13px;
+  border: 0;
+  border-radius: 50%;
+  background: #0fccce;
+  cursor: pointer;
+}
+.lf-progress::-moz-range-thumb {
+  -moz-appearance: none !important;
+  height: 13px;
+  width: 13px;
+  border: 0;
+  border-radius: 50%;
+  background: #0fccce;
+  cursor: pointer;
+}
+.lf-progress::-ms-track {
+  width: 100%;
+  height: 3px;
+  cursor: pointer;
+  background: transparent;
+  border-color: transparent;
+  color: transparent;
+}
+.lf-progress::-ms-fill-lower {
+  background: #ccc;
+  border-radius: 3px;
+}
+.lf-progress::-ms-fill-upper {
+  background: #ccc;
+  border-radius: 3px;
+}
+.lf-progress::-ms-thumb {
+  border: 0;
+  height: 15px;
+  width: 15px;
+  border-radius: 50%;
+  background: #0fccce;
+  cursor: pointer;
+}
+.lf-progress:focus::-ms-fill-lower {
+  background: #ccc;
+}
+.lf-progress:focus::-ms-fill-upper {
+  background: #ccc;
+}
+.lf-player-container :focus {
+  outline: 0;
+}
+.lf-popover {
+  position: relative;
+}
+
+.lf-popover-content {
+  display: inline-block;
+  position: absolute;
+  opacity: 1;
+  visibility: visible;
+  transform: translate(0, -10px);
+  box-shadow: 0 2px 5px 0 rgba(0, 0, 0, 0.26);
+  transition: all 0.3s cubic-bezier(0.75, -0.02, 0.2, 0.97);
+}
+
+.lf-popover-content.hidden {
+  opacity: 0;
+  visibility: hidden;
+  transform: translate(0, 0px);
+}
+
+.lf-player-btn-container {
+  display: flex;
+  align-items: center;
+}
+.lf-player-btn {
+  cursor: pointer;
+  fill: #999;
+  width: 14px;
+}
+
+.lf-player-btn.active {
+  fill: #555;
+}
+
+.lf-popover {
+  position: relative;
+}
+
+.lf-popover-content {
+  display: inline-block;
+  position: absolute;
+  background-color: #ffffff;
+  opacity: 1;
+
+  transform: translate(0, -10px);
+  box-shadow: 0 2px 5px 0 rgba(0, 0, 0, 0.26);
+  transition: all 0.3s cubic-bezier(0.75, -0.02, 0.2, 0.97);
+  padding: 10px;
+}
+
+.lf-popover-content.hidden {
+  opacity: 0;
+  visibility: hidden;
+  transform: translate(0, 0px);
+}
+
+.lf-arrow {
+  position: absolute;
+  z-index: -1;
+  content: '';
+  bottom: -9px;
+  border-style: solid;
+  border-width: 10px 10px 0px 10px;
+}
+
+.lf-left-align,
+.lf-left-align .lfarrow {
+  left: 0;
+  right: unset;
+}
+
+.lf-right-align,
+.lf-right-align .lf-arrow {
+  right: 0;
+  left: unset;
+}
+
+.lf-text-input {
+  border: 1px #ccc solid;
+  border-radius: 5px;
+  padding: 3px;
+  width: 60px;
+  margin: 0;
+}
+
+.lf-color-picker {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  height: 90px;
+}
+
+.lf-color-selectors {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.lf-color-component {
+  display: flex;
+  flex-direction: row;
+  font-size: 12px;
+  align-items: center;
+  justify-content: center;
+}
+
+.lf-color-component strong {
+  width: 40px;
+}
+
+.lf-color-component input[type='range'] {
+  margin: 0 0 0 10px;
+}
+
+.lf-color-component input[type='number'] {
+  width: 50px;
+  margin: 0 0 0 10px;
+}
+
+.lf-color-preview {
+  font-size: 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  padding-left: 5px;
+}
+
+.lf-preview {
+  height: 60px;
+  width: 60px;
+}
+
+.lf-popover-snapshot {
+  width: 150px;
+}
+.lf-popover-snapshot h5 {
+  margin: 5px 0 10px 0;
+  font-size: 0.75rem;
+}
+.lf-popover-snapshot a {
+  display: block;
+  text-decoration: none;
+}
+.lf-popover-snapshot a:before {
+  content: '⥼';
+  margin-right: 5px;
+}
+.lf-popover-snapshot .lf-note {
+  display: block;
+  margin-top: 10px;
+  color: #999;
+}
+.lf-player-controls > div {
+  margin-right: 5px;
+  margin-left: 5px;
+}
+.lf-player-controls > div:first-child {
+  margin-left: 0px;
+}
+.lf-player-controls > div:last-child {
+  margin-right: 0px;
+}
+</style><style type="text/css">.lf-progress {
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  width: 100%;
+  /* margin: 0 10px; */
+  height: 4px;
+  border-radius: 3px;
+  cursor: pointer;
+}
+.lf-progress:focus {
+  outline: none;
+  border: none;
+}
+.lf-progress::-moz-range-track {
+  cursor: pointer;
+  background: none;
+  border: none;
+  outline: none;
+}
+.lf-progress::-webkit-slider-thumb {
+  -webkit-appearance: none !important;
+  height: 13px;
+  width: 13px;
+  border: 0;
+  border-radius: 50%;
+  background: #0fccce;
+  cursor: pointer;
+}
+.lf-progress::-moz-range-thumb {
+  -moz-appearance: none !important;
+  height: 13px;
+  width: 13px;
+  border: 0;
+  border-radius: 50%;
+  background: #0fccce;
+  cursor: pointer;
+}
+.lf-progress::-ms-track {
+  width: 100%;
+  height: 3px;
+  cursor: pointer;
+  background: transparent;
+  border-color: transparent;
+  color: transparent;
+}
+.lf-progress::-ms-fill-lower {
+  background: #ccc;
+  border-radius: 3px;
+}
+.lf-progress::-ms-fill-upper {
+  background: #ccc;
+  border-radius: 3px;
+}
+.lf-progress::-ms-thumb {
+  border: 0;
+  height: 15px;
+  width: 15px;
+  border-radius: 50%;
+  background: #0fccce;
+  cursor: pointer;
+}
+.lf-progress:focus::-ms-fill-lower {
+  background: #ccc;
+}
+.lf-progress:focus::-ms-fill-upper {
+  background: #ccc;
+}
+.lf-player-container :focus {
+  outline: 0;
+}
+.lf-popover {
+  position: relative;
+}
+
+.lf-popover-content {
+  display: inline-block;
+  position: absolute;
+  opacity: 1;
+  visibility: visible;
+  transform: translate(0, -10px);
+  box-shadow: 0 2px 5px 0 rgba(0, 0, 0, 0.26);
+  transition: all 0.3s cubic-bezier(0.75, -0.02, 0.2, 0.97);
+}
+
+.lf-popover-content.hidden {
+  opacity: 0;
+  visibility: hidden;
+  transform: translate(0, 0px);
+}
+
+.lf-player-btn-container {
+  display: flex;
+  align-items: center;
+}
+.lf-player-btn {
+  cursor: pointer;
+  fill: #999;
+  width: 14px;
+}
+
+.lf-player-btn.active {
+  fill: #555;
+}
+
+.lf-popover {
+  position: relative;
+}
+
+.lf-popover-content {
+  display: inline-block;
+  position: absolute;
+  background-color: #ffffff;
+  opacity: 1;
+
+  transform: translate(0, -10px);
+  box-shadow: 0 2px 5px 0 rgba(0, 0, 0, 0.26);
+  transition: all 0.3s cubic-bezier(0.75, -0.02, 0.2, 0.97);
+  padding: 10px;
+}
+
+.lf-popover-content.hidden {
+  opacity: 0;
+  visibility: hidden;
+  transform: translate(0, 0px);
+}
+
+.lf-arrow {
+  position: absolute;
+  z-index: -1;
+  content: '';
+  bottom: -9px;
+  border-style: solid;
+  border-width: 10px 10px 0px 10px;
+}
+
+.lf-left-align,
+.lf-left-align .lfarrow {
+  left: 0;
+  right: unset;
+}
+
+.lf-right-align,
+.lf-right-align .lf-arrow {
+  right: 0;
+  left: unset;
+}
+
+.lf-text-input {
+  border: 1px #ccc solid;
+  border-radius: 5px;
+  padding: 3px;
+  width: 60px;
+  margin: 0;
+}
+
+.lf-color-picker {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  height: 90px;
+}
+
+.lf-color-selectors {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.lf-color-component {
+  display: flex;
+  flex-direction: row;
+  font-size: 12px;
+  align-items: center;
+  justify-content: center;
+}
+
+.lf-color-component strong {
+  width: 40px;
+}
+
+.lf-color-component input[type='range'] {
+  margin: 0 0 0 10px;
+}
+
+.lf-color-component input[type='number'] {
+  width: 50px;
+  margin: 0 0 0 10px;
+}
+
+.lf-color-preview {
+  font-size: 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  padding-left: 5px;
+}
+
+.lf-preview {
+  height: 60px;
+  width: 60px;
+}
+
+.lf-popover-snapshot {
+  width: 150px;
+}
+.lf-popover-snapshot h5 {
+  margin: 5px 0 10px 0;
+  font-size: 0.75rem;
+}
+.lf-popover-snapshot a {
+  display: block;
+  text-decoration: none;
+}
+.lf-popover-snapshot a:before {
+  content: '⥼';
+  margin-right: 5px;
+}
+.lf-popover-snapshot .lf-note {
+  display: block;
+  margin-top: 10px;
+  color: #999;
+}
+.lf-player-controls > div {
+  margin-right: 5px;
+  margin-left: 5px;
+}
+.lf-player-controls > div:first-child {
+  margin-left: 0px;
+}
+.lf-player-controls > div:last-child {
+  margin-right: 0px;
+}
+</style></head>
+<body class="">
+
+    <!-- Control Panel -->
+    <div class="wysiwyg-toolbar" id="toolbar">
+        <button class="tool-btn" onclick="format('bold')" title="Bold (Ctrl+B)"><b>B</b></button>
+        <button class="tool-btn" onclick="format('italic')" title="Italic (Ctrl+I)"><i>I</i></button>
+        <button class="tool-btn" onclick="format('underline')" title="Underline (Ctrl+U)"><u>U</u></button>
+        <div class="separator"></div>
+        <button class="tool-btn" onclick="format('justifyLeft')" title="Align Left">Left</button>
+        <button class="tool-btn" onclick="format('justifyCenter')" title="Align Center">Center</button>
+        <button class="tool-btn" onclick="format('justifyFull')" title="Justify">Justify</button>
+        <div class="separator"></div>
+        <button class="tool-btn" onclick="format('subscript')" title="Subscript">x₂</button>
+        <button class="tool-btn" onclick="format('superscript')" title="Superscript">x²</button>
+        <div class="separator"></div>
+         <button class="tool-btn" onclick="format('insertUnorderedList')" title="List">List</button>
+        <button class="tool-btn" onclick="document.execCommand('undo')" title="Undo">↩️</button>
+        <button class="tool-btn" onclick="document.execCommand('redo')" title="Redo">↪️</button>
+    </div>
+
+    <div class="control-panel">
+        <h4>📄 IRJMETS Paper</h4>
+        <button class="btn btn-save-disk" onclick="saveToFile(false)">Saving...</button>
+        <div id="save-status" style="color: white; font-size: 9px; text-align: center; height: 12px; margin-top: -4px; opacity: 0; transition: opacity 0.5s;">Saved</div>
+        <button class="btn btn-edit" onclick="toggleEditMode()">✏️ Toggle Edit</button>
+        <button class="btn btn-pdf" onclick="window.print()">📥 Save as PDF</button>
+        <div class="edit-indicator" id="editIndicator" style="display: none;">✏️ Edit Mode Active</div>
+    </div>
+
+    <!-- Main Paper Wrapper -->
+    <div class="paper">
+        <table class="report-container">
+            <!-- REPEATING HEADER -->
+            <thead class="report-header">
+                <tr>
+                    <td class="report-header-cell">
+                        <div class="irjmets-header-wrapper">
+                            <div class="header-top-row">
+                                <!-- CENTERED LOGO -->
+                                <div class="logo-section">
+                                    <img src="irjmets-logo.jpg" alt="IRJMETS Logo">
+                                </div>
+                                <!-- ABSOLUTE RIGHT ISSN -->
+                                <div class="issn-section">
+                                    <div class="issn" contenteditable="false">e-ISSN: 2582-5208</div>
+                                </div>
+                            </div>
+                            
+                            <div class="journal-full-name" contenteditable="false">
+                                International Research Journal of Modernization in Engineering Technology and Science
+                            </div>
+                            <div class="journal-subtitle" contenteditable="false">
+                                ( Peer-Reviewed, Open Access, Fully Refereed International Journal )
+                            </div>
+                            <div class="journal-meta">
+                                <span contenteditable="false">Volume:07/Issue:01/January-2026</span>
+                                <span contenteditable="false">Impact Factor: 8.187</span>
+                                <span contenteditable="false">www.irjmets.com</span>
+                            </div>
+                        </div>
+                    </td>
+                </tr>
+            </thead>
+            
+            <!-- BODY CONTENT -->
+            <tbody class="report-content">
+                <tr>
+                    <td class="report-content-cell">
+                        
+                        <!-- Paper Title -->
+                        <h1 class="paper-title" contenteditable="false">
+                            Attendro: A Portable, Session-Controlled Biometric Attendance System with Centralized Fingerprint Database for Educational Institutions
+                        </h1>
+                        
+                        <!-- Authors -->
+                        <div class="authors" contenteditable="false">
+                            Atharv S. Ghandat<sup>*1</sup>, Sanika P. Desai<sup>*2</sup>, Tanisha H. Chavan<sup>*3</sup>, Kunal S. Mahalunge<sup>*4</sup>
+                        </div>
+                        
+                        <!-- Affiliations -->
+                        <div class="affiliations" contenteditable="false">
+                            <sup>*1,2,3,4</sup>Department of Artificial Intelligence and Machine Learning, K.E. Society's Rajarambapu Institute of Technology Polytechnic, Lohegaon, Pune, Maharashtra, India
+                        </div>
+                        
+                        <!-- Abstract -->
+                        <div class="abstract-section">
+                            <h2 class="section-heading">ABSTRACT</h2>
+                            <p class="abstract-text no-indent" contenteditable="false"><span style="caret-color: rgba(0, 0, 0, 0);">The major problem in academic administration is the ineffective manual tracking of attendance and the use of proxy signatures. The paper is a design and validation of a portable, IoT-based biometric system called Attendro that implements session-controlled authentication. The device is based on the ESP32 dual-core microcontroller and the R307 optical fingerprint reader and communicates with a Supabase cloud backend through secure HTTPS/TLS protocols. In contrast with non-portable biometric readers, Attendro proposes unique "session windows" managed by faculty members, implying that data on attendance are legally attached to a particular time and place. N=50 experimental validation experiments showed a False Acceptance Rate (FAR) of less than 0.001, 1.37 seconds of average end-to-end latency, and more than 12 hours of steady battery use. These results affirm that the alternative to the conventional fixed infrastructure is portable, serverless biometric architectures, which are both cost-effective and secure.</span></p>
+                        </div>
+                        
+                        <!-- Keywords -->
+                        <div class="keywords">
+                            <strong>Keywords:</strong> Fingerprint Authentication, ESP32, Cloud Computing, IoT, Attendance Management, Session Control, Biometric Systems, Supabase.
+                        </div>
+                        
+                        <!-- I. INTRODUCTION -->
+                        <h2 class="section-heading">I. INTRODUCTION</h2>
+                        
+                        <p contenteditable="false"><span style="caret-color: rgba(0, 0, 0, 0);">The monitoring of academic attendance is one of the very crucial administrative practices, which has a direct correlation with the performance of students and the responsibility of the institutions. The conventional manual recording methods, extending to paper registers and roll calls, are inherently inefficient in terms of systemic aspects, stealing beneficial lecture hours and vulnerable to loci malpractice like proxy attendance [1]. Due to emerging requirements of automated, secure, and data-driven identification systems, the move to Smart Campus environments in educational institutions has been difficult to keep up with [3].</span></p>
+                        
+                        <p contenteditable="false"><span style="caret-color: rgba(0, 0, 0, 0);">The initial interventions based on technology were Radio Frequency Identification (RFID) systems, in which students verified presences actively using passive transponders [2]. Although these systems minimized the administrative overheads, they did not solve the main problem of identity verification, whereby cards can be traded, rendering the attendance record obsolete [5]. Student data privacy has also elicited ethical concern that has also demanded strong and safe paradigms of design in tracking technology [4].</span></p>
+                        
+                        <p contenteditable="false"></p><div>The solution to all these verification hurdles is biometric authentication, which has come out to be the final solution to the issue. Institutions can ensure non-repudiation in the attendance information by checking individual physiological attributes, including fingerprints or iris markings [6]. Rukhiran et al. [1] show that biometric systems with an IoT can substantially improve identity verification services in learning institutions. Fingerprint technology is better than complex iris recognition setups to provide the best balance between accuracy, processing time, and cost-effectiveness in high-throughput settings [10].</div><div><br style="caret-color: rgba(0, 0, 0, 0);"></div><p></p>
+                        
+                        <p contenteditable="false"><span style="caret-color: rgba(0, 0, 0, 0);">This essay introduces the reflective project, Attendro, which is a biometric attendance system with IOT capabilities and runs on ESP32 architecture. In response to the shortcomings of traditional installations based on fixed hardware, Attendro seeks to use the wireless connectivity [7], [8] to offer a session-based, location-unaware attendance system, which is seamlessly integrated with cloud infrastructure.</span></p>
+                        
+                        <!-- FIGURE 1 -->
+                        <div class="figure-container">
+                            <div class="figure-box" id="figure1" data-scale="1" style="padding: 20px;">
+                                <button class="download-btn" onclick="downloadDiagram('figure1', 'System_Component_Diagram')">⬇️ Download PNG</button>
+                                <div class="mermaid" data-uml="graph LR A[Faculty Dashboard] --Start Session--&gt; B(Supabase Cloud) B --Session Token--&gt; C[Portable Device ESP32] D[Student] --Fingerprint--&gt; C C --Mark Present--&gt; B B --Live Update--&gt; A">
+graph LR
+    A[Faculty Dashboard] --Start Session--> B(Supabase Cloud)
+    B --Session Token--> C[Portable Device ESP32]
+    D[Student] --Fingerprint--> C
+    C --Mark Present--> B
+    B --Live Update--> A
+                                </div>
+                            <div class="diagram-controls">
+                    <button class="d-btn" onclick="adjustZoom('figure1', 0.1)" title="Zoom In">➕</button>
+                    <button class="d-btn" onclick="adjustZoom('figure1', -0.1)" title="Zoom Out">➖</button>
+                    <button class="d-btn" onclick="adjustHeight('figure1', -20)" title="Crop Height (Shorten)">✂️</button>
+                    <button class="d-btn" onclick="adjustHeight('figure1', 20)" title="Expand Height">↕️</button>
+                </div></div>
+                            <div class="figure-caption"><strong>Figure 1:</strong> System Component Interaction Diagram</div>
+                        </div>
+                        
+                        <!-- II. LITERATURE SURVEY -->
+                        <h2 class="section-heading">II. LITERATURE SURVEY</h2>
+                        <p contenteditable="false"><span style="caret-color: rgba(0, 0, 0, 0);">The development of the attendance management system also indicates the general tendency to automation and the Internet of Things (IoT) in education infrastructure. This segment evaluates the available methodologies, including token-based systems and high-end biometric systems.</span></p>
+                        
+                        <h3 class="subsection-heading">A. Token-Based and RFID Systems</h3>
+                        <p contenteditable="false"><span style="caret-color: rgba(0, 0, 0, 0);">The first automation was mainly based on Radio Frequency Identification (RFID). Koppikar et al. [2] have suggested an RFID smart attendance monitoring system based on the IoT to simplify data entry into the system. In the same vein, Wakchoure et al. [5] exhibited a multi-approach RFID system that had the capabilities of registering entry and exit times. As efficient at cutting down on the amount of labor as they are, these systems are susceptible to the problem of buddy punching, wherein a student swipes another student into work. The coping mechanism of proving physical presence has led to the adoption of biometric substitutes [2], [5].</span></p>
+                        
+                        <h3 class="subsection-heading">B. Biometric Identification Technologies</h3>
+                        <p contenteditable="false">Biometrics are used to identify the system of people using inherent physical or behavioral traits [10]. Maltoni and Cappelli [10] set the basic validity of fingerprint recognition in regard to large-scale recognition. The comparative study examinations by Kadry and Smaili [9] on iris recognition show high accuracy rates, although the cost of its usage in the classroom is prohibitive, and the hardware is too complex. Conversely, fingerprint sensors take the place of fingerprint scanners in the education sector because of their affordability and simple installation [1]. This method was again confirmed by Adedoyin et al. through the development of a biometric management system that combined the internet of things (IoT) technology to eliminate the data latency problems that were experienced with the use of standalone scanning devices [6].</p><div><br></div><div><br></div><div><br></div><div><br style="caret-color: rgba(0, 0, 0, 0);"></div><p></p>
+                        
+                        <h3 class="subsection-heading">C. Portable and IoT-Enabled Architectures</h3>
+                        <p contenteditable="false"><span style="caret-color: rgba(0, 0, 0, 0);">The contemporary implementations are focused more on movement and real-time connectivity of data. Kumar and Singh [7] used the NodeMCU platform to develop a Wi-Fi-enabled biometric system, which demonstrated that data on attendance could be forcefully sent to a central server. Developing on this, Sharma and Bhatt [8] emphasized portability, which they developed, and they came up with a battery-operated unit that does not require the use of fixed wiring within classrooms. The present study builds on the previous work by incorporating the ESP32 microcontroller [11], [3], which provides better processing capabilities and dual-core performance than previous versions of the NodeMCU, which thus allows more robust encryption and template matching.</span></p>
+                        
+                        <!-- III. METHODOLOGY -->
+                        <h2 class="section-heading">III. METHODOLOGY</h2>
+                        <p contenteditable="false"><span style="caret-color: rgba(0, 0, 0, 0);">The Attendro system has three related parts, including a portable hardware module, a web dashboard for the faculty, and a cloud backend to handle data persistence and business operations. Their combined activity of coordination realizes the session-controlled attendance paradigm, which is the core of this work.</span></p>
+                        
+                        <h3 class="subsection-heading">A. Hardware Architecture</h3>
+                        <p contenteditable="false"><span style="caret-color: rgba(0, 0, 0, 0);">The microcontroller used as the central processing unit of the portable device is the ESP32 microcontroller. The ESP32 has a dual-core Xtensa(r) 32-bit LX6 microprocessor, with the required computational capability between cryptography and network stack operation, as described in the technical reference manual [11]. In the case of biometric acquisition, the system incorporates the DY50/R307 optical fingerprint sensor [12]. The module carries out onboard image processing and pattern matches, outsources the performance of key calculations to the main controller, and provides a quick check outcome (less than 1.0 second latency) [12].</span></p>
+                        
+                        <!-- FIGURE 2 -->
+                        <div class="figure-container">
+                            <div class="figure-box" id="figure2" data-scale="0.8" style="padding: 20px; height: 359px; overflow: hidden;">
+                                <button class="download-btn" onclick="downloadDiagram('figure2', 'ER_Diagram')">⬇️ Download PNG</button>
+                                <div class="mermaid" data-uml="erDiagram STUDENTS ||--o{ ATTENDANCE_RECORDS : &quot;marks&quot; DEVICES ||--o{ LECTURE_SESSIONS : &quot;hosts&quot; LECTURE_SESSIONS ||--o{ ATTENDANCE_RECORDS : &quot;contains&quot; SUBJECTS ||--o{ LECTURE_SESSIONS : &quot;part_of&quot; STUDENTS { uuid id PK string name int roll_no string batch int fingerprint_id } DEVICES { uuid id PK string device_code boolean is_active } LECTURE_SESSIONS { uuid id PK timestamp start_time timestamp end_time string status uuid device_id FK uuid subject_id FK } ATTENDANCE_RECORDS { uuid id PK uuid student_id FK uuid session_id FK timestamp marked_at }" style="transform: scale(0.8); transform-origin: center top;">erDiagram STUDENTS ||--o{ ATTENDANCE_RECORDS : "marks" DEVICES ||--o{ LECTURE_SESSIONS : "hosts" LECTURE_SESSIONS ||--o{ ATTENDANCE_RECORDS : "contains" SUBJECTS ||--o{ LECTURE_SESSIONS : "part_of" STUDENTS { uuid id PK string name int roll_no string batch int fingerprint_id } DEVICES { uuid id PK string device_code boolean is_active } LECTURE_SESSIONS { uuid id PK timestamp start_time timestamp end_time string status uuid device_id FK uuid subject_id FK } ATTENDANCE_RECORDS { uuid id PK uuid student_id FK uuid session_id FK timestamp marked_at }</div>
+                            <div class="diagram-controls">
+                    <button class="d-btn" onclick="adjustZoom('figure2', 0.1)" title="Zoom In">➕</button>
+                    <button class="d-btn" onclick="adjustZoom('figure2', -0.1)" title="Zoom Out">➖</button>
+                    <button class="d-btn" onclick="adjustHeight('figure2', -20)" title="Crop Height (Shorten)">✂️</button>
+                    <button class="d-btn" onclick="adjustHeight('figure2', 20)" title="Expand Height">↕️</button>
+                </div></div>
+                            <div class="figure-caption"><strong>Figure 2:</strong> Entity-Relationship Diagram of Attendro Database Schema</div>
+                        </div>
+                        
+                        <h3 class="subsection-heading">B. Session Control Mechanism</h3>
+                        <p contenteditable="false"><span style="caret-color: rgba(0, 0, 0, 0);">The ability of Attendro to operate on a session basis is what makes it unique as compared to the traditional biometric systems. Attendance marking is not always ready to work, but it is valid only in case a lecture session is actually started by a faculty member with the usage of the web dashboard. The architecture means that a fingerprint scan should be used with a meaning only in the context it was meant.</span></p>
+                        
+                        <h3 class="subsection-heading">C. Cloud Backend Implementation</h3>
+                        <p contenteditable="false"><span style="caret-color: rgba(0, 0, 0, 0);">The system uses Supabase [13] as a Backend-as-a-Service (BaaS) with its managed PostgreSQL database and serverless Edge Functions to package the business logic. The architecture makes sure that there is real-time data synchronization between the edge devices and the central repository. The database schema is structured on the principles of the Third Normal Form (3NF), and the normalized structure consists of entities that ensure the management of the devices, students, lecture sessions, and attendance logs.</span></p>
+                        
+                        <!-- FIGURE 3 -->
+                        <div class="figure-container">
+                            <div class="figure-box" id="figure3" data-scale="1" style="padding: 20px;">
+                                <button class="download-btn" onclick="downloadDiagram('figure3', 'Sequence_Diagram')">⬇️ Download PNG</button>
+                                <div class="mermaid" data-uml="sequenceDiagram participant DASH as Faculty Dashboard participant CLOUD as Supabase Cloud participant ESP as ESP32 Device participant STUD as Student DASH-&gt;&gt;CLOUD: Start Session (Sub: AMI, Batch: B1) CLOUD--&gt;&gt;DASH: Session Active (Token: XYZ) loop Polling ESP-&gt;&gt;CLOUD: GET /active-session? CLOUD--&gt;&gt;ESP: Status: Active, Token: XYZ end ESP-&gt;&gt;ESP: Display Ready STUD-&gt;&gt;ESP: Scan Finger ESP-&gt;&gt;ESP: Match (ID: 15) ESP-&gt;&gt;CLOUD: POST /mark-attendance alt Success CLOUD--&gt;&gt;ESP: 200 OK ESP-&gt;&gt;ESP: Beep (Success) else Failure CLOUD--&gt;&gt;ESP: 400 Error ESP-&gt;&gt;ESP: Long Beep end">
+sequenceDiagram
+    participant DASH as Faculty Dashboard
+    participant CLOUD as Supabase Cloud
+    participant ESP as ESP32 Device
+    participant STUD as Student
+    DASH->>CLOUD: Start Session (Sub: AMI, Batch: B1)
+    CLOUD-->>DASH: Session Active (Token: XYZ)
+    loop Polling
+        ESP->>CLOUD: GET /active-session?
+        CLOUD-->>ESP: Status: Active, Token: XYZ
+    end
+    ESP->>ESP: Display Ready
+    STUD->>ESP: Scan Finger
+    ESP->>ESP: Match (ID: 15)
+    ESP->>CLOUD: POST /mark-attendance
+    alt Success
+        CLOUD-->>ESP: 200 OK
+        ESP->>ESP: Beep (Success)
+    else Failure
+        CLOUD-->>ESP: 400 Error
+        ESP->>ESP: Long Beep
+    end
+                                </div>
+                            <div class="diagram-controls">
+                    <button class="d-btn" onclick="adjustZoom('figure3', 0.1)" title="Zoom In">➕</button>
+                    <button class="d-btn" onclick="adjustZoom('figure3', -0.1)" title="Zoom Out">➖</button>
+                    <button class="d-btn" onclick="adjustHeight('figure3', -20)" title="Crop Height (Shorten)">✂️</button>
+                    <button class="d-btn" onclick="adjustHeight('figure3', 20)" title="Expand Height">↕️</button>
+                </div></div>
+                            <div class="figure-caption"><strong>Figure 3:</strong> Sequence Diagram for Attendance Marking Process</div>
+                        </div>
+                        
+                        <!-- IV. SYSTEM DESIGN -->
+                        <h2 class="section-heading">IV. SYSTEM DESIGN</h2><h3 class="subsection-heading">A. Database Architecture and Schema</h3>
+                        <p contenteditable="false"><span style="caret-color: rgba(0, 0, 0, 0);">Attendro backend is based on Supabase using a core of PostgreSQL to ensure strict relational integrity. The schema is normalized (3NF) by reducing redundancy. Specific Row Level Security (RLS) policies are strictly implemented such that device writes would be cryptographically separate and faculty reads would be cryptographically separate [13]. Table 1 describes the core entity functional responsibilities.</span></p><div><span style="caret-color: rgba(0, 0, 0, 0);"><br></span></div><p></p>
+                        
+                        <div class="table-container">
+                            <div class="table-caption"><strong>Table 1:</strong> Database Schema Specification</div>
+                            <table>
+                                <tbody><tr><th>Entity Table</th><th>Primary Attributes</th><th>Functional Description</th></tr>
+                                <tr><td><code>devices</code></td><td>UUID, MAC_Addr, Status</td><td>Hardware registry for authorized ESP32 nodes.</td></tr>
+                                <tr><td><code>students</code></td><td>Roll_No, Finger_ID, Batch</td><td>Maps biometric IDs to academic profiles.</td></tr>
+                                <tr><td><code>sessions</code></td><td>Session_ID, Subject, Time</td><td>Defines active attendance windows.</td></tr>
+                                <tr><td><code>logs</code></td><td>Log_ID, Timestamp, Hash</td><td>Immutable record of verified presence.</td></tr>
+                            </tbody></table>
+                        </div>
+                        
+                        <h3 class="subsection-heading">B. Hardware Interfacing</h3>
+                        <p contenteditable="false"><span style="caret-color: rgba(0, 0, 0, 0);">Modularity and power efficiency are taken into account in the hardware design. The ESP32 will be the central controller, connecting the sensor with the biometric sensor and the display with OLED with a UART and I2C connection, respectively [11]. The physical connection topology as shown in figure 4 includes the direct interrupt lines to wake up the processor in deep sleep.</span></p>
+
+                        <!-- FIGURE 4 -->
+                        <div class="figure-container">
+                            <div class="figure-box" id="figure4" data-scale="1" style="padding: 20px;">
+                                <button class="download-btn" onclick="downloadDiagram('figure4', 'Hardware_Connection_Diagram')">⬇️ Download PNG</button>
+                                <div class="mermaid">
+graph TD
+    ESP32[ESP32 Microcontroller] -->|UART| R307[R307 Optical Sensor]
+    ESP32 -->|I2C| OLED[0.96 inch OLED]
+    ESP32 -->|GPIO| Buzzer[Active Buzzer]
+    Power[3.7V Li-Ion Battery] -->|Regulated| ESP32
+                                </div>
+                            <div class="diagram-controls">
+                    <button class="d-btn" onclick="adjustZoom('figure4', 0.1)" title="Zoom In">➕</button>
+                    <button class="d-btn" onclick="adjustZoom('figure4', -0.1)" title="Zoom Out">➖</button>
+                    <button class="d-btn" onclick="adjustHeight('figure4', -20)" title="Crop Height (Shorten)">✂️</button>
+                    <button class="d-btn" onclick="adjustHeight('figure4', 20)" title="Expand Height">↕️</button>
+                </div></div>
+                            <div class="figure-caption"><strong>Figure 4:</strong> Hardware Connection Topology</div>
+                        </div>
+
+                        <h3 class="subsection-heading">C. Firmware State Logic</h3>
+                        <p contenteditable="false"><span style="caret-color: rgba(0, 0, 0, 0);">The firmware operates on a Finite State Machine (FSM) architecture to ensure deterministic behavior. The system transitions between initialization, idle monitoring, fingerprint scanning, and data transmission states based on hardware interrupts and network events.</span></p>
+
+                        <!-- FIGURE 5 -->
+                        <div class="figure-container">
+                            <div class="figure-box" id="figure5" data-scale="1" style="padding: 20px;">
+                                <button class="download-btn" onclick="downloadDiagram('figure5', 'Firmware_State_Machine')">⬇️ Download PNG</button>
+                                <div class="mermaid" data-uml="stateDiagram-v2 [*] --&gt; BOOT : Power On BOOT --&gt; IDLE : Init Success IDLE --&gt; SCAN : Finger Detected SCAN --&gt; MATCH : Quality &gt; 80% SCAN --&gt; ERROR : Low Quality MATCH --&gt; UPLOAD : Valid ID UPLOAD --&gt; IDLE : Server ACK 200 UPLOAD --&gt; QUEUE : Network Timeout QUEUE --&gt; UPLOAD : Network Restored ERROR --&gt; IDLE : Reset">
+stateDiagram-v2
+    [*] --> BOOT : Power On
+    BOOT --> IDLE : Init Success
+    IDLE --> SCAN : Finger Detected
+    SCAN --> MATCH : Quality > 80%
+    SCAN --> ERROR : Low Quality
+    MATCH --> UPLOAD : Valid ID
+    UPLOAD --> IDLE : Server ACK 200
+    UPLOAD --> QUEUE : Network Timeout
+    QUEUE --> UPLOAD : Network Restored
+    ERROR --> IDLE : Reset
+                                </div>
+                            <div class="diagram-controls">
+                    <button class="d-btn" onclick="adjustZoom('figure5', 0.1)" title="Zoom In">➕</button>
+                    <button class="d-btn" onclick="adjustZoom('figure5', -0.1)" title="Zoom Out">➖</button>
+                    <button class="d-btn" onclick="adjustHeight('figure5', -20)" title="Crop Height (Shorten)">✂️</button>
+                    <button class="d-btn" onclick="adjustHeight('figure5', 20)" title="Expand Height">↕️</button>
+                </div></div>
+                            <div class="figure-caption"><strong>Figure 5:</strong> Firmware Finite State Machine (FSM)</div>
+                        </div>
+
+                        <h3 class="subsection-heading">D. Secure Communication Protocol</h3>
+                        <p contenteditable="false"><span style="caret-color: rgba(0, 0, 0, 0);">The data transmission is based on the HTTPS protocol (TLS 1.2) to avoid the interception. The payload format is adapted to the lightweight JSON format. An average attendance packet consists of { device ID, student hash, time stamp, and session token }. The server checks the session token with the active windows so that the replay attacks cannot be made.</span></p>
+                        
+                        <!-- V. RESULTS -->
+                        <h2 class="section-heading">V. RESULTS AND DISCUSSION</h2>
+
+                        <p contenteditable="false"><span style="caret-color: rgba(0, 0, 0, 0);">The installed system was effectively tested to check or confirm its effectiveness with the design requirements of portability, security, and efficiency. The performance data in this paper was collected in the course of a pilot deployment that lasted one week and utilized 60 different subject groups and 15 simulated lecture sessions.</span></p>
+
+                        <h3 class="subsection-heading">A. Biometric Accuracy Analysis</h3>
+                        <p contenteditable="false"><span style="caret-color: rgba(0, 0, 0, 0);">The optical R307 sensor had been shown to have good performance in standard ambient conditions. The False Acceptance Rate (FAR) as well as the False Rejection Rate (FRR) was used to measure the accuracy of the identification. At the Level 3 (default) security level, the system attained the FAR of 0.001% and FRR of 0.82. The FRR is low, and hence the legitimate students are hardly refused to attend, which reduces disruption in the classrooms. Subject fingers that were too dry or scarred were found to be the chief exceptions to the optical capture technology [10].</span></p>
+
+                        <h3 class="subsection-heading">B. Latency Breakdown</h3>
+                        <p contenteditable="false"><span style="caret-color: rgba(0, 0, 0, 0);">To determine the bottlenecks of systems, we timed the microsecond-based firmware to write down the execution stamps. N=50 samples of a set of attendance transactions were logged in a typical IEEE 802.11n (2.4 GHz) network setup. A complete set of&nbsp;</span><strong style="caret-color: rgba(0, 0, 0, 0);">N=50 attendance transactions</strong><span style="caret-color: rgba(0, 0, 0, 0);">&nbsp;was recorded over a standard IEEE 802.11n (2.4 GHz) network environment.</span></p>
+                        <p contenteditable="false"><span style="caret-color: rgba(0, 0, 0, 0);">The average duration taken by the transaction time, T total, was 1.37 seconds with a standard deviation of 0.2 s. The network round-trip (RTT), as measured in Figure 6, is the most significant factor in determining the latency and the strongest contributor (62 percent on average) to the overall duration. This tendency is peculiar to the Single-Stream (1x1) Wi-Fi interfaces on embedded controllers. Nevertheless, at a local processing load of less than 450 ms, the local processing overhead (acquisition + matching) is very efficient, which justifies the selection of the ESP32 platform in reference to edge-based biometrics.</span></p>
+
+                        <!-- FIGURE 6 -->
+                        <div class="figure-container">
+                            <div class="figure-box" id="figure6" style="padding: 25px 30px; text-align: left; width: 85%; margin: 0 auto;" data-scale="1">
+                                <button class="download-btn" onclick="downloadDiagram('figure6', 'Latency_Chart')" style="bottom: 5px; right: 5px;">⬇️ Download PNG</button>
+                                
+                                <!-- Print-Friendly Horizontal Bar Chart -->
+                                <div style="font-family: 'Cambria', serif; width: 100%;">
+                                    
+                                    <!-- Chart Title -->
+                                    <div style="text-align: center; font-size: 10pt; font-weight: bold; margin-bottom: 15px; border-bottom: 1px solid #333; padding-bottom: 8px;">
+                                        Mean Latency Breakdown by Subsystem
+                                    </div>
+                                    
+                                    <!-- Bar Chart Container -->
+                                    <table style="width: 100%; border-collapse: collapse; font-size: 9pt;">
+                                        <!-- Bar 1: Network Round-Trip -->
+                                        <tbody><tr>
+                                            <td style="width: 40%; padding: 8px 10px 8px 0; text-align: left; vertical-align: middle; font-weight: bold; border: none;">
+                                                Network Round-Trip (HTTPS/TLS)
+                                            </td>
+                                            <td style="width: 45%; padding: 8px 0; vertical-align: middle; border: none;">
+                                                <div style="background: #e0e0e0; height: 22px; width: 100%; position: relative; border: 1px solid #999; -webkit-print-color-adjust: exact; print-color-adjust: exact;">
+                                                    <div style="background: #404040; width: 62%; height: 100%; display: inline-block; -webkit-print-color-adjust: exact; print-color-adjust: exact;"></div>
+                                                </div>
+                                            </td>
+                                            <td style="width: 15%; padding: 8px 0 8px 10px; text-align: right; vertical-align: middle; font-weight: bold; border: none;">
+                                                850 ms
+                                            </td>
+                                        </tr>
+                                        
+                                        <!-- Bar 2: Sensor Acquisition -->
+                                        <tr>
+                                            <td style="width: 40%; padding: 8px 10px 8px 0; text-align: left; vertical-align: middle; font-weight: bold; border: none;">
+                                                Sensor Acquisition (Optical)
+                                            </td>
+                                            <td style="width: 45%; padding: 8px 0; vertical-align: middle; border: none;">
+                                                <div style="background: #e0e0e0; height: 22px; width: 100%; position: relative; border: 1px solid #999; -webkit-print-color-adjust: exact; print-color-adjust: exact;">
+                                                    <div style="background: #666666; width: 20.4%; height: 100%; display: inline-block; -webkit-print-color-adjust: exact; print-color-adjust: exact;"></div>
+                                                </div>
+                                            </td>
+                                            <td style="width: 15%; padding: 8px 0 8px 10px; text-align: right; vertical-align: middle; font-weight: bold; border: none;">
+                                                280 ms
+                                            </td>
+                                        </tr>
+                                        
+                                        <!-- Bar 3: Feature Matching -->
+                                        <tr>
+                                            <td style="width: 40%; padding: 8px 10px 8px 0; text-align: left; vertical-align: middle; font-weight: bold; border: none;">
+                                                Feature Matching (Edge)
+                                            </td>
+                                            <td style="width: 45%; padding: 8px 0; vertical-align: middle; border: none;">
+                                                <div style="background: #e0e0e0; height: 22px; width: 100%; position: relative; border: 1px solid #999; -webkit-print-color-adjust: exact; print-color-adjust: exact;">
+                                                    <div style="background: #888888; width: 10.5%; height: 100%; display: inline-block; -webkit-print-color-adjust: exact; print-color-adjust: exact;"></div>
+                                                </div>
+                                            </td>
+                                            <td style="width: 15%; padding: 8px 0 8px 10px; text-align: right; vertical-align: middle; font-weight: bold; border: none;">
+                                                145 ms
+                                            </td>
+                                        </tr>
+                                        
+                                        <!-- Bar 4: Database Write -->
+                                        <tr>
+                                            <td style="width: 40%; padding: 8px 10px 8px 0; text-align: left; vertical-align: middle; font-weight: bold; border: none;">
+                                                Database Write (Cloud)
+                                            </td>
+                                            <td style="width: 45%; padding: 8px 0; vertical-align: middle; border: none;">
+                                                <div style="background: #e0e0e0; height: 22px; width: 100%; position: relative; border: 1px solid #999; -webkit-print-color-adjust: exact; print-color-adjust: exact;">
+                                                    <div style="background: #aaaaaa; width: 7.1%; height: 100%; display: inline-block; -webkit-print-color-adjust: exact; print-color-adjust: exact;"></div>
+                                                </div>
+                                            </td>
+                                            <td style="width: 15%; padding: 8px 0 8px 10px; text-align: right; vertical-align: middle; font-weight: bold; border: none;">
+                                                95 ms
+                                            </td>
+                                        </tr>
+                                    </tbody></table>
+                                    
+                                    <!-- Footer Note -->
+                                    <div style="border-top: 1px solid #333; margin-top: 12px; padding-top: 8px; font-size: 8pt; color: #333; text-align: center; font-style: italic;">
+                                        Mean values over N=50 trials | Total Average: 1.37s (σ = 0.2s)
+                                    </div>
+                                </div>
+                                <!-- End Chart -->
+
+                            <div class="diagram-controls">
+                    <button class="d-btn" onclick="adjustZoom('figure6', 0.1)" title="Zoom In">➕</button>
+                    <button class="d-btn" onclick="adjustZoom('figure6', -0.1)" title="Zoom Out">➖</button>
+                    <button class="d-btn" onclick="adjustHeight('figure6', -20)" title="Crop Height (Shorten)">✂️</button>
+                    <button class="d-btn" onclick="adjustHeight('figure6', 20)" title="Expand Height">↕️</button>
+                </div></div>
+                            <div class="figure-caption"><strong>Figure 6:</strong> Mean Latency Breakdown by Subsystem (N=50)</div>
+                        </div>
+
+                        <h3 class="subsection-heading">C. Power Consumption Profiling</h3>
+                        <p contenteditable="false"><span style="caret-color: rgba(0, 0, 0, 0);">Embedded systems on portable systems need power efficiency. Measurement of current draw was done in three operating conditions at a standard digital multimeter. The Wi-Fi radio ESP32 is the main consumer with a current during active transmission of the radio of about 180 mA. As the results (Table 2) confirm, the use of the 2500 mAh battery gives a theoretical operating time of 12 hours in the active session mode, much more than what is required during a typical academic day.</span></p>
+
+                        <div class="table-container">
+                            <div class="table-caption"><strong>Table 2:</strong> Power Consumption Analysis</div>
+                            <table>
+                                <tbody><tr><th>Operational State</th><th>Current Draw (mA)</th><th>Power (mW @ 3.3V)</th></tr>
+                                <tr><td>Deep Sleep</td><td>0.15 mA</td><td>0.5 mW</td></tr>
+                                <tr><td>Idle (Connected)</td><td>65 mA</td><td>214.5 mW</td></tr>
+                                <tr><td>Active Scanning</td><td>90 mA</td><td>297 mW</td></tr>
+                                <tr><td>Data Transmission</td><td>180 mA</td><td>594 mW</td></tr>
+                            </tbody></table>
+                        </div>
+
+                        <h3 class="subsection-heading">D. Comparative Analysis</h3>
+                        <p contenteditable="false"><span style="caret-color: rgba(0, 0, 0, 0);">In order to put the contribution of "Attendro" into perspective, we determined the contribution against the established methodologies that have been referenced in the literature survey. Table 3 also shows that although the RFID systems [2] provide speed, they lack in security (proxy prevention). On the other hand, fixed biometric systems [6] can provide security, but they are not flexible enough, like shared classroom resources. Also by and large this system has managed to hybridize the advantages of both.</span></p>
+
+                        <div class="table-container">
+                            <div class="table-caption"><strong>Table 3:</strong> Comparative Feature Analysis</div>
+                            <table>
+                                <tbody><tr><th>Feature</th><th>Manual System</th><th>RFID / Smart Card [2]</th><th>Fixed Biometric [6]</th><th>Attendro (Proposed)</th></tr>
+                                <tr><td><strong>Anti-Spoofing</strong></td><td>Low</td><td>Very Low</td><td>High</td><td><strong>High</strong></td></tr>
+                                <tr><td><strong>Portability</strong></td><td>High</td><td>High</td><td>Low</td><td><strong>High</strong></td></tr>
+                                <tr><td><strong>Data Realism</strong></td><td>Delayed</td><td>Real-time</td><td>Real-time</td><td><strong>Real-time</strong></td></tr>
+                                <tr><td><strong>Cost Efficiency</strong></td><td>Low (Labor High)</td><td>Medium</td><td>High (Wiring)</td><td><strong>Medium</strong></td></tr>
+                            </tbody></table>
+                        </div>
+                        
+                        <!-- VI. APPLICATIONS -->
+                        <h2 class="section-heading">VI. APPLICATIONS</h2>
+                        <p contenteditable="false"><span style="caret-color: rgba(0, 0, 0, 0);">The flexibility of the Attendro system created by its modular architecture is far more useful than in the academic setting. The system has been effective in meeting the identity verification requirements in a variety of sectors that mandate high performance and verifiable attendance marking, as well as a decision that is not location dependent, by decoupling the biometric acquisition unit with fixed infrastructures.</span></p>
+
+                        <h3 class="subsection-heading">A. Industrial Workforce Management</h3>
+                        <p contenteditable="false"><span style="caret-color: rgba(0, 0, 0, 0);">Workforce deployment can be done in remote or temporary sectors of the economy like construction, mining, or logistics, whereby installation of traditional biometric turnstiles can be logistically untenable. The portable system by Attendro and the battery-operated device enable the supervisor to record the attendance of his or her shift at the access point. This feature facilitates data synchronization with central payroll systems through mobile hotspots, which is practically the end of the phenomenon of ghost worker fraud, which is widespread in non-integrated manual records.</span></p>
+
+                        <h3 class="subsection-heading">B. Event Registration and Credit Tracking</h3>
+                        <p contenteditable="false"><span style="caret-color: rgba(0, 0, 0, 0);">When it comes to conferences, seminars, and professional workshops, there are also a great deal of bottlenecks in the registration of the participants. The one-point-four-second authentication cycle (high throughput) ensures the system is used to verify a large number of people, thereby minimizing the number of queues. Moreover, the session-based logic is granularly used to manage the attendance of certain breakout sessions so that the Continuing Professional Development (CPD) non-credit can be provided under a strict award of physical presence, but not the mere registration.</span></p>
+
+                        <h3 class="subsection-heading">C. Healthcare Shift Authentication</h3>
+                        <p contenteditable="false"><span style="caret-color: rgba(0, 0, 0, 0);">The administration in the hospital needs strict documentation of the hospital staff's presence during the critical shifts. This is in contrast to the use of the traditional punch card, which does not enable the portable carrying of a biometric device; unlike the traditional punch card, a portable biometric unit can be carried around by head nurses to check the availability of staff during emergency response drills or during rounds. This will act as an irrevocable digital audit trail, enhancing adherence to healthcare work guidelines and accountability within the critical care setting.</span></p>
+                        
+                        <!-- VII. CONCLUSION -->
+                        <h2 class="section-heading">VII. CONCLUSION</h2>
+                        <p contenteditable="false"><span style="caret-color: rgba(0, 0, 0, 0);">In this study, the idea of the research has been proved to be a workable, secure, and portable alternative to the old-fashioned paradigm of attendance management. Its combination of the microcontroller processing power of the ESP32 and strong optical fingerprint capture capabilities enables the system to perform a verifiable identity check within less than 1.4 seconds, in effect reducing the latency commonly found on biometric systems.</span></p>
+                        <p contenteditable="false"><span style="caret-color: rgba(0, 0, 0, 0);">The proposed use of the session-controlled authentication is a fundamental part of the gap in the literature [7], [8] in the domain of authentication that guarantees that the attendance records of an individual are highly associated with the temporal and physical contexts. After experimentation it has been established that the system possesses high quality in terms of academic reliability (FAR &lt; 0.001%) and still has the capability to offer high power efficiency with a lifetime of a full day in the field.</span></p>
+                        <p contenteditable="false"><span style="caret-color: rgba(0, 0, 0, 0);">The next versions of this project will look at how edge-based machine learning (TinyML) can be integrated to increase the false rejection rates due to noise in the environment. Further, we offer to assemble a ledger anchored on blockchain [11] to issue academic credentials, which cannot be tampered with, and the purpose of our system would not only be attendance but also overall student.</span></p>
+                        
+                        <!-- ACKNOWLEDGEMENT -->
+                        <h2 class="section-heading">ACKNOWLEDGEMENTS</h2>
+                        <p class="no-indent" contenteditable="false"><span style="caret-color: rgba(0, 0, 0, 0);">Various participants were useful in the production of this research, going through the assistance and efforts of a number of individuals. We are also thankful to our project mentor,&nbsp;</span><b style="caret-color: rgba(0, 0, 0, 0);">Prof. Mayur Gund</b><span style="caret-color: rgba(0, 0, 0, 0);">, who helped us with his technical knowledge and constructive criticism to develop the system architecture. We would also like to recognize the&nbsp;</span><b style="caret-color: rgba(0, 0, 0, 0);">Rajarambapu Institute of Technology Polytechnic of the K.E. Society, Pune,</b><span style="caret-color: rgba(0, 0, 0, 0);">&nbsp;which offers the required laboratory infrastructure and testing facilities to us to carry out the hardware validation phase of the given study.</span></p>
+                        
+                        <!-- REFERENCES -->
+                        <h2 class="section-heading">VIII. REFERENCES</h2>
+                        <div class="references-section">
+                            <div class="reference-item">[1] Rukhiran, M., et al. (2023). IoT-based biometric recognition systems in education for identity verification services: Quality assessment approach. IEEE Access, 11: 22767–22787.</div>
+                            <div class="reference-item">[2] Koppikar, U., et al. (2019). IoT based smart attendance monitoring system using RFID. In 2019 1st International Conference on advances in information technology (ICAIT), IEEE.</div>
+                            <div class="reference-item">[3] Muhamad, W., et al. (2017). Smart campus features, technologies, and applications: A systematic literature review. In 2017 International conference on information technology systems and innovation (ICITSI), IEEE.</div>
+                            <div class="reference-item">[4] North-Samardzic, A. (2020). Biometric technology and ethics: Beyond security applications. Journal of Business Ethics, 167(3): 433–450.</div>
+                            <div class="reference-item">[5] Wakchoure, S., et al. (2021). Multiple approach of RFID-based attendance system using IoT. In Soft Computing for Security Applications: Proceedings of ICSCS 2021, Springer.</div>
+                            <div class="reference-item">[6] Adedoyin, M.A., et al. (2024). Development of an IoT-Based Biometric Attendance Management System. FUOYE Journal of Engineering and Technology, 9(3): 397–405.</div>
+                            <div class="reference-item">[7] Kumar, V., &amp; Singh, R. (2020). "IoT Based Biometric Attendance System Using NodeMCU." International Journal of Computer Applications, 176(32), 12-17.</div>
+                            <div class="reference-item">[8] Sharma, P., &amp; Bhatt, D. (2021). "A Portable Fingerprint Based Biometric Attendance System Using WiFi-Enabled Microcontroller." Journal of Emerging Technologies and Innovative Research (JETIR), 8(3), 50-56.</div>
+                            <div class="reference-item">[9] Kadry S. and Smaili M. (2010): Wireless Attendance Management System based on Iris Recognition. Scientific Research and Essays Vol. 5(12), pp. 1428-1435.</div>
+                            <div class="reference-item">[10] Maltoni D. and Cappelli R. (2008): Fingerprint Recognition, In Handbook of Biometrics, Springer Science + Business Media, U.S.A.</div>
+                            <div class="reference-item">[11] Espressif Systems. (2021). ESP32 Technical Reference Manual. https://www.espressif.com</div>
+                            <div class="reference-item">[12] DY50 Fingerprint Sensor Datasheet. https://www.electronicwings.com</div>
+                            <div class="reference-item">[13] Supabase Inc. (2025). Supabase Documentation. https://supabase.com/docs</div>
+                        </div>
+
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Script for Functionality -->
+    <script>
+        let editMode = false;
+        let saveTimeout;
+
+        async function saveToFile(silent = false) {
+            const btn = document.querySelector('.btn-save-disk');
+            let originalText = "💾 Save Changes"; 
+            
+            // If manual save, show specific state
+            if(!silent) btn.innerText = "Saving...";
+            
+            // 1. Clone the entire document to avoid flickering UI
+            const clone = document.documentElement.cloneNode(true);
+            
+            // 2. Clean up the clone
+            clone.querySelector('body').classList.remove('editing-mode');
+            const indicator = clone.querySelector('#editIndicator');
+            if(indicator) indicator.style.display = 'none';
+            
+            // Reset contenteditable
+            clone.querySelectorAll('[contenteditable]').forEach(el => {
+                el.contentEditable = "false";
+            });
+
+            // 3. Restore Mermaid Source (remove SVGs in the saved file)
+            const mermaidDivs = clone.querySelectorAll('.mermaid');
+            mermaidDivs.forEach((el) => {
+                const source = el.getAttribute('data-uml');
+                if (source) {
+                    el.innerText = source; // Restore original text
+                    el.removeAttribute('data-processed');
+                }
+            });
+
+            // 4. Serialize HTML
+            const htmlContent = "<!DOCTYPE html>\n" + clone.outerHTML;
+
+            // 5. Send to Server
+            try {
+                const response = await fetch('/save-paper', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'text/html' },
+                    body: htmlContent
+                });
+                
+                if (response.ok) {
+                    if(!silent) {
+                        btn.innerText = "✅ Saved!";
+                        setTimeout(() => btn.innerText = originalText, 2000);
+                    } else {
+                        console.log("Auto-saved successfully");
+                        const statusSpan = document.getElementById('save-status');
+                        if(statusSpan) {
+                            statusSpan.innerText = "Saved";
+                            statusSpan.style.opacity = '1';
+                            setTimeout(() => statusSpan.style.opacity = '0', 1000);
+                        }
+                    }
+                } else {
+                    if(!silent) btn.innerText = "❌ Error";
+                    console.error("Server save failed");
+                }
+            } catch (e) {
+                console.error(e);
+                if(!silent) btn.innerText = "❌ Conn Err";
+            }
+        }
+        
+        // Auto-save listener
+        document.body.addEventListener('input', function(e) {
+            if(!editMode) return;
+            // Debounce save
+            clearTimeout(saveTimeout);
+            const statusSpan = document.getElementById('save-status');
+            if(statusSpan) {
+                statusSpan.innerText = "Typing...";
+                statusSpan.style.opacity = '1';
+            }
+            
+            saveTimeout = setTimeout(() => {
+                saveToFile(true);
+            }, 2000); // Auto-save 2s after stopping typing
+        });
+        
+        // Ctrl+S Handler
+        document.addEventListener('keydown', function(e) {
+            if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+                e.preventDefault();
+                saveToFile(false);
+            }
+        });
+        
+        function downloadDiagram(figureId, filename) {
+            const figureBox = document.getElementById(figureId);
+            const svgElement = figureBox.querySelector('svg');
+            
+            if (!svgElement) {
+                alert('Diagram not ready. Please wait a moment.');
+                return;
+            }
+            
+            // Clone and style for export
+            const svgClone = svgElement.cloneNode(true);
+            const bbox = svgElement.getBBox();
+            
+            // Ensure width/height are set
+            if(!svgClone.getAttribute('width')) svgClone.setAttribute('width', bbox.width);
+            if(!svgClone.getAttribute('height')) svgClone.setAttribute('height', bbox.height);
+            
+            // Add white bg
+            const bgRect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+            bgRect.setAttribute('width', '100%');
+            bgRect.setAttribute('height', '100%');
+            bgRect.setAttribute('fill', 'white');
+            svgClone.insertBefore(bgRect, svgClone.firstChild);
+            
+            const svgData = new XMLSerializer().serializeToString(svgClone);
+            const svgBlob = new Blob([svgData], {type: 'image/svg+xml;charset=utf-8'});
+            const url = URL.createObjectURL(svgBlob);
+            
+            const img = new Image();
+            img.onload = function() {
+                const canvas = document.createElement('canvas');
+                // Scale up for better quality
+                const scale = 2;
+                canvas.width = (img.width || bbox.width) * scale;
+                canvas.height = (img.height || bbox.height) * scale;
+                
+                const ctx = canvas.getContext('2d');
+                ctx.fillStyle = 'white';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                ctx.scale(scale, scale);
+                ctx.drawImage(img, 0, 0);
+                
+                const a = document.createElement('a');
+                a.download = filename + '.png';
+                a.href = canvas.toDataURL('image/png');
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            };
+            img.src = url;
+        }
+        
+        function format(command, value=null) {
+            document.execCommand(command, false, value);
+            // Re-focus the editor area to keep selection visible if lost
+            const sel = window.getSelection();
+            if(sel.rangeCount > 0) {
+                 const node = sel.anchorNode;
+                 if(node && node.parentElement) node.parentElement.blur();   
+                 if(node && node.parentElement) node.parentElement.focus();
+            }
+        }
+        
+        function toggleEditMode() {
+            editMode = !editMode;
+            
+            const indicator = document.getElementById('editIndicator');
+            const body = document.body;
+            
+            if (editMode) {
+                indicator.style.display = 'block';
+                body.classList.add('editing-mode');
+            } else {
+                indicator.style.display = 'none';
+                body.classList.remove('editing-mode');
+            }
+
+            // Toggle contenteditable for body text
+            document.querySelectorAll('[contenteditable]').forEach(el => {
+                el.contentEditable = editMode ? 'true' : 'false';
+            });
+
+            // Toggle for Header Metadata (Volume, Issue, etc.)
+            document.querySelectorAll('.journal-meta span, .journal-full-name, .issn, .journal-subtitle').forEach(el => {
+                el.contentEditable = editMode ? 'true' : 'false';
+            });
+        }
+
+        // --- Diagram Controls & Resizing ---
+        function initDiagramControls() {
+            document.querySelectorAll('.figure-box').forEach(box => {
+                if(box.querySelector('.diagram-controls')) return;
+
+                const controls = document.createElement('div');
+                controls.className = 'diagram-controls';
+                // HTML Entities for icons: ➕ ➖ ✂️ ↕️
+                controls.innerHTML = `
+                    <button class="d-btn" onclick="adjustZoom('${box.id}', 0.1)" title="Zoom In">➕</button>
+                    <button class="d-btn" onclick="adjustZoom('${box.id}', -0.1)" title="Zoom Out">➖</button>
+                    <button class="d-btn" onclick="adjustHeight('${box.id}', -20)" title="Crop Height (Shorten)">✂️</button>
+                    <button class="d-btn" onclick="adjustHeight('${box.id}', 20)" title="Expand Height">↕️</button>
+                `;
+                box.appendChild(controls);
+                
+                box.dataset.scale = '1';
+                // Initialize height if not set
+                if(!box.style.height || box.style.height === '' || box.style.height === 'auto') {
+                    // Lock computed height
+                    // box.style.height = box.offsetHeight + 'px'; 
+                    // Note: Setting fixed height immediately might break responsive print layout if not careful.
+                    // We only set it when user acts.
+                }
+            });
+        }
+
+        function adjustZoom(boxId, delta) {
+            const box = document.getElementById(boxId);
+            // Target Mermaid SVG container or Custom HTML Chart container
+            const content = box.querySelector('.mermaid') || box.querySelector('div[style*="font-family"]');
+            
+            if(!content) return;
+            
+            let currentScale = parseFloat(box.dataset.scale || 1);
+            currentScale = parseFloat((currentScale + delta).toFixed(1));
+            if(currentScale < 0.2) currentScale = 0.2;
+            
+            box.dataset.scale = currentScale;
+            content.style.transform = `scale(${currentScale})`;
+            content.style.transformOrigin = 'top center';
+            
+            // Optional: Adjust margin to compensate for scale shrinking?
+        }
+
+        function adjustHeight(boxId, delta) {
+            const box = document.getElementById(boxId);
+            
+            // Lock height to pixels if it's currently auto
+            if(!box.style.height || box.style.height === 'auto') {
+                box.style.height = box.offsetHeight + 'px';
+                box.style.overflow = 'hidden'; // Enable clipping
+            }
+            
+            let currentHeight = parseInt(box.style.height);
+            let newHeight = currentHeight + delta;
+            
+            // Prevent collapsing
+            if(newHeight < 50) newHeight = 50;
+            
+            box.style.height = newHeight + 'px';
+        }
+
+        // Initialize on load
+        window.addEventListener('load', () => {
+            setTimeout(initDiagramControls, 1500); // Wait for Mermaid
+        });
+    </script>
+
+<div class="mermaidTooltip" style="opacity: 0;"></div><qb-div data-qb-element="privacy-policy-june-2025" style="z-index: 2147483647; max-width: 1px; max-height: 1px; box-sizing: border-box; position: fixed; top: 10px; right: 10px;"><div style="all: initial !important;"><qb-div style="all: initial !important;"></qb-div></div></qb-div><qb-div id="qb-ai-chat-launcher" style="all: initial !important;"><div style="all: initial !important;"><qb-div style="all: initial !important;"></qb-div></div></qb-div></body></html>

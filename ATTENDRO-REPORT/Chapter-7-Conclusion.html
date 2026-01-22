@@ -9,29 +9,55 @@
         mermaid.initialize({ startOnLoad: true, theme: 'neutral' });
     </script>
     <style>
+        /* Base Print Settings */
         @page {
             size: A4;
-            margin-top: 2.5cm;
-            margin-bottom: 1.25cm;
-            margin-left: 3.5cm;
-            margin-right: 1.25cm;
+            margin: 2.5cm 1.25cm 1.25cm 3.5cm;
         }
+
+        /* Screen Preview Mode */
         body {
             font-family: "Times New Roman", Times, serif;
             font-size: 12pt;
-            line-height: 2; /* Double space */
+            line-height: 2;
             text-align: justify;
             margin: 0;
-            padding: 0;
-            background-color: white;
+            padding: 20px;
+            background-color: #f0f2f5;
             color: black;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
         }
+
         .container {
-            width: 100%;
-            margin: 0 auto;
-            padding: 0; 
+            background-color: white;
+            width: 210mm;
+            min-height: 297mm;
+            padding: 2.5cm 1.25cm 1.25cm 3.5cm; /* Match print margins */
             box-sizing: border-box;
-            min-height: 90vh; 
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+            position: relative;
+        }
+
+        /* Print Mode Overrides */
+        @media print {
+            body {
+                background: none;
+                padding: 0;
+                display: block;
+            }
+            .container {
+                box-shadow: none;
+                margin: 0;
+                width: auto;
+                min-height: auto;
+                padding: 0;
+            }
+            .controls, .btn, .download-btn-sm {
+                display: none !important;
+            }
         }
 
         /* Typography Rules */
@@ -195,10 +221,10 @@
                 While the current system robustly meets its primary objectives, several enhancements have been identified to further improve its utility and scalability in future iterations:
             </p>
             <ol>
-                <li><strong>Offline Buffering:</strong> Future versions will incorporate an SD card module to cache attendance logs locally when Wi-Fi connectivity is unstable, automatically syncing with the cloud once the connection is restored.</li>
+                <li><strong>Mobile App for Students:</strong> A dedicated mobile application can be developed for students to view their real-time attendance status, receive low-attendance alerts, and download monthly reports.</li>
                 <li><strong>Multi-Factor Authentication (MFA):</strong> To accommodate cases where biometric scans fail (e.g., due to injury), an RFID reader or keypad PIN system could be added as a secondary authentication layer.</li>
                 <li><strong>Predictive Analytics:</strong> Leveraging the historical data collected, Machine Learning models could be implemented on the backend to identify absenteeism trends and alert faculty to students at risk of falling below attendance requirements.</li>
-                <li><strong>Mobile App Integration:</strong> Developing a dedicated mobile application for students to view their own attendance records and receive push notifications for class schedules.</li>
+                <li><strong>Advanced Face Recognition:</strong> Scaling the project to include ESP32-CAM modules would allow for multi-modal biometric verification (Face + Fingerprint) for higher security contexts.</li>
             </ol>
             <p>
                 These planned improvements will evolve Attendro from a functional prototype into a comprehensive diverse educational management ecosystem.

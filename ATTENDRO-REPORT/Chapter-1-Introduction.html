@@ -10,29 +10,55 @@
     </script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <style>
+        /* Base Print Settings */
         @page {
             size: A4;
-            margin-top: 2.5cm;
-            margin-bottom: 1.25cm;
-            margin-left: 3.5cm;
-            margin-right: 1.25cm;
+            margin: 2.5cm 1.25cm 1.25cm 3.5cm;
         }
+
+        /* Screen Preview Mode */
         body {
             font-family: "Times New Roman", Times, serif;
             font-size: 12pt;
-            line-height: 2; /* Double space */
+            line-height: 2;
             text-align: justify;
             margin: 0;
-            padding: 0;
-            background-color: white;
+            padding: 20px;
+            background-color: #f0f2f5;
             color: black;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
         }
+
         .container {
-            width: 100%;
-            margin: 0 auto;
-            padding: 0; 
+            background-color: white;
+            width: 210mm;
+            min-height: 297mm;
+            padding: 2.5cm 1.25cm 1.25cm 3.5cm; /* Match print margins */
             box-sizing: border-box;
-            min-height: 90vh; 
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+            position: relative;
+        }
+
+        /* Print Mode Overrides */
+        @media print {
+            body {
+                background: none;
+                padding: 0;
+                display: block;
+            }
+            .container {
+                box-shadow: none;
+                margin: 0;
+                width: auto;
+                min-height: auto;
+                padding: 0;
+            }
+            .controls, .btn, .download-btn-sm {
+                display: none !important;
+            }
         }
 
         /* Typography Rules */
@@ -328,10 +354,11 @@
             </p>
             <ul>
                 <li><strong>Chapter 2 (Literature Survey)</strong> reviews existing biometric technologies and research papers relevant to IoT-based attendance systems.</li>
-                <li><strong>Chapter 3 (System Analysis)</strong> discusses the hardware and software requirements and the scope of the project.</li>
-                <li><strong>Chapter 4 (Methodology)</strong> details the algorithm design, database schema, and implementation steps.</li>
-                <li><strong>Chapter 5 (Results)</strong> presents the testing outcomes and snapshots of the working prototype.</li>
-                <li><strong>Chapter 6 (Conclusion)</strong> summarises the work and outlines future scope.</li>
+                <li><strong>Chapter 3 (Scope of Project)</strong> discusses the hardware and software requirements and the specific scope of the system.</li>
+                <li><strong>Chapter 4 (Methodology)</strong> details the architectural framework, operational workflow, and firmware logic.</li>
+                <li><strong>Chapter 5 (Design Details)</strong> provides an in-depth look at the database schema, hardware interfacing, and software architecture.</li>
+                <li><strong>Chapter 6 (Results and Applications)</strong> presents the testing outcomes and snapshots of the working prototype.</li>
+                <li><strong>Chapter 7 (Conclusion)</strong> summarises the work, acknowledges limitations, and outlines future scope.</li>
             </ul>
         </div>
     </div>

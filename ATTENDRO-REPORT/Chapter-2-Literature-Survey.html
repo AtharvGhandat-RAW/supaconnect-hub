@@ -9,29 +9,55 @@
         mermaid.initialize({ startOnLoad: true, theme: 'neutral' });
     </script>
     <style>
+        /* Base Print Settings */
         @page {
             size: A4;
-            margin-top: 2.5cm;
-            margin-bottom: 1.25cm;
-            margin-left: 3.5cm;
-            margin-right: 1.25cm;
+            margin: 2.5cm 1.25cm 1.25cm 3.5cm;
         }
+
+        /* Screen Preview Mode */
         body {
             font-family: "Times New Roman", Times, serif;
             font-size: 12pt;
-            line-height: 2; /* Double space */
+            line-height: 2;
             text-align: justify;
             margin: 0;
-            padding: 0;
-            background-color: white;
+            padding: 20px;
+            background-color: #f0f2f5;
             color: black;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
         }
+
         .container {
-            width: 100%;
-            margin: 0 auto;
-            padding: 0; 
+            background-color: white;
+            width: 210mm;
+            min-height: 297mm;
+            padding: 2.5cm 1.25cm 1.25cm 3.5cm; /* Match print margins */
             box-sizing: border-box;
-            min-height: 90vh; 
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+            position: relative;
+        }
+
+        /* Print Mode Overrides */
+        @media print {
+            body {
+                background: none;
+                padding: 0;
+                display: block;
+            }
+            .container {
+                box-shadow: none;
+                margin: 0;
+                width: auto;
+                min-height: auto;
+                padding: 0;
+            }
+            .controls, .btn, .download-btn-sm {
+                display: none !important;
+            }
         }
 
         /* Typography Rules */
@@ -293,7 +319,23 @@
                 The survey compared Optical (R307) and Capacitive sensors. Optical sensors capture an image of the fingerprint ridges using visible light. Research indicates that while capacitive sensors are slimmer (used in phones), optical sensors like the R307 are more durable for high-volume scanning (hundreds of students) and are less susceptible to damage from static electricity or rough usage in a classroom environment.
             </p>
 
-            <h2 class="section-heading">2.4 COMPARATIVE ANALYSIS OF EXISTING METHODS</h2>
+            <h2 class="section-heading">2.4 REVIEW OF KEY RESEARCH PAPERS</h2>
+            <p>
+                Specific studies relevant to the design of Attendro were analysed to understand the current state-of-the-art:
+            </p>
+            <ul>
+                <li>
+                    <strong>Tambade et al. [3]</strong> proposed a "Portable Biometric Attendance Management System" which highlighted the necessity of mobility in attendance tracking. Their work demonstrated the feasibility of handheld units but relied on local storage (SD cards) which delayed data synchronisation. Attendro improves upon this by using real-time cloud uploading.
+                </li>
+                <li>
+                    <strong>Khan et al. [2]</strong> in "Biometric Attendance System Based on Cloud Computing" emphasised the scalability of cloud databases over local servers. Their model showed that centralized data management reduces redundancy. However, their proposed system was designed for static office environments rather than dynamic classrooms.
+                </li>
+                <li>
+                    <strong>Baskar et al. [1]</strong> explored an "IoT Based Biometric Attendance System" utilizing Wi-Fi modules. While effective, their system lacked a rigorous "Session Control" mechanism, meaning the device was always active, potentially allowing students to mark attendance outside of lecture hours.
+                </li>
+            </ul>
+
+            <h2 class="section-heading">2.5 COMPARATIVE ANALYSIS OF EXISTING METHODS</h2>
             <p>
                 A comparative study of various methodologies proposed in recent years highlights the trade-offs between security, cost, and usability.
             </p>
@@ -326,7 +368,7 @@
                 </tr>
             </table>
 
-            <h2 class="section-heading">2.5 RESEARCH GAP AND DEFINITION OF PROBLEM STATEMENT</h2>
+            <h2 class="section-heading">2.6 RESEARCH GAP AND DEFINITION OF PROBLEM STATEMENT</h2>
             <p>
                 The literature reveals a clear dichotomy: systems are either highly secure but rigid (Wall Biometrics) or highly flexible but insecure (Mobile Apps/QR).
             </p>
@@ -357,7 +399,7 @@
                 <button class="download-btn-sm" onclick="downloadDiagram('fig2_2', 'Figure_2_2.png')">Download PNG</button>
             </div>
 
-            <h2 class="section-heading">2.6 CHAPTER SUMMARY</h2>
+            <h2 class="section-heading">2.7 CHAPTER SUMMARY</h2>
             <p>
                 This chapter surveyed the landscape of attendance management systems. It established that while biometrics offer the best security against proxy attendance, current fixed implementations are ill-suited for the dynamic schedule of a polytechnic institute. The synthesis of this literature confirms that employing an ESP32-based portable unit with session-logic is a novel and necessary intervention. The next chapter will detail the System Design and Architecture derived from these findings.
             </p>
