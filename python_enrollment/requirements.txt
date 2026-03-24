@@ -1,0 +1,4 @@
+pyserial>=3.5
+requests>=2.28.0
+# tkinter comes built-in with Python on most systems
+# On Linux, you may need: sudo apt install python3-tk

@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { Link, useLocation, useNavigate, useParams } from 'react-router-dom';
-import { Check, Copy, Users, BookOpen, AlertCircle, Send, RotateCcw, Zap, AlertTriangle } from 'lucide-react';
+import { Check, Copy, Users, BookOpen, AlertCircle, Send, RotateCcw, Zap, AlertTriangle, Fingerprint, Wifi, WifiOff } from 'lucide-react';
 import PageShell from '@/components/layout/PageShell';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -11,8 +11,8 @@ import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { getStudents, type Student } from '@/services/students';
 import { getClassWithTeacher } from '@/services/classes';
-import { 
-  createAttendanceSession, 
+import {
+  createAttendanceSession,
   createAttendanceRecords,
   getLastAttendanceSession,
   getLastClassAttendanceToday,
@@ -23,6 +23,15 @@ import {
 import { createActivityLog } from '@/services/activity';
 import { shareToWhatsApp } from '@/utils/whatsapp';
 import { checkTimeGate } from '@/utils/timeGate';
+import { DeviceConfigDialog } from '@/components/devices';
+import {
+  configureDeviceForAttendance,
+  endDeviceSession,
+  subscribeToAttendanceRecords,
+  getDeviceByCode,
+  isDeviceOnline,
+  type FingerprintDevice
+} from '@/services/devices';
 
 interface StudentAttendance extends Student {
   isPresent: boolean;
@@ -51,6 +60,13 @@ const FacultyAttendancePage: React.FC = () => {
   
   // New state for copy functionality
   const [copySourceSession, setCopySourceSession] = useState<{id: string, time: string, subject: string} | null>(null);
+
+  // Device configuration state
+  const [showDeviceDialog, setShowDeviceDialog] = useState(false);
+  const [configuredDevice, setConfiguredDevice] = useState<string | null>(null);
+  const [deviceOnline, setDeviceOnline] = useState(false);
+  const [deviceSessionId, setDeviceSessionId] = useState<string | null>(null);
+  const [attendanceSessionId, setAttendanceSessionId] = useState<string | null>(null);
 
   const state = location.state as {
     classId: string;
@@ -398,6 +414,50 @@ ${studentDetails}
    RIT पॉलिटेक्निक, पुणे`;
   };
 
+  // Handle device configuration
+  const handleDeviceConfigured = async (deviceCode: string) => {
+    setConfiguredDevice(deviceCode);
+    setDeviceOnline(true);
+
+    // Check device status periodically
+    const checkStatus = async () => {
+      const device = await getDeviceByCode(deviceCode);
+      if (device) {
+        setDeviceOnline(isDeviceOnline(device));
+      }
+    };
+
+    // Check every 30 seconds
+    const interval = setInterval(checkStatus, 30000);
+    return () => clearInterval(interval);
+  };
+
+  // Subscribe to real-time attendance updates from device
+  useEffect(() => {
+    if (!attendanceSessionId) return;
+
+    const subscription = subscribeToAttendanceRecords(attendanceSessionId, (record) => {
+      // Update local student list when attendance is marked via device
+      setStudents(prev => prev.map(s => {
+        if (s.id === record.student_id) {
+          const newStatus = record.status === 'PRESENT';
+          if (s.isPresent !== newStatus) {
+            toast({
+              title: 'Attendance Updated',
+              description: `${s.name} marked ${record.status} via fingerprint`,
+            });
+          }
+          return { ...s, isPresent: newStatus };
+        }
+        return s;
+      }));
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, [attendanceSessionId]);
+
   const handleSubmit = async () => {
     if (!state || !facultyId) return;
 
@@ -408,7 +468,7 @@ ${studentDetails}
       // Create attendance session
       // Ensure time format is HH:MM (remove seconds if present)
       const cleanStartTime = state.startTime.length > 5 ? state.startTime.substring(0, 5) : state.startTime;
-      
+
       const session = await createAttendanceSession({
         class_id: state.classId,
         subject_id: state.subjectId,
@@ -419,7 +479,10 @@ ${studentDetails}
         batch_id: state.batchId || null,
       });
 
-      // Create attendance records
+      // Store session ID for real-time updates
+      setAttendanceSessionId(session.id);
+
+      // Create attendance records (all absent by default if using device)
       const records = students.map(s => ({
         session_id: session.id,
         student_id: s.id,
@@ -427,21 +490,49 @@ ${studentDetails}
       }));
       await createAttendanceRecords(records);
 
+      // If device is configured, set up device session
+      if (configuredDevice && facultyId) {
+        try {
+          const deviceSession = await configureDeviceForAttendance({
+            deviceCode: configuredDevice,
+            facultyId,
+            classId: state.classId,
+            subjectId: state.subjectId,
+            batchId: state.batchId,
+            attendanceSessionId: session.id,
+            date: today,
+            startTime: cleanStartTime,
+          });
+          setDeviceSessionId(deviceSession.id);
+          toast({
+            title: 'Device Ready',
+            description: 'Fingerprint device is now accepting attendance',
+          });
+        } catch (err) {
+          console.error('Device config error:', err);
+          toast({
+            title: 'Device Warning',
+            description: 'Device could not be configured. Manual attendance still saved.',
+            variant: 'destructive',
+          });
+        }
+      }
+
       // Log activity
       await createActivityLog(
         `Prof. ${facultyName} marked attendance for ${state.subjectName} (${state.className})`
       );
-      
+
       setSubmitted(true);
       setAbsentStudents(students.filter(s => !s.isPresent));
       toast({ title: 'Success', description: 'Attendance marked successfully' });
 
     } catch (error: any) {
         console.error('Error submitting attendance:', error);
-        toast({ 
-            title: 'Submission Failed', 
-            description: error.message || 'Failed to submit attendance', 
-            variant: 'destructive' 
+        toast({
+            title: 'Submission Failed',
+            description: error.message || 'Failed to submit attendance',
+            variant: 'destructive'
         });
     } finally {
       setSubmitting(false);
@@ -499,6 +590,26 @@ ${studentDetails}
                 )}
               </div>
               <div className="flex flex-wrap gap-2">
+                {/* Fingerprint Device Button */}
+                {!configuredDevice ? (
+                  <Button
+                    variant="outline"
+                    onClick={() => setShowDeviceDialog(true)}
+                    className="gap-2 border-primary/50 text-primary hover:bg-primary/10"
+                  >
+                    <Fingerprint className="w-4 h-4" />
+                    Add Device
+                  </Button>
+                ) : (
+                  <div className="flex items-center gap-2 px-3 py-1.5 rounded-md bg-success/10 border border-success/30">
+                    {deviceOnline ? (
+                      <Wifi className="w-4 h-4 text-success animate-pulse" />
+                    ) : (
+                      <WifiOff className="w-4 h-4 text-warning" />
+                    )}
+                    <span className="text-sm font-medium">{configuredDevice}</span>
+                  </div>
+                )}
                 {hasLastSession && (
                   <Button variant="outline" onClick={handleCopyFromLastLecture} className="gap-2">
                     <RotateCcw className="w-4 h-4" />
@@ -730,6 +841,23 @@ ${studentDetails}
           </div>
         )}
       </motion.div>
+
+      {/* Device Configuration Dialog */}
+      {state && facultyId && (
+        <DeviceConfigDialog
+          open={showDeviceDialog}
+          onOpenChange={setShowDeviceDialog}
+          facultyId={facultyId}
+          classId={state.classId}
+          subjectId={state.subjectId}
+          subjectName={state.subjectName}
+          className={`${state.className} ${state.batchName || ''}`}
+          batchId={state.batchId}
+          attendanceSessionId={attendanceSessionId || ''}
+          startTime={state.startTime}
+          onConfigured={handleDeviceConfigured}
+        />
+      )}
     </PageShell>
   );
 };
