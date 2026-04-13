@@ -112,6 +112,12 @@ void setup() {
     setupFingerprint();
     setupWiFi();
 
+    if (wifiConnected) {
+        registerDevice();
+        sendHeartbeat();
+        lastHeartbeat = millis();
+    }
+
     Serial.println("\n\n✓ Device Initialized!\n");
     Serial.println("Commands: STATUS, CHECK, VERIFY, RESET, BRIDGE, CLEAR");
     Serial.println("Type in Serial Monitor to use commands\n");
@@ -136,12 +142,19 @@ void loop() {
         if (WiFi.status() != WL_CONNECTED) {
             if (wifiConnected) {
                 wifiConnected = false;
+                deviceRegistered = false;
                 Serial.println("[WIFI] Connection lost, reconnecting...");
             }
             WiFi.reconnect();
         } else if (!wifiConnected) {
             wifiConnected = true;
             Serial.printf("[WIFI] Connected! IP: %s\n", WiFi.localIP().toString().c_str());
+
+            if (!deviceRegistered) {
+                registerDevice();
+            }
+            sendHeartbeat();
+            lastHeartbeat = now;
         }
         lastWiFiCheck = now;
     }
@@ -432,7 +445,12 @@ void registerDevice() {
     String checkResponse = makeApiRequest("GET", checkEndpoint);
 
     JsonDocument checkDoc;
-    deserializeJson(checkDoc, checkResponse);
+    DeserializationError checkErr = deserializeJson(checkDoc, checkResponse);
+    if (checkErr) {
+        Serial.printf("[DEVICE] Registration check parse failed: %s\n", checkErr.c_str());
+        deviceRegistered = false;
+        return;
+    }
 
     String body = String("{") +
                  "\"device_code\":\"" + DEVICE_CODE + "\"," +
@@ -446,11 +464,21 @@ void registerDevice() {
         // Device exists - update it
         deviceId = checkDoc[0]["id"].as<String>();
         String updateEndpoint = String("fingerprint_devices?id=eq.") + deviceId;
-        makeApiRequest("PATCH", updateEndpoint, body);
+        String updateResponse = makeApiRequest("PATCH", updateEndpoint, body);
+        if (updateResponse.indexOf("error") != -1) {
+            Serial.println("[DEVICE] ✗ Failed to update existing device");
+            deviceRegistered = false;
+            return;
+        }
         Serial.println("[DEVICE] ✓ Updated existing device");
     } else {
         // Device doesn't exist - create it
-        makeApiRequest("POST", "fingerprint_devices", body);
+        String createResponse = makeApiRequest("POST", "fingerprint_devices", body);
+        if (createResponse.indexOf("error") != -1) {
+            Serial.println("[DEVICE] ✗ Failed to register new device");
+            deviceRegistered = false;
+            return;
+        }
         Serial.println("[DEVICE] ✓ Registered new device");
     }
 

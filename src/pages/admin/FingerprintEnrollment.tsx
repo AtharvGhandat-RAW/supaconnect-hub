@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { AlertCircle, USB, CheckCircle, XCircle, Loader, Trash2, Eye } from 'lucide-react';
+import { AlertCircle, Usb, CheckCircle, XCircle, Loader, Trash2, Eye } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import PageShell from '@/components/layout/PageShell';
@@ -525,7 +525,7 @@ const FingerprintEnrollmentPage: React.FC = () => {
                   disabled={isLoading}
                   variant={isConnected ? 'outline' : 'default'}
                 >
-                  {isLoading ? <Loader className="w-4 h-4 mr-2 animate-spin" /> : <USB className="w-4 h-4 mr-2" />}
+                  {isLoading ? <Loader className="w-4 h-4 mr-2 animate-spin" /> : <Usb className="w-4 h-4 mr-2" />}
                   {isConnected ? 'Disconnect' : 'Connect Sensor'}
                 </Button>
               </div>
