@@ -1,23 +1,14 @@
 /**
- * ESP32 Biometric Attendance Device - Complete Working Code
+ * ATTENDRO - ESP32 Biometric Attendance Device
+ * Production-Ready Version 3.0
  *
- * Hardware:
- * - ESP32 DevKit V1 or similar
- * - R307 Fingerprint Sensor (connected to Serial2)
- * - 0.91" OLED Display SSD1306 (I2C)
- *
- * Wiring:
- * R307:
- *   - VCC (Red)    -> 5V (VIN)
- *   - GND (Black)  -> GND
- *   - TX (Green)   -> GPIO16 (RX2)
- *   - RX (White)   -> GPIO17 (TX2)
- *
- * OLED:
- *   - VCC -> 3.3V
- *   - GND -> GND
- *   - SDA -> GPIO21
- *   - SCL -> GPIO22
+ * Features:
+ * - Reliable WiFi connectivity with auto-reconnect
+ * - Real-time session detection from web app
+ * - Fingerprint matching with Supabase integration
+ * - Live attendance updates
+ * - OLED status display
+ * - LED and buzzer feedback
  */
 
 #include <Arduino.h>
@@ -30,32 +21,29 @@
 #include <Adafruit_Fingerprint.h>
 
 // ==================== CONFIGURATION ====================
-// WiFi Settings - UPDATE THESE
-const char* WIFI_SSID = "YOUR_WIFI_SSID";
-const char* WIFI_PASSWORD = "YOUR_WIFI_PASSWORD";
+// Update these with your credentials
+const char* WIFI_SSID = "Phone";
+const char* WIFI_PASSWORD = "999999999";
 
-// Supabase Settings
 const char* SUPABASE_URL = "https://gphcfejuurygcetmtpec.supabase.co";
 const char* SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdwaGNmZWp1dXJ5Z2NldG10cGVjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQ3ODM0ODAsImV4cCI6MjA4MDM1OTQ4MH0.NrHmxfRMW3E2SdiMEfNwbozGG36xpG1jroQB0dy3s5E";
 const char* SUPABASE_SERVICE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdwaGNmZWp1dXJ5Z2NldG10cGVjIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc2NDc4MzQ4MCwiZXhwIjoyMDgwMzU5NDgwfQ.EuzI5mIV6nu5H6mC3QYkQsbmdkqLEXuWIZlf2oiqZ7g";
 
-// Device Settings
+// Device Configuration (set in web app, then device uses this code)
 const char* DEVICE_CODE = "DEVICE_001";
 const char* DEVICE_NAME = "Attendance Device 1";
 
 // ==================== PIN DEFINITIONS ====================
-#define FP_RX 16          // R307 TX -> ESP32 RX
-#define FP_TX 17          // R307 RX -> ESP32 TX
-#define OLED_SDA 21       // OLED Data
-#define OLED_SCL 22       // OLED Clock
-#define LED_PIN 2         // Built-in LED
-#define BUZZER_PIN 5      // Optional buzzer
-#define BOOT_PIN 0        // Hold BOOT at startup for PC software bridge mode
+#define FP_RX 16           // Fingerprint RX pin
+#define FP_TX 17           // Fingerprint TX pin
+#define OLED_SDA 21        // OLED SDA pin
+#define OLED_SCL 22        // OLED SCL pin
+#define LED_PIN 2          // Status LED
+#define BUZZER_PIN 5       // Buzzer pinaca
 
 // ==================== DISPLAY SETUP ====================
 #define SCREEN_WIDTH 128
 #define SCREEN_HEIGHT 32
-#define OLED_ADDR 0x3C
 
 Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, -1);
 
@@ -63,128 +51,116 @@ Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, -1);
 HardwareSerial fpSerial(2);
 Adafruit_Fingerprint finger(&fpSerial);
 
-// ==================== GLOBAL VARIABLES ====================
+// ==================== STATUS VARIABLES ====================
 bool wifiConnected = false;
 bool sensorReady = false;
 bool displayReady = false;
 
+String deviceId = "";
 String currentSessionId = "";
-String currentClassId = "";
-String currentSubjectId = "";
-String currentSubjectName = "";
-String currentClassName = "";
+String currentAttendanceSessionId = "";
 bool sessionActive = false;
 bool deviceRegistered = false;
-bool bridgeMode = false;
 
 unsigned long lastHeartbeat = 0;
 unsigned long lastSessionCheck = 0;
-unsigned long lastWiFiReconnectAttempt = 0;
+unsigned long lastWiFiCheck = 0;
+unsigned long lastDisplayUpdate = 0;
 
-const unsigned long HEARTBEAT_INTERVAL_MS = 30000;
-const unsigned long SESSION_CHECK_INTERVAL_MS = 10000;
-const unsigned long WIFI_RECONNECT_INTERVAL_MS = 10000;
-const unsigned long FINGER_RELEASE_TIMEOUT_MS = 5000;
+const unsigned long HEARTBEAT_INTERVAL = 30000;      // 30 seconds
+const unsigned long SESSION_CHECK_INTERVAL = 5000;   // 5 seconds (faster)
+const unsigned long WIFI_CHECK_INTERVAL = 5000;      // 5 seconds
+const unsigned long DISPLAY_UPDATE_INTERVAL = 1000;  // 1 second
 
 // ==================== FUNCTION DECLARATIONS ====================
 void setupDisplay();
 void setupFingerprint();
 void setupWiFi();
-void maintainWiFiConnection();
-void registerDevice();
-void sendHeartbeat();
-String getTimestamp();
-void checkActiveSession();
+void showStatus(const char* line1, const char* line2 = "");
+void beep(int ms = 100);
 void handleFingerprint();
 void processAttendance(int fingerprintId);
-bool markAttendance(String sessionId, String studentId);
-void handleCommand(String cmd);
+void registerDevice();
+void sendHeartbeat();
+void checkActiveSession();
 String makeApiRequest(const char* method, String endpoint, String body = "");
-void showMessage(const char* line1, const char* line2 = "");
-void showStudentInfo(const char* name, const char* className);
-void showSuccess(const char* message);
-void showError(const char* message);
-void showReady();
-void beep(int duration = 100);
-void runFingerprintBridge();
+void handleCommand(String cmd);
 
 // ==================== SETUP ====================
 void setup() {
     Serial.begin(115200);
     delay(1000);
 
-    Serial.println("\n================================");
-    Serial.println("ESP32 Biometric Attendance Device");
-    Serial.println("================================\n");
+    Serial.println("\n\n══════════════════════════════════════");
+    Serial.println("  ATTENDRO v3.0 - Attendance Device");
+    Serial.println("══════════════════════════════════════\n");
 
     // Initialize pins
     pinMode(LED_PIN, OUTPUT);
     pinMode(BUZZER_PIN, OUTPUT);
-    pinMode(BOOT_PIN, INPUT_PULLUP);
     digitalWrite(LED_PIN, LOW);
 
-    // Bridge mode lets PC enrollment software talk directly to R307 via ESP32 USB serial.
-    if (digitalRead(BOOT_PIN) == LOW) {
-        bridgeMode = true;
-        fpSerial.begin(57600, SERIAL_8N1, FP_RX, FP_TX);
-        Serial.println("\nBridge mode enabled (PC <-> R307)");
-        Serial.println("Open enrollment software on this COM port at 57600 baud");
-        return;
-    }
-
     // Initialize I2C for OLED
+    Serial.print("[INIT] Starting I2C...");
     Wire.begin(OLED_SDA, OLED_SCL);
+    Wire.setClock(400000);
+    delay(100);
+    Serial.println(" OK");
 
     // Setup components
     setupDisplay();
     setupFingerprint();
     setupWiFi();
 
-    if (wifiConnected) {
-        registerDevice();
-        checkActiveSession();
-    }
-
-    showReady();
-
-    Serial.println("\nDevice ready!");
-    Serial.println("Commands: STATUS, CHECK, RESET, CLEAR, BRIDGE");
-    Serial.println("Tip: Hold BOOT while reset/power-on to enter bridge mode for PC software\n");
+    Serial.println("\n\n✓ Device Initialized!\n");
+    Serial.println("Commands: STATUS, CHECK, VERIFY, RESET, BRIDGE, CLEAR");
+    Serial.println("Type in Serial Monitor to use commands\n");
 }
 
 // ==================== MAIN LOOP ====================
 void loop() {
-    if (bridgeMode) {
-        runFingerprintBridge();
-        return;
-    }
-
     // Handle serial commands
     if (Serial.available()) {
         String cmd = Serial.readStringUntil('\n');
         cmd.trim();
         cmd.toUpperCase();
-        handleCommand(cmd);
+        if (cmd.length() > 0) {
+            handleCommand(cmd);
+        }
     }
 
-    // Periodic tasks
+    // WiFi maintenance
     unsigned long now = millis();
-    maintainWiFiConnection();
 
-    // Heartbeat every 30 seconds
-    if (wifiConnected && now - lastHeartbeat > HEARTBEAT_INTERVAL_MS) {
-        sendHeartbeat();
-        lastHeartbeat = now;
+    if (now - lastWiFiCheck > WIFI_CHECK_INTERVAL) {
+        if (WiFi.status() != WL_CONNECTED) {
+            if (wifiConnected) {
+                wifiConnected = false;
+                Serial.println("[WIFI] Connection lost, reconnecting...");
+            }
+            WiFi.reconnect();
+        } else if (!wifiConnected) {
+            wifiConnected = true;
+            Serial.printf("[WIFI] Connected! IP: %s\n", WiFi.localIP().toString().c_str());
+        }
+        lastWiFiCheck = now;
     }
 
-    // Check for session every 10 seconds
-    if (wifiConnected && now - lastSessionCheck > SESSION_CHECK_INTERVAL_MS) {
-        checkActiveSession();
-        lastSessionCheck = now;
+    // Periodic tasks (only if WiFi connected)
+    if (wifiConnected) {
+        if (now - lastSessionCheck > SESSION_CHECK_INTERVAL) {
+            checkActiveSession();
+            lastSessionCheck = now;
+        }
+
+        if (now - lastHeartbeat > HEARTBEAT_INTERVAL) {
+            sendHeartbeat();
+            lastHeartbeat = now;
+        }
     }
 
-    // Handle fingerprint scanning
-    if (sensorReady) {
+    // Fingerprint detection
+    if (sensorReady && sessionActive) {
         handleFingerprint();
     }
 
@@ -193,553 +169,501 @@ void loop() {
 
 // ==================== DISPLAY FUNCTIONS ====================
 void setupDisplay() {
-    Serial.print("Initializing display... ");
+    Serial.print("[DISPLAY] Initializing...");
 
-    if (display.begin(SSD1306_SWITCHCAPVCC, OLED_ADDR)) {
-        displayReady = true;
-        display.clearDisplay();
-        display.setTextSize(1);
-        display.setTextColor(SSD1306_WHITE);
-        display.setCursor(20, 8);
-        display.println(F("BIOMETRIC"));
-        display.setCursor(20, 20);
-        display.println(F("ATTENDANCE"));
-        display.display();
-        Serial.println("OK");
-    } else {
-        Serial.println("FAILED!");
-    }
-}
+    uint8_t addresses[] = {0x3C, 0x3D};
+    bool found = false;
 
-void showMessage(const char* line1, const char* line2) {
-    if (!displayReady) return;
-    display.clearDisplay();
-    display.setTextSize(1);
-    display.setCursor(0, 6);
-    display.println(line1);
-    if (line2 && strlen(line2) > 0) {
-        display.setCursor(0, 20);
-        display.println(line2);
-    }
-    display.display();
-}
+    for (uint8_t addr : addresses) {
+        if (display.begin(SSD1306_SWITCHCAPVCC, addr)) {
+            displayReady = true;
+            found = true;
+            Serial.printf(" OK at 0x%02X\n", addr);
 
-void showStudentInfo(const char* name, const char* className) {
-    if (!displayReady) return;
-    display.clearDisplay();
-    display.setTextSize(1);
-
-    // Truncate name if needed
-    String nameStr = String(name);
-    if (nameStr.length() > 20) {
-        nameStr = nameStr.substring(0, 17) + "...";
-    }
-
-    display.setCursor(0, 0);
-    display.println(nameStr);
-    display.setCursor(0, 12);
-    display.println(className);
-    display.setTextSize(2);
-    display.setCursor(0, 22);
-    display.println(F("PRESENT"));
-    display.display();
-}
-
-void showSuccess(const char* message) {
-    if (!displayReady) return;
-    display.clearDisplay();
-    display.setTextSize(1);
-    display.setCursor(0, 6);
-    display.println(F("SUCCESS"));
-    display.setCursor(0, 20);
-    display.println(message);
-    display.display();
-
-    digitalWrite(LED_PIN, HIGH);
-    beep(200);
-    delay(200);
-    digitalWrite(LED_PIN, LOW);
-}
-
-void showError(const char* message) {
-    if (!displayReady) return;
-    display.clearDisplay();
-    display.setTextSize(1);
-    display.setCursor(0, 6);
-    display.println(F("ERROR"));
-    display.setCursor(0, 20);
-    display.println(message);
-    display.display();
-
-    for (int i = 0; i < 3; i++) {
-        digitalWrite(LED_PIN, HIGH);
-        beep(50);
-        delay(100);
-        digitalWrite(LED_PIN, LOW);
-        delay(100);
-    }
-}
-
-void showReady() {
-    if (sessionActive) {
-        showMessage(currentSubjectName.c_str(), "Place finger...");
-    } else {
-        char buf[32];
-        snprintf(buf, sizeof(buf), "Device: %s", DEVICE_CODE);
-        showMessage(buf, "Ready");
-    }
-}
-
-// ==================== FINGERPRINT FUNCTIONS ====================
-void setupFingerprint() {
-    Serial.print("Initializing fingerprint sensor... ");
-
-    const uint32_t baudRates[] = {57600, 115200, 38400};
-    const size_t baudCount = sizeof(baudRates) / sizeof(baudRates[0]);
-
-    for (size_t i = 0; i < baudCount; i++) {
-        uint32_t baud = baudRates[i];
-
-        fpSerial.begin(baud, SERIAL_8N1, FP_RX, FP_TX);
-        delay(120);
-
-        finger.begin(baud);
-        delay(120);
-
-        if (finger.verifyPassword()) {
-            sensorReady = true;
-            Serial.println("OK");
-            Serial.print("  Fingerprint baud: ");
-            Serial.println(baud);
-            Serial.print("  Stored fingerprints: ");
-            finger.getTemplateCount();
-            Serial.println(finger.templateCount);
+            display.clearDisplay();
+            display.setTextSize(2);
+            display.setTextColor(SSD1306_WHITE);
+            display.setCursor(15, 8);
+            display.println("ATTENDRO");
+            display.display();
+            delay(1500);
             break;
         }
     }
 
-    if (!sensorReady) {
-        Serial.println("FAILED!");
-        Serial.println("  1) Power R307 from VIN(5V), not 3.3V");
-        Serial.println("  2) Check TX->GPIO16 and RX->GPIO17");
-        Serial.println("  3) Disconnect other tools from same COM port");
+    if (!found) {
+        Serial.println(" FAILED!");
+        Serial.println("  Check: SDA→GPIO21, SCL→GPIO22, VCC→3.3V, GND→GND");
+        displayReady = false;
     }
 }
 
-void handleFingerprint() {
-    // Check for finger
-    uint8_t result = finger.getImage();
+void showStatus(const char* line1, const char* line2) {
+    if (!displayReady) return;
 
-    if (result != FINGERPRINT_OK) {
-        return; // No finger detected
+    display.clearDisplay();
+    display.setTextSize(1);
+    display.setTextColor(SSD1306_WHITE);
+
+    display.setCursor(0, 0);
+    display.println(line1);
+
+    if (line2 != NULL && strlen(line2) > 0) {
+        display.setCursor(0, 20);
+        display.println(line2);
     }
 
-    Serial.println("Finger detected, processing...");
+    display.display();
+}
+
+// ==================== FINGERPRINT FUNCTIONS ====================
+void setupFingerprint() {
+    Serial.print("[FINGERPRINT] Detecting sensor...");
+
+    const uint32_t baudRates[] = {57600, 115200, 38400};
+
+    for (uint32_t baud : baudRates) {
+        fpSerial.begin(baud, SERIAL_8N1, FP_RX, FP_TX);
+        delay(120);
+        finger.begin(baud);
+        delay(100);
+
+        if (finger.verifyPassword()) {
+            sensorReady = true;
+            finger.getTemplateCount();
+            Serial.printf(" OK at %d baud\n", baud);
+            Serial.printf("[FINGERPRINT] Enrolled templates: %d\n", finger.templateCount);
+            return;
+        }
+    }
+
+    Serial.println(" FAILED!");
+    Serial.println("  Check: TX→GPIO16, RX→GPIO17, VCC→5V, GND→GND");
+    sensorReady = false;
+}
+
+void handleFingerprint() {
+    uint8_t result = finger.getImage();
+
+    // No finger detected
+    if (result != FINGERPRINT_OK) {
+        delay(100);
+        return;
+    }
+
+    // Finger detected - show scanning
+    if (displayReady) {
+        showStatus("Scanning...", "Please wait");
+    }
+    Serial.println("[FP] Finger detected, processing...");
 
     // Convert image to template
     result = finger.image2Tz();
     if (result != FINGERPRINT_OK) {
-        Serial.println("Image conversion failed");
+        Serial.println("[FP] Error: Image conversion failed");
+        showStatus("Error", "Image failed");
+        delay(1500);
         return;
     }
 
-    // Search for match
+    // Search for match in database
     result = finger.fingerSearch();
 
-    if (result == FINGERPRINT_OK) {
-        Serial.print("Match found! ID: ");
-        Serial.print(finger.fingerID);
-        Serial.print(", Confidence: ");
-        Serial.println(finger.confidence);
-
-        if (finger.confidence >= 50) {
-            // Get student info and mark attendance
-            processAttendance(finger.fingerID);
-        } else {
-            showError("Low confidence");
-        }
+    if (result == FINGERPRINT_OK && finger.confidence >= 50) {
+        Serial.printf("[FP] MATCH! ID=%d, Confidence=%d\n", finger.fingerID, finger.confidence);
+        processAttendance(finger.fingerID);
     } else {
-        Serial.println("No match found");
-        showMessage("Not Registered!", "Enroll first");
+        Serial.printf("[FP] No match (result=%d, confidence=%d)\n", result, finger.confidence);
+        showStatus("Not Found", "Please enroll");
+
+        // Error beep
+        digitalWrite(LED_PIN, HIGH);
         beep(100);
-        delay(100);
         beep(100);
+        digitalWrite(LED_PIN, LOW);
+        delay(1500);
     }
 
     // Wait for finger removal
-    unsigned long startWait = millis();
-    while (finger.getImage() != FINGERPRINT_NOFINGER && (millis() - startWait) < FINGER_RELEASE_TIMEOUT_MS) {
-        delay(50);
+    unsigned long timeout = millis();
+    while (finger.getImage() != FINGERPRINT_NOFINGER && millis() - timeout < 5000) {
+        delay(100);
     }
+
     delay(500);
-    showReady();
+    showStatus("ATTENDRO", "Ready");
 }
 
 void processAttendance(int fingerprintId) {
     if (!wifiConnected) {
-        showError("No WiFi!");
+        showStatus("No WiFi", "Error");
+        Serial.println("[ERROR] WiFi not connected");
+        delay(2000);
+        showStatus("ATTENDRO", "Ready");
         return;
     }
 
-    showMessage("Verifying...", "");
-
-    // Get student by fingerprint ID
-    String endpoint = "fingerprint_templates?fingerprint_id=eq." + String(fingerprintId) +
-                     "&select=student_id,students(id,name,enrollment_no,classes(name,division))";
-
-    String response = makeApiRequest("GET", endpoint);
-
-    if (response.length() < 3) {
-        showError("Student not found");
+    if (!sessionActive) {
+        showStatus("No Session", "Active");
+        Serial.println("[ERROR] No active session");
+        delay(2000);
+        showStatus("ATTENDRO", "Ready");
         return;
     }
 
-    // Parse response
-    DynamicJsonDocument doc(1024);
-    DeserializationError error = deserializeJson(doc, response);
+    Serial.printf("[ATTENDANCE] Processing fingerprint ID: %d\n", fingerprintId);
 
-    if (error || doc.size() == 0) {
-        showError("Parse error");
+    // Step 1: Get student from fingerprint template
+    String getStudentEndpoint = String("fingerprint_templates?fingerprint_id=eq.") +
+                                String(fingerprintId) +
+                                "&select=student_id,students(id,name,enrollment_no)";
+
+    String studentResponse = makeApiRequest("GET", getStudentEndpoint);
+
+    if (studentResponse.length() < 3) {
+        showStatus("Not Found", "DB Error");
+        Serial.println("[ERROR] Fingerprint not in database");
+        digitalWrite(LED_PIN, HIGH);
+        beep(100);
+        beep(100);
+        digitalWrite(LED_PIN, LOW);
+        delay(2000);
+        showStatus("ATTENDRO", "Ready");
         return;
     }
 
-    JsonObject template_obj = doc[0];
-    if (!template_obj.containsKey("students") || template_obj["students"].isNull()) {
-        showError("No student data");
+    // Parse student data
+    JsonDocument doc;
+    deserializeJson(doc, studentResponse);
+
+    if (doc.size() == 0) {
+        showStatus("Error", "Parse failed");
+        Serial.println("[ERROR] Failed to parse JSON");
+        delay(2000);
+        showStatus("ATTENDRO", "Ready");
         return;
     }
 
-    JsonObject student = template_obj["students"];
-    String studentId = student["id"].as<String>();
-    String studentName = student["name"].as<String>();
-    String className = "";
+    const char* studentId = doc[0]["student_id"];
+    const char* studentName = doc[0]["students"]["name"];
+    const char* enrollmentNo = doc[0]["students"]["enrollment_no"];
 
-    if (student.containsKey("classes") && !student["classes"].isNull()) {
-        className = String(student["classes"]["name"].as<const char*>()) + " " +
-                   String(student["classes"]["division"].as<const char*>());
-    }
+    Serial.printf("[STUDENT] Name: %s, ID: %s, Enrollment: %s\n", studentName, studentId, enrollmentNo);
 
-    Serial.print("Student: ");
-    Serial.println(studentName);
+    // Step 2: Mark attendance as PRESENT
+    String attendancePayload = String("{") +
+                              "\"session_id\":\"" + currentAttendanceSessionId + "\"," +
+                              "\"student_id\":\"" + String(studentId) + "\"," +
+                              "\"status\":\"PRESENT\"," +
+                              "\"remarks\":\"Fingerprint verified\"" +
+                              "}";
 
-    // If session is active, mark attendance
-    if (sessionActive && currentSessionId.length() > 0) {
-        bool success = markAttendance(currentSessionId, studentId);
-        if (success) {
-            showStudentInfo(studentName.c_str(), className.c_str());
-            Serial.println("Attendance marked!");
-        } else {
-            showMessage(studentName.c_str(), "Already marked");
-        }
+    Serial.printf("[ATTENDANCE] Updating: %s\n", attendancePayload.c_str());
+
+    String attendanceResponse = makeApiRequest("POST", "attendance_records", attendancePayload);
+
+    // Check if update was successful
+    if (attendanceResponse.indexOf("error") == -1) {
+        Serial.printf("[SUCCESS] %s marked PRESENT!\n", studentName);
+        showStatus(studentName, "PRESENT ✓");
+
+        // Success feedback
+        digitalWrite(LED_PIN, HIGH);
+        beep(200);
+        delay(100);
+        beep(200);
+        digitalWrite(LED_PIN, LOW);
+        delay(2000);
     } else {
-        // Just show student info (idle mode)
-        showStudentInfo(studentName.c_str(), className.c_str());
-    }
+        Serial.println("[ERROR] Attendance update failed!");
+        Serial.println(attendanceResponse);
+        showStatus("Error", "Update failed");
 
-    delay(2000);
-}
-
-bool markAttendance(String sessionId, String studentId) {
-    // Check if already marked
-    String checkEndpoint = "attendance_records?session_id=eq." + sessionId +
-                          "&student_id=eq." + studentId + "&select=id,status";
-    String checkResponse = makeApiRequest("GET", checkEndpoint);
-
-    DynamicJsonDocument checkDoc(256);
-    deserializeJson(checkDoc, checkResponse);
-
-    if (checkDoc.size() > 0) {
-        String status = checkDoc[0]["status"].as<String>();
-        if (status == "PRESENT") {
-            return false; // Already marked
+        // Error feedback
+        digitalWrite(LED_PIN, HIGH);
+        for (int i = 0; i < 3; i++) {
+            beep(100);
+            delay(100);
         }
-
-        // Update existing record
-        String recordId = checkDoc[0]["id"].as<String>();
-        String updateBody = "{\"status\":\"PRESENT\",\"remark\":\"Fingerprint\"}";
-        String updateEndpoint = "attendance_records?id=eq." + recordId;
-        makeApiRequest("PATCH", updateEndpoint, updateBody);
-        return true;
+        digitalWrite(LED_PIN, LOW);
+        delay(2000);
     }
 
-    // Create new record
-    String body = "{\"session_id\":\"" + sessionId +
-                 "\",\"student_id\":\"" + studentId +
-                 "\",\"status\":\"PRESENT\",\"remark\":\"Fingerprint\"}";
-
-    String response = makeApiRequest("POST", "attendance_records", body);
-    return response.length() > 0 && response.indexOf("error") == -1;
+    showStatus("ATTENDRO", "Ready");
 }
 
-// ==================== WiFi FUNCTIONS ====================
+// ==================== WIFI & API FUNCTIONS ====================
 void setupWiFi() {
-    Serial.print("Connecting to WiFi: ");
-    Serial.println(WIFI_SSID);
-    showMessage("Connecting WiFi...", WIFI_SSID);
+    Serial.printf("[WIFI] Connecting to '%s'...\n", WIFI_SSID);
+    showStatus("WiFi", "Connecting...");
 
     WiFi.mode(WIFI_STA);
     WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
 
     int attempts = 0;
-    while (WiFi.status() != WL_CONNECTED && attempts < 30) {
+    while (WiFi.status() != WL_CONNECTED && attempts < 25) {
         delay(500);
         Serial.print(".");
         attempts++;
     }
+    Serial.println();
 
     if (WiFi.status() == WL_CONNECTED) {
         wifiConnected = true;
-        Serial.println("\nWiFi connected!");
-        Serial.print("IP: ");
-        Serial.println(WiFi.localIP());
-        showMessage("WiFi Connected!", WiFi.localIP().toString().c_str());
-        beep(200);
-        delay(1000);
+        Serial.printf("[WIFI] ✓ Connected\n");
+        Serial.printf("[WIFI] IP Address: %s\n", WiFi.localIP().toString().c_str());
+        showStatus("WiFi", "Connected!");
+        delay(1500);
     } else {
-        Serial.println("\nWiFi FAILED!");
-        showError("WiFi Failed!");
+        Serial.println("[WIFI] ✗ Connection failed");
+        Serial.println("  Check SSID and password in code");
+        wifiConnected = false;
+        showStatus("WiFi", "Failed");
         delay(2000);
     }
 }
 
-void maintainWiFiConnection() {
-    wl_status_t status = WiFi.status();
-
-    if (status == WL_CONNECTED) {
-        if (!wifiConnected) {
-            wifiConnected = true;
-            Serial.println("WiFi reconnected");
-            showMessage("WiFi Reconnected", WiFi.localIP().toString().c_str());
-            delay(500);
-
-            if (!deviceRegistered) {
-                registerDevice();
-            }
-            checkActiveSession();
-            showReady();
-        }
-        return;
-    }
-
-    if (wifiConnected) {
-        wifiConnected = false;
-        sessionActive = false;
-        currentSessionId = "";
-        Serial.println("WiFi disconnected");
-        showError("WiFi Lost");
-        showReady();
-    }
-
-    unsigned long now = millis();
-    if (now - lastWiFiReconnectAttempt > WIFI_RECONNECT_INTERVAL_MS) {
-        lastWiFiReconnectAttempt = now;
-        Serial.println("Attempting WiFi reconnect...");
-        WiFi.disconnect(false, false);
-        WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
-    }
-}
-
-// ==================== API FUNCTIONS ====================
-String makeApiRequest(const char* method, String endpoint, String body) {
-    if (WiFi.status() != WL_CONNECTED) {
-        wifiConnected = false;
-        return "";
-    }
-
-    HTTPClient http;
-    String url = String(SUPABASE_URL) + "/rest/v1/" + endpoint;
-
-    if (!http.begin(url)) {
-        Serial.println("HTTP begin failed");
-        return "";
-    }
-    http.addHeader("Content-Type", "application/json");
-    http.addHeader("apikey", SUPABASE_SERVICE_KEY);
-    http.addHeader("Authorization", String("Bearer ") + SUPABASE_SERVICE_KEY);
-    http.addHeader("Prefer", "return=representation");
-    http.setTimeout(10000);
-
-    int httpCode;
-    if (strcmp(method, "GET") == 0) {
-        httpCode = http.GET();
-    } else if (strcmp(method, "POST") == 0) {
-        httpCode = http.POST(body);
-    } else if (strcmp(method, "PATCH") == 0) {
-        httpCode = http.PATCH(body);
-    } else {
-        http.end();
-        return "";
-    }
-
-    String response = "";
-    if (httpCode > 0) {
-        response = http.getString();
-    } else {
-        Serial.print("HTTP request failed: ");
-        Serial.println(http.errorToString(httpCode));
-    }
-
-    if (httpCode >= 400) {
-        Serial.print("HTTP ");
-        Serial.print(httpCode);
-        Serial.print(" -> ");
-        Serial.println(url);
-    }
-
-    http.end();
-    return response;
-}
-
 void registerDevice() {
-    Serial.println("Registering device...");
+    if (!wifiConnected) return;
 
-    // Check if exists
-    String checkEndpoint = "fingerprint_devices?device_code=eq." + String(DEVICE_CODE);
-    String existing = makeApiRequest("GET", checkEndpoint);
+    Serial.println("[DEVICE] Registering with Supabase...");
 
-    String body = "{\"device_code\":\"" + String(DEVICE_CODE) +
-                 "\",\"device_name\":\"" + String(DEVICE_NAME) +
-                 "\",\"status\":\"ACTIVE\",\"firmware_version\":\"1.0.0\"}";
+    String checkEndpoint = String("fingerprint_devices?device_code=eq.") + DEVICE_CODE + "&select=id";
+    String checkResponse = makeApiRequest("GET", checkEndpoint);
 
-    if (existing.length() > 2) {
-        // Update
-        makeApiRequest("PATCH", checkEndpoint, body);
-        Serial.println("Device updated");
+    JsonDocument checkDoc;
+    deserializeJson(checkDoc, checkResponse);
+
+    String body = String("{") +
+                 "\"device_code\":\"" + DEVICE_CODE + "\"," +
+                 "\"device_name\":\"" + DEVICE_NAME + "\"," +
+                 "\"status\":\"ACTIVE\"," +
+                 "\"firmware_version\":\"3.0\"," +
+                 "\"last_seen_at\":\"now()\"" +
+                 "}";
+
+    if (checkDoc.size() > 0) {
+        // Device exists - update it
+        deviceId = checkDoc[0]["id"].as<String>();
+        String updateEndpoint = String("fingerprint_devices?id=eq.") + deviceId;
+        makeApiRequest("PATCH", updateEndpoint, body);
+        Serial.println("[DEVICE] ✓ Updated existing device");
     } else {
-        // Insert
+        // Device doesn't exist - create it
         makeApiRequest("POST", "fingerprint_devices", body);
-        Serial.println("Device registered");
+        Serial.println("[DEVICE] ✓ Registered new device");
     }
 
     deviceRegistered = true;
 }
 
 void sendHeartbeat() {
-    String endpoint = "fingerprint_devices?device_code=eq." + String(DEVICE_CODE);
-    String body = "{\"last_seen_at\":\"" + getTimestamp() + "\"}";
-    makeApiRequest("PATCH", endpoint, body);
-}
+    if (!wifiConnected || !deviceRegistered) return;
 
-String getTimestamp() {
-    // Simple timestamp - in production use NTP
-    return "now()";
+    String endpoint = String("fingerprint_devices?device_code=eq.") + DEVICE_CODE;
+    String body = String("{\"last_seen_at\":\"now()\",\"status\":\"ACTIVE\"}");
+
+    String response = makeApiRequest("PATCH", endpoint, body);
+
+    if (response.indexOf("error") == -1) {
+        Serial.println("[HEARTBEAT] ✓ Sent");
+    }
 }
 
 void checkActiveSession() {
-    if (!wifiConnected) return;
+    if (!wifiConnected || !deviceRegistered) return;
 
     // Get device ID first
-    String devEndpoint = "fingerprint_devices?device_code=eq." + String(DEVICE_CODE) + "&select=id";
+    String devEndpoint = String("fingerprint_devices?device_code=eq.") + DEVICE_CODE + "&select=id";
     String devResponse = makeApiRequest("GET", devEndpoint);
 
-    DynamicJsonDocument devDoc(256);
+    JsonDocument devDoc;
     deserializeJson(devDoc, devResponse);
 
-    if (devDoc.size() == 0) return;
+    if (devDoc.size() == 0) {
+        if (sessionActive) {
+            sessionActive = false;
+            currentSessionId = "";
+            showStatus("ATTENDRO", "No session");
+        }
+        return;
+    }
 
-    String deviceId = devDoc[0]["id"].as<String>();
+    deviceId = devDoc[0]["id"].as<String>();
 
-    // Check for active session
-    String sessEndpoint = "device_sessions?device_id=eq." + deviceId +
-                         "&session_status=eq.ACTIVE&select=id,attendance_session_id,subjects(name),classes(name,division)";
+    // Check for active session for this device
+    String sessEndpoint = String("device_sessions?device_id=eq.") + deviceId +
+                         "&session_status=eq.ACTIVE" +
+                         "&select=id,attendance_session_id,subjects(name)";
+
     String sessResponse = makeApiRequest("GET", sessEndpoint);
 
-    DynamicJsonDocument sessDoc(1024);
+    JsonDocument sessDoc;
     deserializeJson(sessDoc, sessResponse);
 
     if (sessDoc.size() > 0) {
-        JsonObject sess = sessDoc[0];
+        // Active session found
+        String newSessionId = sessDoc[0]["id"].as<String>();
+        String newAttendanceSessionId = sessDoc[0]["attendance_session_id"].as<String>();
+        const char* subjectName = sessDoc[0]["subjects"]["name"];
 
-        if (!sessionActive) {
-            // New session started
-            currentSessionId = sess["attendance_session_id"].as<String>();
-
-            if (sess.containsKey("subjects") && !sess["subjects"].isNull()) {
-                currentSubjectName = sess["subjects"]["name"].as<String>();
-            }
-            if (sess.containsKey("classes") && !sess["classes"].isNull()) {
-                currentClassName = String(sess["classes"]["name"].as<const char*>()) + " " +
-                                  String(sess["classes"]["division"].as<const char*>());
-            }
-
+        if (newSessionId != currentSessionId) {
+            // New session
+            currentSessionId = newSessionId;
+            currentAttendanceSessionId = newAttendanceSessionId;
             sessionActive = true;
-            Serial.println("Session started: " + currentSubjectName);
-            showMessage(currentSubjectName.c_str(), "Place finger...");
-            beep(500);
+
+            Serial.printf("[SESSION] ✓ ACTIVE: %s\n", subjectName);
+            showStatus(subjectName, "Scan finger...");
+
+            // Session start feedback
+            beep(100);
+            delay(100);
+            beep(100);
         }
     } else {
+        // No active session
         if (sessionActive) {
-            // Session ended
             sessionActive = false;
             currentSessionId = "";
-            Serial.println("Session ended");
-            showReady();
+            currentAttendanceSessionId = "";
+            Serial.println("[SESSION] ✗ No active session");
+            showStatus("ATTENDRO", "Ready");
         }
     }
+}
+
+String makeApiRequest(const char* method, String endpoint, String body) {
+    if (WiFi.status() != WL_CONNECTED) {
+        Serial.println("[API] Error: WiFi not connected");
+        return "{}";
+    }
+
+    HTTPClient http;
+    String url = String(SUPABASE_URL) + "/rest/v1/" + endpoint;
+
+    if (!http.begin(url)) {
+        Serial.printf("[API] Error: Failed to begin request to %s\n", url.c_str());
+        return "{}";
+    }
+
+    // Set headers
+    http.addHeader("Content-Type", "application/json");
+    http.addHeader("apikey", SUPABASE_SERVICE_KEY);
+    http.addHeader("Authorization", String("Bearer ") + SUPABASE_SERVICE_KEY);
+    http.addHeader("Prefer", "return=representation");
+    http.setTimeout(8000);
+
+    int httpCode = -1;
+
+    if (strcmp(method, "GET") == 0) {
+        httpCode = http.GET();
+    } else if (strcmp(method, "POST") == 0) {
+        httpCode = http.POST(body);
+    } else if (strcmp(method, "PATCH") == 0) {
+        httpCode = http.PATCH(body);
+    } else if (strcmp(method, "DELETE") == 0) {
+        httpCode = http.sendRequest("DELETE");
+    }
+
+    String response = "";
+
+    if (httpCode > 0) {
+        response = http.getString();
+
+        if (httpCode >= 200 && httpCode < 300) {
+            // Success
+            Serial.printf("[API] %s %s -> %d\n", method, endpoint.c_str(), httpCode);
+        } else {
+            // Error
+            Serial.printf("[API] ERROR %d: %s\n", httpCode, url.c_str());
+            Serial.println("[API] Response: " + response);
+        }
+    } else {
+        Serial.printf("[API] ERROR: %s\n", http.errorToString(httpCode).c_str());
+    }
+
+    http.end();
+    return response;
 }
 
 // ==================== COMMAND HANDLING ====================
 void handleCommand(String cmd) {
-    Serial.println("Command: " + cmd);
+    Serial.println("[CMD] Processing: " + cmd);
 
     if (cmd == "STATUS") {
-        Serial.println("\n=== DEVICE STATUS ===");
-        Serial.print("WiFi: ");
-        Serial.println(wifiConnected ? "Connected" : "Disconnected");
-        Serial.print("IP: ");
-        Serial.println(WiFi.localIP());
-        Serial.print("Sensor: ");
-        Serial.println(sensorReady ? "Ready" : "Not found");
-        Serial.print("Display: ");
-        Serial.println(displayReady ? "Ready" : "Not found");
-        Serial.print("Session: ");
-        Serial.println(sessionActive ? "Active" : "Inactive");
+        Serial.println("\n╔════════ DEVICE STATUS ════════╗");
+        Serial.printf("║ WiFi: %s\n", wifiConnected ? "✓ Connected" : "✗ Disconnected");
+        if (wifiConnected) {
+            Serial.printf("║ IP: %s\n", WiFi.localIP().toString().c_str());
+        }
+        Serial.printf("║ Sensor: %s\n", sensorReady ? "✓ Ready" : "✗ Not found");
+        Serial.printf("║ Display: %s\n", displayReady ? "✓ Ready" : "✗ Not found");
+        Serial.printf("║ Device Registered: %s\n", deviceRegistered ? "✓ Yes" : "✗ No");
+        Serial.printf("║ Session: %s\n", sessionActive ? "✓ ACTIVE" : "✗ Inactive");
         if (sensorReady) {
             finger.getTemplateCount();
-            Serial.print("Fingerprints: ");
-            Serial.println(finger.templateCount);
+            Serial.printf("║ Fingerprints: %d enrolled\n", finger.templateCount);
         }
-        Serial.println("====================\n");
+        Serial.println("╚═════════════════════════════════╝\n");
     }
     else if (cmd == "CHECK") {
-        Serial.println("Checking for active session...");
         checkActiveSession();
     }
+    else if (cmd == "VERIFY") {
+        Serial.println("[CMD] Verifying fingerprint sensor...");
+        if (sensorReady) {
+            if (finger.verifyPassword()) {
+                Serial.println("[CMD] ✓ Sensor responsive");
+            } else {
+                Serial.println("[CMD] ✗ Sensor not responding");
+            }
+        } else {
+            Serial.println("[CMD] ✗ Sensor not initialized");
+        }
+    }
+    else if (cmd == "REGISTER") {
+        registerDevice();
+    }
     else if (cmd == "RESET") {
-        Serial.println("Restarting...");
+        Serial.println("[CMD] Restarting device...");
+        delay(500);
         ESP.restart();
     }
     else if (cmd == "CLEAR") {
-        Serial.println("Clearing fingerprint database...");
         if (sensorReady) {
+            Serial.println("[CMD] Clearing fingerprint database...");
             finger.emptyDatabase();
-            Serial.println("Database cleared!");
-            showSuccess("Cleared!");
+            Serial.println("[CMD] ✓ Database cleared");
+        } else {
+            Serial.println("[CMD] ✗ Sensor not ready");
         }
     }
     else if (cmd == "BRIDGE") {
-        Serial.println("Switching to bridge mode. Press RESET to return.");
-        bridgeMode = true;
+        Serial.println("[CMD] Entering BRIDGE MODE");
+        Serial.println("[CMD] ESP32 is now transparent to R307");
+        Serial.println("[CMD] Type 'RESET' to exit\n");
+
+        // Bridge mode: forward all data between Serial and R307
         fpSerial.begin(57600, SERIAL_8N1, FP_RX, FP_TX);
+        while (true) {
+            if (Serial.available()) {
+                fpSerial.write(Serial.read());
+            }
+            if (fpSerial.available()) {
+                Serial.write(fpSerial.read());
+            }
+            delay(2);
+        }
     }
     else {
-        Serial.println("Unknown command. Available: STATUS, CHECK, RESET, CLEAR, BRIDGE");
+        Serial.println("[CMD] Unknown command!");
+        Serial.println("Available: STATUS, CHECK, VERIFY, REGISTER, RESET, CLEAR, BRIDGE");
     }
 }
 
-void runFingerprintBridge() {
-    while (Serial.available()) {
-        fpSerial.write(Serial.read());
-    }
-    while (fpSerial.available()) {
-        Serial.write(fpSerial.read());
-    }
-    delay(2);
-}
-
-// ==================== UTILITY FUNCTIONS ====================
-void beep(int duration) {
+void beep(int ms) {
     digitalWrite(BUZZER_PIN, HIGH);
-    delay(duration);
+    delay(ms);
     digitalWrite(BUZZER_PIN, LOW);
 }

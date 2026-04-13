@@ -28,6 +28,7 @@ import AdminSettings from "./pages/admin/Settings";
 import AdminBatches from "./pages/admin/Batches";
 import AdminHolidays from "./pages/admin/Holidays";
 import AdminSubstitutions from "./pages/admin/Substitutions";
+import FingerprintEnrollment from "./pages/admin/FingerprintEnrollment";
 
 // Faculty Pages
 import FacultyDashboard from "./pages/faculty/Dashboard";
@@ -39,6 +40,9 @@ import FacultyReports from "./pages/faculty/Reports";
 import FacultySubjects from "./pages/faculty/Subjects";
 import FacultySettings from "./pages/faculty/Settings";
 import FacultyMyClass from "./pages/faculty/MyClass";
+
+// Student Pages
+import FingerprintTest from "./pages/student/FingerprintTest";
 import { useEffect } from "react";
 import { App as CapacitorApp } from "@capacitor/app";
 
@@ -85,6 +89,7 @@ const App = () => {
           <Route path="/admin/substitutions" element={<RouteGuard allowedRole="ADMIN"><AdminSubstitutions /></RouteGuard>} />
           <Route path="/admin/reports" element={<RouteGuard allowedRole="ADMIN"><AdminReports /></RouteGuard>} />
           <Route path="/admin/settings" element={<RouteGuard allowedRole="ADMIN"><AdminSettings /></RouteGuard>} />
+          <Route path="/admin/fingerprint-enrollment" element={<RouteGuard allowedRole="ADMIN"><FingerprintEnrollment /></RouteGuard>} />
 
           {/* Faculty routes */}
           <Route path="/faculty/dashboard" element={<RouteGuard allowedRole="FACULTY"><FacultyDashboard /></RouteGuard>} />
@@ -97,6 +102,9 @@ const App = () => {
           <Route path="/faculty/subjects" element={<RouteGuard allowedRole="FACULTY"><FacultySubjects /></RouteGuard>} />
           <Route path="/faculty/batches" element={<RouteGuard allowedRole="FACULTY"><AdminBatches role="faculty" /></RouteGuard>} />
           <Route path="/faculty/settings" element={<RouteGuard allowedRole="FACULTY"><FacultySettings /></RouteGuard>} />
+
+          {/* Student routes */}
+          <Route path="/student/fingerprint-test" element={<RouteGuard allowedRole="STUDENT"><FingerprintTest /></RouteGuard>} />
 
           {/* 404 */}
           <Route path="*" element={<NotFound />} />

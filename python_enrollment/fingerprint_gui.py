@@ -15,7 +15,7 @@ import requests
 import json
 
 import tkinter as tk
-from tkinter import ttk, messagebox, scrolledtext
+from tkinter import ttk, messagebox, scrolledtext, simpledialog
 from tkinter.font import Font
 
 # ==================== CONFIGURATION ====================
@@ -275,6 +275,7 @@ class FingerprintEnrollmentApp:
         self.current_student = None
         self.enrollment_step = 0
         self.connected_baud = 0
+        self.log_text = None  # Will be created in create_log_card
 
         # Styling
         self.style = ttk.Style()
@@ -514,6 +515,10 @@ class FingerprintEnrollmentApp:
         self.log_text.pack(fill=tk.BOTH, expand=True)
 
     def log(self, message: str, level: str = "info"):
+        # Check if log_text exists (might be called during initialization)
+        if not hasattr(self, 'log_text') or self.log_text is None:
+            print(f"[LOG] {message}")  # Fallback to console
+            return
         timestamp = time.strftime("%H:%M:%S")
         prefix = {"info": "ℹ️", "success": "✅", "error": "❌", "warning": "⚠️"}.get(level, "•")
         self.log_text.insert(tk.END, f"[{timestamp}] {prefix} {message}\n")
@@ -888,7 +893,7 @@ class FingerprintEnrollmentApp:
             messagebox.showwarning("Warning", "Please connect to sensor first")
             return
 
-        fp_id = tk.simpledialog.askinteger("Delete Fingerprint", "Enter Fingerprint ID to delete:")
+        fp_id = simpledialog.askinteger("Delete Fingerprint", "Enter Fingerprint ID to delete:")
         if fp_id is None:
             return
 

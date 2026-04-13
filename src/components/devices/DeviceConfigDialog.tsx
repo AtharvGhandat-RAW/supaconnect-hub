@@ -7,7 +7,6 @@ import {
   Loader2,
   CheckCircle,
   AlertCircle,
-  QrCode,
   Smartphone
 } from 'lucide-react';
 import {
@@ -25,7 +24,6 @@ import { useToast } from '@/hooks/use-toast';
 import {
   getDeviceByCode,
   isDeviceOnline,
-  configureDeviceForAttendance,
   subscribeToDeviceStatus,
   FingerprintDevice
 } from '@/services/devices';
@@ -61,7 +59,6 @@ const DeviceConfigDialog: React.FC<DeviceConfigDialogProps> = ({
   const [deviceCode, setDeviceCode] = useState('');
   const [device, setDevice] = useState<FingerprintDevice | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [isConfiguring, setIsConfiguring] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   // Reset state when dialog opens
@@ -105,39 +102,24 @@ const DeviceConfigDialog: React.FC<DeviceConfigDialogProps> = ({
     }
   };
 
-  // Configure device for attendance
+  // Configure device for attendance - only verify and store device code
+  // Actual device session creation happens in handleSubmit after attendance session is created
   const handleConfigure = async () => {
     if (!device) return;
 
-    setIsConfiguring(true);
-    setError(null);
-
-    try {
-      await configureDeviceForAttendance({
-        deviceCode: device.device_code,
-        facultyId,
-        classId,
-        subjectId,
-        batchId,
-        attendanceSessionId,
-        date: new Date().toISOString().split('T')[0],
-        startTime,
-      });
-
-      toast({
-        title: 'Device Configured',
-        description: `Device ${device.device_code} is now ready for attendance.`,
-      });
-
-      onConfigured(device.device_code);
-      onOpenChange(false);
-    } catch (err: unknown) {
-      console.error('Error configuring device:', err);
-      const message = err instanceof Error ? err.message : 'Failed to configure device';
-      setError(message);
-    } finally {
-      setIsConfiguring(false);
+    // Just verify device is online, don't create device session yet
+    if (!isDeviceOnline(device)) {
+      setError('Device appears to be offline. Please check if it is powered on.');
+      return;
     }
+
+    toast({
+      title: 'Device Selected',
+      description: `Device ${device.device_code} will be configured when attendance is submitted.`,
+    });
+
+    onConfigured(device.device_code);
+    onOpenChange(false);
   };
 
   // Subscribe to device status updates
@@ -287,20 +269,11 @@ const DeviceConfigDialog: React.FC<DeviceConfigDialogProps> = ({
           {device && (
             <Button
               onClick={handleConfigure}
-              disabled={isConfiguring || !deviceOnline}
+              disabled={!deviceOnline}
               className="btn-gradient"
             >
-              {isConfiguring ? (
-                <>
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  Configuring...
-                </>
-              ) : (
-                <>
-                  <CheckCircle className="w-4 h-4 mr-2" />
-                  Configure Device
-                </>
-              )}
+              <CheckCircle className="w-4 h-4 mr-2" />
+              Select Device
             </Button>
           )}
         </DialogFooter>

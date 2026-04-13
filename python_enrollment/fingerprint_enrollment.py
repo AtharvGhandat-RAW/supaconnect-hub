@@ -64,8 +64,11 @@ class R307Sensor:
     """R307 Fingerprint Sensor Communication"""
 
     def __init__(self, port: str, baudrate: int = 57600):
-        self.serial = serial.Serial(port, baudrate, timeout=2)
+        self.serial = serial.Serial(port, baudrate, timeout=2, write_timeout=2)
         time.sleep(0.5)
+        # Clear any pending data
+        self.serial.reset_input_buffer()
+        self.serial.reset_output_buffer()
 
     def close(self):
         if self.serial and self.serial.is_open:
@@ -228,7 +231,7 @@ class SupabaseClient:
         }
 
         try:
-            response = requests.get(url, headers=self._headers(), params=params)
+            response = requests.get(url, headers=self._headers(), params=params, timeout=10)
             if response.status_code == 200:
                 data = response.json()
                 if data and len(data) > 0:
@@ -246,7 +249,7 @@ class SupabaseClient:
         }
 
         try:
-            response = requests.get(url, headers=self._headers(), params=params)
+            response = requests.get(url, headers=self._headers(), params=params, timeout=10)
             if response.status_code == 200:
                 data = response.json()
                 return len(data) > 0
@@ -264,7 +267,7 @@ class SupabaseClient:
         }
 
         try:
-            response = requests.post(url, headers=self._headers(use_service=True), json=data)
+            response = requests.post(url, headers=self._headers(use_service=True), json=data, timeout=10)
             return response.status_code in [200, 201]
         except Exception as e:
             print(f"Error saving fingerprint: {e}")
@@ -276,7 +279,7 @@ class SupabaseClient:
         params = {'student_id': f'eq.{student_id}'}
 
         try:
-            response = requests.delete(url, headers=self._headers(use_service=True), params=params)
+            response = requests.delete(url, headers=self._headers(use_service=True), params=params, timeout=10)
             return response.status_code in [200, 204]
         except Exception as e:
             print(f"Error deleting fingerprint: {e}")
@@ -294,7 +297,7 @@ class SupabaseClient:
             params['class_id'] = f'eq.{class_id}'
 
         try:
-            response = requests.get(url, headers=self._headers(), params=params)
+            response = requests.get(url, headers=self._headers(), params=params, timeout=10)
             if response.status_code == 200:
                 return response.json()
         except Exception as e:
@@ -406,7 +409,8 @@ class FingerprintEnrollmentCLI:
 
         # Capture first image
         print("\nStep 1: Place your finger on the sensor...")
-        while True:
+        capture_start = time.time()
+        while time.time() - capture_start < 15:  # 15 second timeout
             result = self.sensor.capture_image()
             if result == FINGERPRINT_OK:
                 print("Image captured!")
@@ -416,6 +420,9 @@ class FingerprintEnrollmentCLI:
             else:
                 print(f"Error capturing image: {result}")
                 return
+        else:
+            print("ERROR: Fingerprint capture timed out (15s)")
+            return
 
         # Convert to template 1
         result = self.sensor.image_to_tz(1)
@@ -426,13 +433,17 @@ class FingerprintEnrollmentCLI:
 
         # Wait for finger removal
         print("\nRemove your finger...")
-        while self.sensor.capture_image() != FINGERPRINT_NOFINGER:
+        removal_start = time.time()
+        while time.time() - removal_start < 10:  # 10 second timeout
+            if self.sensor.capture_image() == FINGERPRINT_NOFINGER:
+                break
             time.sleep(0.1)
         time.sleep(0.5)
 
         # Capture second image
         print("\nStep 2: Place the SAME finger again...")
-        while True:
+        capture_start = time.time()
+        while time.time() - capture_start < 15:  # 15 second timeout
             result = self.sensor.capture_image()
             if result == FINGERPRINT_OK:
                 print("Image captured!")
@@ -442,6 +453,9 @@ class FingerprintEnrollmentCLI:
             else:
                 print(f"Error capturing image: {result}")
                 return
+        else:
+            print("ERROR: Fingerprint capture timed out (15s)")
+            return
 
         # Convert to template 2
         result = self.sensor.image_to_tz(2)
@@ -482,7 +496,8 @@ class FingerprintEnrollmentCLI:
             return
 
         print("\nPlace your finger on the sensor...")
-        while True:
+        capture_start = time.time()
+        while time.time() - capture_start < 15:  # 15 second timeout
             result = self.sensor.capture_image()
             if result == FINGERPRINT_OK:
                 break
@@ -491,6 +506,9 @@ class FingerprintEnrollmentCLI:
             else:
                 print(f"Error: {result}")
                 return
+        else:
+            print("ERROR: Fingerprint capture timed out (15s)")
+            return
 
         result = self.sensor.image_to_tz(1)
         if result != FINGERPRINT_OK:

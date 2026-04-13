@@ -208,6 +208,135 @@ export type Database = {
         }
         Relationships: []
       }
+      device_attendance_queue: {
+        Row: {
+          id: string
+          device_id: string
+          device_session_id: string | null
+          fingerprint_id: number
+          scanned_at: string
+          synced: boolean
+          synced_at: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          device_id: string
+          device_session_id?: string | null
+          fingerprint_id: number
+          scanned_at: string
+          synced?: boolean
+          synced_at?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          device_id?: string
+          device_session_id?: string | null
+          fingerprint_id?: number
+          scanned_at?: string
+          synced?: boolean
+          synced_at?: string | null
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "device_attendance_queue_device_id_fkey"
+            columns: ["device_id"]
+            isOneToOne: false
+            referencedRelation: "fingerprint_devices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "device_attendance_queue_device_session_id_fkey"
+            columns: ["device_session_id"]
+            isOneToOne: false
+            referencedRelation: "device_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      device_sessions: {
+        Row: {
+          id: string
+          device_id: string
+          faculty_id: string
+          class_id: string
+          subject_id: string
+          batch_id: string | null
+          attendance_session_id: string | null
+          session_date: string
+          start_time: string
+          session_status: string
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          device_id: string
+          faculty_id: string
+          class_id: string
+          subject_id: string
+          batch_id?: string | null
+          attendance_session_id?: string | null
+          session_date?: string
+          start_time: string
+          session_status?: string
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          device_id?: string
+          faculty_id?: string
+          class_id?: string
+          subject_id?: string
+          batch_id?: string | null
+          attendance_session_id?: string | null
+          session_date?: string
+          start_time?: string
+          session_status?: string
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "device_sessions_device_id_fkey"
+            columns: ["device_id"]
+            isOneToOne: false
+            referencedRelation: "fingerprint_devices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "device_sessions_faculty_id_fkey"
+            columns: ["faculty_id"]
+            isOneToOne: false
+            referencedRelation: "faculty"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "device_sessions_class_id_fkey"
+            columns: ["class_id"]
+            isOneToOne: false
+            referencedRelation: "classes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "device_sessions_subject_id_fkey"
+            columns: ["subject_id"]
+            isOneToOne: false
+            referencedRelation: "subjects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "device_sessions_attendance_session_id_fkey"
+            columns: ["attendance_session_id"]
+            isOneToOne: false
+            referencedRelation: "attendance_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       faculty: {
         Row: {
           created_at: string
@@ -283,6 +412,77 @@ export type Database = {
             columns: ["faculty_id"]
             isOneToOne: false
             referencedRelation: "faculty"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      fingerprint_devices: {
+        Row: {
+          id: string
+          device_code: string
+          device_name: string | null
+          status: string
+          last_seen_at: string | null
+          firmware_version: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          device_code: string
+          device_name?: string | null
+          status?: string
+          last_seen_at?: string | null
+          firmware_version?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          device_code?: string
+          device_name?: string | null
+          status?: string
+          last_seen_at?: string | null
+          firmware_version?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      fingerprint_templates: {
+        Row: {
+          id: string
+          student_id: string
+          fingerprint_id: number
+          template_data: string | null
+          is_verified: boolean
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          student_id: string
+          fingerprint_id: number
+          template_data?: string | null
+          is_verified?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          student_id?: string
+          fingerprint_id?: number
+          template_data?: string | null
+          is_verified?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fingerprint_templates_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: true
+            referencedRelation: "students"
             referencedColumns: ["id"]
           },
         ]
