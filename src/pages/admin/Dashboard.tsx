@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Users, GraduationCap, ClipboardCheck, BookOpen, Activity } from 'lucide-react';
+import { Users, GraduationCap, ClipboardCheck, BookOpen, Activity, Fingerprint } from 'lucide-react';
 import PageShell from '@/components/layout/PageShell';
 import StatCard from '@/components/ui/StatCard';
 import DataTable from '@/components/ui/DataTable';
@@ -14,6 +14,8 @@ import { getSubjects } from '@/services/subjects';
 import { supabase } from '@/integrations/supabase/client';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
+import { Button } from '@/components/ui/button';
+import { useNavigate } from 'react-router-dom';
 
 interface TodaySession {
   id: string;
@@ -25,6 +27,7 @@ interface TodaySession {
 }
 
 const AdminDashboardPage: React.FC = () => {
+  const navigate = useNavigate();
   const [stats, setStats] = useState({
     totalStudents: 0,
     totalClasses: 0,
@@ -192,6 +195,15 @@ const AdminDashboardPage: React.FC = () => {
           <p className="text-muted-foreground mt-1">
             Overview of attendance and academic management
           </p>
+          <div className="mt-3">
+            <Button
+              onClick={() => navigate('/admin/fingerprint-enrollment')}
+              className="btn-gradient"
+            >
+              <Fingerprint className="w-4 h-4 mr-2" />
+              Open Fingerprint Enrollment
+            </Button>
+          </div>
         </div>
 
         {/* Stat Cards */}

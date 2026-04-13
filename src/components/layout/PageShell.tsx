@@ -21,6 +21,7 @@ import {
   CalendarDays,
   RefreshCw,
   Book,
+  Fingerprint,
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
@@ -48,6 +49,7 @@ const adminNavItems: NavItem[] = [
   { label: 'Defaulters', path: '/admin/defaulters', icon: <AlertTriangle className="w-5 h-5" /> },
   { label: 'Absentee Book', path: '/admin/fines', icon: <Book className="w-5 h-5" /> },
   { label: 'Promotion', path: '/admin/promotion', icon: <ArrowUpCircle className="w-5 h-5" /> },
+  { label: 'Fingerprint', path: '/admin/fingerprint-enrollment', icon: <Fingerprint className="w-5 h-5" /> },
   { label: 'Reports', path: '/admin/reports', icon: <FileBarChart className="w-5 h-5" /> },
   { label: 'Settings', path: '/admin/settings', icon: <Settings className="w-5 h-5" /> },
 ];

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { AlertCircle, Usb, CheckCircle, XCircle, Loader, Trash2, Eye } from 'lucide-react';
+import { AlertCircle, Usb, CheckCircle, XCircle, Loader, Trash2, Eye, Plus, RefreshCw, Smartphone } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import PageShell from '@/components/layout/PageShell';
@@ -23,6 +23,15 @@ const R307_COMMANDS = {
 
 const FINGERPRINT_OK = 0x00;
 const FINGERPRINT_NOFINGER = 0x02;
+
+interface FingerprintDevice {
+  id: string;
+  device_code: string;
+  device_name: string | null;
+  status: string;
+  firmware_version: string | null;
+  last_seen_at: string | null;
+}
 
 class R307Sensor {
   constructor() {
@@ -203,6 +212,14 @@ const FingerprintEnrollmentPage: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [enrolledCount, setEnrolledCount] = useState(0);
 
+  // Device registration state
+  const [deviceCode, setDeviceCode] = useState('');
+  const [deviceName, setDeviceName] = useState('');
+  const [firmwareVersion, setFirmwareVersion] = useState('3.0');
+  const [deviceSaving, setDeviceSaving] = useState(false);
+  const [deviceLoading, setDeviceLoading] = useState(false);
+  const [devices, setDevices] = useState<FingerprintDevice[]>([]);
+
   // Log
   const [logs, setLogs] = useState<string[]>([]);
   const logEndRef = useRef(null);
@@ -217,6 +234,87 @@ const FingerprintEnrollmentPage: React.FC = () => {
   useEffect(() => {
     logEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [logs]);
+
+  const isDeviceOnline = (lastSeenAt: string | null) => {
+    if (!lastSeenAt) return false;
+    const diff = Date.now() - new Date(lastSeenAt).getTime();
+    return diff < 2 * 60 * 1000;
+  };
+
+  const loadDevices = async () => {
+    try {
+      setDeviceLoading(true);
+      const { data, error } = await supabase
+        .from('fingerprint_devices')
+        .select('id, device_code, device_name, status, firmware_version, last_seen_at')
+        .order('updated_at', { ascending: false })
+        .limit(20);
+
+      if (error) throw error;
+      setDevices(data || []);
+    } catch (error) {
+      toast({
+        title: 'Error',
+        description: 'Failed to load fingerprint devices',
+        variant: 'destructive'
+      });
+    } finally {
+      setDeviceLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadDevices();
+  }, []);
+
+  const saveDevice = async () => {
+    if (!deviceCode.trim()) {
+      toast({
+        title: 'Error',
+        description: 'Device code is required',
+        variant: 'destructive'
+      });
+      return;
+    }
+
+    try {
+      setDeviceSaving(true);
+
+      const payload = {
+        device_code: deviceCode.trim().toUpperCase(),
+        device_name: deviceName.trim() || null,
+        status: 'ACTIVE',
+        firmware_version: firmwareVersion.trim() || '3.0',
+        last_seen_at: new Date().toISOString()
+      };
+
+      const { error } = await supabase
+        .from('fingerprint_devices')
+        .upsert(payload, { onConflict: 'device_code' });
+
+      if (error) throw error;
+
+      addLog(`✓ Device saved: ${payload.device_code}`, 'success');
+      toast({
+        title: 'Device Saved',
+        description: `${payload.device_code} is ready for attendance sessions`
+      });
+
+      setDeviceCode('');
+      setDeviceName('');
+      setFirmwareVersion('3.0');
+      await loadDevices();
+    } catch (error) {
+      addLog(`✗ Device save failed: ${error.message}`, 'error');
+      toast({
+        title: 'Error',
+        description: error.message,
+        variant: 'destructive'
+      });
+    } finally {
+      setDeviceSaving(false);
+    }
+  };
 
   const checkBrowserSupport = () => {
     if (!navigator.serial) {
@@ -494,7 +592,66 @@ const FingerprintEnrollmentPage: React.FC = () => {
         {/* Header */}
         <div>
           <h1 className="text-3xl font-bold">Fingerprint Enrollment</h1>
-          <p className="text-muted-foreground">Enroll student fingerprints for attendance</p>
+          <p className="text-muted-foreground">Add fingerprint devices and enroll student fingerprints for attendance</p>
+        </div>
+
+        {/* Device Registration */}
+        <div className="rounded-lg border bg-white p-4 space-y-4">
+          <div className="flex items-center justify-between">
+            <h2 className="text-lg font-semibold flex items-center gap-2">
+              <Smartphone className="w-5 h-5" />
+              Device Registration
+            </h2>
+            <Button variant="outline" onClick={loadDevices} disabled={deviceLoading}>
+              <RefreshCw className={`w-4 h-4 mr-2 ${deviceLoading ? 'animate-spin' : ''}`} />
+              Refresh
+            </Button>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-2">
+            <Input
+              placeholder="Device code (DEVICE_001)"
+              value={deviceCode}
+              onChange={(e) => setDeviceCode(e.target.value.toUpperCase())}
+              disabled={deviceSaving}
+            />
+            <Input
+              placeholder="Device name"
+              value={deviceName}
+              onChange={(e) => setDeviceName(e.target.value)}
+              disabled={deviceSaving}
+            />
+            <Input
+              placeholder="Firmware (3.0)"
+              value={firmwareVersion}
+              onChange={(e) => setFirmwareVersion(e.target.value)}
+              disabled={deviceSaving}
+            />
+            <Button onClick={saveDevice} disabled={deviceSaving || !deviceCode.trim()}>
+              {deviceSaving ? <Loader className="w-4 h-4 mr-2 animate-spin" /> : <Plus className="w-4 h-4 mr-2" />}
+              Save Device
+            </Button>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+            {devices.map((d) => {
+              const online = isDeviceOnline(d.last_seen_at);
+              return (
+                <div key={d.id} className="border rounded-lg p-3 flex items-center justify-between">
+                  <div>
+                    <p className="font-medium">{d.device_name || d.device_code}</p>
+                    <p className="text-xs text-muted-foreground">{d.device_code} • v{d.firmware_version || 'N/A'}</p>
+                    <p className="text-xs text-muted-foreground">
+                      Last seen: {d.last_seen_at ? new Date(d.last_seen_at).toLocaleString() : 'Never'}
+                    </p>
+                  </div>
+                  <span className={`text-xs px-2 py-1 rounded-full ${online ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'}`}>
+                    {online ? 'Online' : 'Offline'}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
         </div>
 
         <div className="grid grid-cols-3 gap-4">
